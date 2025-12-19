@@ -124,15 +124,27 @@ void {init_fn}(void)
             case UI_CHILD_ICON:
                 c->lv_obj = lv_img_create({screen_var}.lv_screen);
                 lv_obj_set_pos(c->lv_obj, c->x, c->y);
-                lv_image_set_inner_align(c->lv_obj, LV_IMAGE_ALIGN_TOP_MID);
+
+                /* enforce icon boundaries */
+                lv_obj_set_size(c->lv_obj, c->w, c->h);
+                lv_obj_set_style_clip_corner(
+                    c->lv_obj,
+                    true,
+                    LV_PART_MAIN | LV_STATE_DEFAULT
+                );
+
+                lv_image_set_inner_align(c->lv_obj, LV_IMAGE_ALIGN_CENTER);
+
                 // don't set src here; do it in separate loader
                 break;
+
 
             case UI_CHILD_LABEL:
                 c->lv_obj = lv_label_create({screen_var}.lv_screen);
                 lv_obj_set_pos(c->lv_obj, c->x, c->y);
                 lv_obj_set_style_pad_all(c->lv_obj, 0, 0);
-                lv_obj_set_size(c->lv_obj, LV_SIZE_CONTENT, LV_SIZE_CONTENT);
+                lv_obj_set_width(c->lv_obj, c->w);
+                lv_label_set_long_mode(c->lv_obj, LV_LABEL_LONG_CLIP);
                 // text will be set separately at runtime
                 break;
 
@@ -206,6 +218,7 @@ def generate_screen_c_and_h(frame_node):
         entry_lines = []
         entry_lines.append(INDENT + "{")
         entry_lines.append(INDENT*2 + f".type = {mapped},")
+        entry_lines.append(INDENT*2 + f'.id = "{name_attr}",')   # NEW LINE
         entry_lines.append(INDENT*2 + ".lv_obj = NULL,")
         entry_lines.append(INDENT*2 + f".x = {x}, .y = {y},")
         entry_lines.append(INDENT*2 + f".w = {w}, .h = {h},")
