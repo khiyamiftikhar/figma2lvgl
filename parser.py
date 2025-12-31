@@ -90,6 +90,7 @@ extern "C" {{
 
 // API
 void {init_fn}(void);
+{setters}
 
 #ifdef __cplusplus
 }}
@@ -104,7 +105,7 @@ c_template = """#include "{header_filename}"
 #include <stdint.h>
 #include <stddef.h>
 
-extern void lv_obj_t; /* forward-declare type for readability; include lvgl headers in your project */
+#extern void lv_obj_t; /* forward-declare type for readability; include lvgl headers in your project */
 
 {screen_struct_def}
 
@@ -161,12 +162,64 @@ void {init_fn}(void)
         }}
     }}
 }}
+
+"""
+
+
+label_job_cb_template = """
+static void {cb_name}(void *arg)
+{{
+    int idx = (int)(intptr_t)arg;
+    ui_child_t *c = &{screen_var}.children[idx];
+
+    if(c->lv_obj)
+    {{
+        lv_label_set_text(c->lv_obj, c->text);
+    }}
+}}
+"""
+
+icon_job_cb_template = """
+static void {cb_name}(void *arg)
+{{
+    int idx = (int)(intptr_t)arg;
+    ui_child_t *c = &{screen_var}.children[idx];
+
+    if(c->lv_obj && c->icon)
+    {{
+        lv_img_set_src(
+            c->lv_obj,
+            c->icon->state_src[c->current_state]
+        );
+    }}
+}}
+"""
+
+bar_job_cb_template = """
+static void {cb_name}(void *arg)
+{{
+    int idx = (int)(intptr_t)arg;
+    ui_child_t *c = &{screen_var}.children[idx];
+
+    if(c->lv_obj)
+    {{
+        lv_bar_set_value(
+            c->lv_obj,
+            c->initial_value,
+            LV_ANIM_OFF
+        );
+    }}
+}}
 """
 
 # ---------------------------
 # Main parser + generator
 # ---------------------------
 def generate_screen_c_and_h(frame_node):
+    setter_prototypes = []
+    job_callbacks = []
+    setter_functions = []
+
     frame_name = frame_node.attrib.get('name', 'unnamed')
     frame_name_snake = to_snake_case(frame_name)
     base = base_name_for_header(frame_name_snake)
@@ -230,6 +283,101 @@ def generate_screen_c_and_h(frame_node):
         entry_lines.append(INDENT + "}")
 
         child_entries.append("\n".join(entry_lines))
+        
+        
+        child_index = len(child_entries)
+        
+        base_fn = f"ui_{base}_child_{child_index}"
+        
+        #for label child
+        if mapped == "UI_CHILD_LABEL":
+            cb_name = f"{base_fn}_label_job"
+
+            job_callbacks.append(
+                label_job_cb_template.format(
+                    cb_name=cb_name,
+                    screen_var=screen_var
+                )
+            )
+
+            setter_prototypes.append(
+                f"void {base_fn}_set_text(const char *text);"
+            )
+
+            setter_functions.append(f"""
+            void {base_fn}_set_text(const char *text)
+            {{
+                snprintf(
+                    {screen_var}.children[{child_index}].text,
+                    UI_MAX_STRING_LENGTH,
+                    "%s",
+                    text
+                );
+
+                ui_worker_process_job({cb_name}, (void*)(intptr_t){child_index});
+            }}
+            """)
+        #for icon child
+        if mapped == "UI_CHILD_ICON":
+            cb_name = f"{base_fn}_icon_job"
+
+            job_callbacks.append(
+                icon_job_cb_template.format(
+                    cb_name=cb_name,
+                    screen_var=screen_var
+                )
+            )
+
+            setter_prototypes.append(
+                f"void {base_fn}_set_state(uint8_t state);"
+            )
+
+            setter_functions.append(f"""
+            void {base_fn}_set_state(uint8_t state)
+            {{
+                {screen_var}.children[{child_index}].current_state = state;
+                ui_worker_process_job({cb_name}, (void*)(intptr_t){child_index});
+            }}
+            """)
+        
+        if mapped == "UI_CHILD_BAR":
+            cb_name = f"{base_fn}_bar_job"
+
+            job_callbacks.append(
+                bar_job_cb_template.format(
+                    cb_name=cb_name,
+                    screen_var=screen_var
+                )
+            )
+
+            setter_prototypes.append(
+                f"void {base_fn}_set_value(int value);"
+            )
+
+            setter_functions.append(f"""
+            void {base_fn}_set_value(int value)
+            {{
+                {screen_var}.children[{child_index}].initial_value = value;
+                ui_worker_process_job({cb_name}, (void*)(intptr_t){child_index});
+            }}
+            """)
+
+
+        
+
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+
 
     child_count = len(child_entries)
     children_block = ",\n".join(child_entries)
@@ -251,7 +399,12 @@ def generate_screen_c_and_h(frame_node):
     screen_struct_def = "\n".join(screen_struct_lines)
 
     # Fill header content
-    header_text = header_template.format(GUARD=guard, init_fn=init_fn)
+ 
+    header_text = header_template.format(
+    GUARD=guard,
+    init_fn=init_fn,
+    setters="\n".join(setter_prototypes)
+)
 
     # Fill c content
     c_text = c_template.format(
@@ -261,6 +414,22 @@ def generate_screen_c_and_h(frame_node):
         init_fn=init_fn,
         screen_var=screen_var
     )
+    
+      # ------------------------------
+    # Append UI job callbacks
+    # ------------------------------
+    c_text += "\n\n// ------------------------------\n"
+    c_text += "// UI JOB CALLBACKS\n"
+    c_text += "// ------------------------------\n"
+    c_text += "\n".join(job_callbacks)
+
+    # ------------------------------
+    # Append UI setter functions
+    # ------------------------------
+    c_text += "\n\n// ------------------------------\n"
+    c_text += "// UI SETTERS\n"
+    c_text += "// ------------------------------\n"
+    c_text += "\n".join(setter_functions)
 
     return c_filename, header_filename, header_text, c_text
 
