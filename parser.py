@@ -477,6 +477,15 @@ def generate_screen_c_and_h(frame_node):
         screen_var=screen_var
     )
     
+    # ------------------------------
+    # Append JOB structs
+    # ------------------------------
+
+    c_text += "\n\n// ------------------------------\n"
+    c_text += "// UI JOB DATA STRUCTS\n"
+    c_text += "// ------------------------------\n"
+    c_text += "\n".join(job_struct_defs)
+    
       # ------------------------------
     # Append UI job callbacks
     # ------------------------------
@@ -493,14 +502,7 @@ def generate_screen_c_and_h(frame_node):
     c_text += "// ------------------------------\n"
     c_text += "\n".join(setter_functions)
     
-    # ------------------------------
-    # Append JOB structs
-    # ------------------------------
-
-    c_text += "\n\n// ------------------------------\n"
-    c_text += "// UI JOB DATA STRUCTS\n"
-    c_text += "// ------------------------------\n"
-    c_text += "\n".join(job_struct_defs)
+    
     return c_filename, header_filename, header_text, c_text
 
 def main():
