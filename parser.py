@@ -347,13 +347,13 @@ def generate_screen_c_and_h(frame_node):
 
 
             setter_prototypes.append(
-                f"void {base_fn}_set_text(const char *text);"
+                f"void {base_fn}_text(const char *text);"
             )
             
             
 
             setter_functions.append(f"""
-            void {base_fn}_set_text(const char *text)
+            void {base_fn}_text(const char *text)
             {{
                 {job_struct} job;
                 job.child_index = {child_index};
@@ -382,13 +382,13 @@ def generate_screen_c_and_h(frame_node):
             )
 
             setter_prototypes.append(
-                f"void {base_fn}_set_state(uint8_t state);"
+                f"void {base_fn}_state(uint8_t state);"
             )
 
             
 
             setter_functions.append(f"""
-            void {base_fn}_set_state(uint8_t state)
+            void {base_fn}_state(uint8_t state)
             {{
                 {job_struct} job;
                 job.child_index = {child_index};
@@ -417,13 +417,13 @@ def generate_screen_c_and_h(frame_node):
             )
 
             setter_prototypes.append(
-                f"void {base_fn}_set_value(int value);"
+                f"void {base_fn}_value(int value);"
             )
 
             
 
             setter_functions.append(f"""
-            void {base_fn}_set_value(int value)
+            void {base_fn}_value(int value)
             {{
                 {job_struct} job;
                 job.child_index = {child_index};
