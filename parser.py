@@ -41,6 +41,11 @@ def map_tag_to_child_type(tag, name_attr):
 # ---------------------------
 # Helpers
 # ---------------------------
+
+
+def normalize_id(name):
+    return name.lower().replace("-", "_").replace(" ", "_")
+
 def to_snake_case(s):
     # normalize whitespace and punctuation, then to snake_case
     s = s.strip()
@@ -315,7 +320,12 @@ def generate_screen_c_and_h(frame_node):
         
         child_index = len(child_entries)
         
-        base_fn = f"ui_{base}_child_{child_index}"
+        raw_id = child.attrib.get("name", f"child_{child_index}")
+        
+        child_id = normalize_id(raw_id)
+
+        
+        base_fn = f"ui_{base}_set_{child_id}"
         
         #for label child
         if mapped == "UI_CHILD_LABEL":
