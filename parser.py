@@ -41,6 +41,11 @@ def map_tag_to_child_type(tag, name_attr):
 # ---------------------------
 # Helpers
 # ---------------------------
+
+
+def normalize_id(name):
+    return name.lower().replace("-", "_").replace(" ", "_")
+
 def to_snake_case(s):
     # normalize whitespace and punctuation, then to snake_case
     s = s.strip()
@@ -80,6 +85,30 @@ def write_file(path, text):
 # ---------------------------
 # Code generation templates
 # ---------------------------
+
+label_job_struct = """
+typedef struct {{
+    uint8_t child_index;
+    char text[UI_MAX_STRING_LENGTH];
+}} {struct_name};
+"""
+
+icon_job_struct = """
+typedef struct {{
+    uint8_t child_index;
+    uint8_t state;
+}} {struct_name};
+"""
+
+bar_job_struct = """
+typedef struct {{
+    uint8_t child_index;
+    int value;
+}} {struct_name};
+"""
+
+
+
 header_template = """#ifndef {GUARD}
 #define {GUARD}
 
@@ -90,6 +119,7 @@ extern "C" {{
 
 // API
 void {init_fn}(void);
+{setters}
 
 #ifdef __cplusplus
 }}
@@ -104,7 +134,7 @@ c_template = """#include "{header_filename}"
 #include <stdint.h>
 #include <stddef.h>
 
-extern void lv_obj_t; /* forward-declare type for readability; include lvgl headers in your project */
+#extern void lv_obj_t; /* forward-declare type for readability; include lvgl headers in your project */
 
 {screen_struct_def}
 
@@ -161,12 +191,68 @@ void {init_fn}(void)
         }}
     }}
 }}
+
+"""
+
+
+label_job_cb_template = """
+static void {cb_name}(void *arg)
+{{
+    {job_struct} *job = ({job_struct} *)arg;
+    ui_child_t *c = &{screen_var}.children[job->child_index];
+
+    if(c->lv_obj)
+    {{
+        lv_label_set_text(c->lv_obj, job->text);
+    }}
+}}
+"""
+
+
+icon_job_cb_template = """
+static void {cb_name}(void *arg)
+{{
+    {job_struct} *job = ({job_struct} *)arg;
+    ui_child_t *c = &{screen_var}.children[job->child_index];
+
+    if(c->lv_obj && c->icon)
+    {{
+        c->current_state = job->state;
+        lv_img_set_src(
+            c->lv_obj,
+            c->icon->state_src[job->state]
+        );
+    }}
+}}
+"""
+
+
+bar_job_cb_template = """
+static void {cb_name}(void *arg)
+{{
+    {job_struct} *job = ({job_struct} *)arg;
+    ui_child_t *c = &{screen_var}.children[job->child_index];
+
+    if(c->lv_obj)
+    {{
+        lv_bar_set_value(
+            c->lv_obj,
+            job->value,
+            LV_ANIM_OFF
+        );
+    }}
+}}
 """
 
 # ---------------------------
 # Main parser + generator
 # ---------------------------
 def generate_screen_c_and_h(frame_node):
+    setter_prototypes = []
+    job_callbacks = []
+    setter_functions = []
+    job_struct_defs = set()
+
     frame_name = frame_node.attrib.get('name', 'unnamed')
     frame_name_snake = to_snake_case(frame_name)
     base = base_name_for_header(frame_name_snake)
@@ -230,6 +316,140 @@ def generate_screen_c_and_h(frame_node):
         entry_lines.append(INDENT + "}")
 
         child_entries.append("\n".join(entry_lines))
+        
+        
+        child_index = len(child_entries)
+        
+        raw_id = child.attrib.get("name", f"child_{child_index}")
+        
+        child_id = normalize_id(raw_id)
+
+        
+        base_fn = f"ui_{base}_set_{child_id}"
+        
+        #for label child
+        if mapped == "UI_CHILD_LABEL":
+            cb_name = f"{base_fn}_label_job"
+            
+            job_struct = f"ui_{base}_label_job_t"
+
+            job_struct_defs.add(
+                label_job_struct.format(struct_name=job_struct)
+            )
+
+            job_callbacks.append(
+            label_job_cb_template.format(
+                cb_name=cb_name,
+                screen_var=screen_var,
+                job_struct=job_struct
+            )
+)
+
+
+            setter_prototypes.append(
+                f"void {base_fn}_text(const char *text);"
+            )
+            
+            
+
+            setter_functions.append(f"""
+            void {base_fn}_text(const char *text)
+            {{
+                {job_struct} job;
+                job.child_index = {child_index};
+                snprintf(job.text, UI_MAX_STRING_LENGTH, "%s", text);
+
+                ui_worker_process_job({cb_name}, &job, sizeof(job));
+            }}
+            """)
+
+        #for icon child
+        if mapped == "UI_CHILD_ICON":
+            cb_name = f"{base_fn}_icon_job"
+            
+            job_struct = f"ui_{base}_icon_job_t"
+
+            job_struct_defs.add(
+                icon_job_struct.format(struct_name=job_struct)
+            )
+
+            job_callbacks.append(
+                icon_job_cb_template.format(
+                    cb_name=cb_name,
+                    screen_var=screen_var,
+                    job_struct=job_struct
+                )
+            )
+
+            setter_prototypes.append(
+                f"void {base_fn}_state(uint8_t state);"
+            )
+
+            
+
+            setter_functions.append(f"""
+            void {base_fn}_state(uint8_t state)
+            {{
+                {job_struct} job;
+                job.child_index = {child_index};
+                job.state = state;
+
+                ui_worker_process_job({cb_name}, &job);
+            }}
+            """)
+
+        
+        if mapped == "UI_CHILD_BAR":
+            cb_name = f"{base_fn}_bar_job"
+            
+            job_struct = f"ui_{base}_bar_job_t"
+
+            job_struct_defs.add(
+                bar_job_struct.format(struct_name=job_struct)
+            )
+
+            job_callbacks.append(
+                bar_job_cb_template.format(
+                    cb_name=cb_name,
+                    screen_var=screen_var,
+                    job_struct=job_struct
+                )
+            )
+
+            setter_prototypes.append(
+                f"void {base_fn}_value(int value);"
+            )
+
+            
+
+            setter_functions.append(f"""
+            void {base_fn}_value(int value)
+            {{
+                {job_struct} job;
+                job.child_index = {child_index};
+                job.value = value;
+
+                ui_worker_process_job({cb_name}, &job);
+            }}
+            """)
+
+
+
+        
+
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+
 
     child_count = len(child_entries)
     children_block = ",\n".join(child_entries)
@@ -251,7 +471,12 @@ def generate_screen_c_and_h(frame_node):
     screen_struct_def = "\n".join(screen_struct_lines)
 
     # Fill header content
-    header_text = header_template.format(GUARD=guard, init_fn=init_fn)
+ 
+    header_text = header_template.format(
+    GUARD=guard,
+    init_fn=init_fn,
+    setters="\n".join(setter_prototypes)
+)
 
     # Fill c content
     c_text = c_template.format(
@@ -261,7 +486,33 @@ def generate_screen_c_and_h(frame_node):
         init_fn=init_fn,
         screen_var=screen_var
     )
+    
+    # ------------------------------
+    # Append JOB structs
+    # ------------------------------
 
+    c_text += "\n\n// ------------------------------\n"
+    c_text += "// UI JOB DATA STRUCTS\n"
+    c_text += "// ------------------------------\n"
+    c_text += "\n".join(job_struct_defs)
+    
+      # ------------------------------
+    # Append UI job callbacks
+    # ------------------------------
+    c_text += "\n\n// ------------------------------\n"
+    c_text += "// UI JOB CALLBACKS\n"
+    c_text += "// ------------------------------\n"
+    c_text += "\n".join(job_callbacks)
+
+    # ------------------------------
+    # Append UI setter functions
+    # ------------------------------
+    c_text += "\n\n// ------------------------------\n"
+    c_text += "// UI SETTERS\n"
+    c_text += "// ------------------------------\n"
+    c_text += "\n".join(setter_functions)
+    
+    
     return c_filename, header_filename, header_text, c_text
 
 def main():
