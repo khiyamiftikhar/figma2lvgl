@@ -27,14 +27,17 @@ class ChildSpec:
         )
 
 
-    def emit_job_callback(self, screen, child, index):
-        screen_snake = to_snake_case(screen.name)
+    def emit_job_callback(self, screen, child):
+        screen_snake = screen.snake
+
+        cb_name = f"ui_{screen_snake}_set_{child.id}_job"
+        job_struct = f"ui_{screen_snake}_{self.type_name.lower()}_job_t"
 
         return load_template(self.callback_template).format(
+            cb_name=cb_name,
+            job_struct=job_struct,
             screen_var=screen_snake,
-            child_id=child.id,
-            job_struct=f"ui_{screen_snake}_{self.type_name.lower()}_job_t",
-            child_index=index,
+            child_id=child.id
         )
 
 
