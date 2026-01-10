@@ -1,26 +1,26 @@
 # generator.py
 
 from utils.utils import to_snake_case, base_name_for_header
-
 from emit.layouts import C_FILE_LAYOUT, H_FILE_LAYOUT
-
-from children.label import LabelEmitter
-from children.icon import IconEmitter
-from children.bar import BarEmitter
+from child_registry import CHILDREN
 
 
 # -------------------------------------------------
-# Child emitters registry
+# Helper: ui_child_t initializer (single source)
 # -------------------------------------------------
 
-EMITTERS = {
-    e.type_name: e
-    for e in (
-        LabelEmitter(),
-        IconEmitter(),
-        BarEmitter(),
-    )
-}
+def make_child_initializer(child):
+    return f"""        {{
+            .type = {child.type},
+            .id = "{child.id}",
+            .lv_obj = NULL,
+            .x = {child.x}, .y = {child.y},
+            .w = {child.w}, .h = {child.h},
+            .icon = NULL,
+            .current_state = 0,
+            .text = "",
+            .initial_value = 0
+        }}"""
 
 
 # -------------------------------------------------
@@ -29,7 +29,7 @@ EMITTERS = {
 
 def generate_screen(screen):
     """
-    Takes ParsedScreen
+    Takes Screen (semantic model)
     Returns:
         c_filename,
         h_filename,
@@ -63,62 +63,51 @@ def generate_screen(screen):
     setter_prototypes = []
     init_cases = []
 
-
     emitted_job_structs = set()
-    
-    
-    # ------------------------------
-        # Init switch cases (per type)
-        # ------------------------------
 
-    for emitter in EMITTERS.values():
-        case = emitter.emit_init_case(screen)
+    # ------------------------------
+    # Init switch cases (PER TYPE)
+    # ------------------------------
+
+    for spec in CHILDREN.values():
+        case = spec.emit_init_case(screen)
         if case:
             init_cases.append(case)
 
     # ------------------------------
-    # Emit per-child content
+    # Per-child generation
     # ------------------------------
 
     for index, child in enumerate(screen.children):
-        emitter = EMITTERS.get(child.type)
-        if not emitter:
+        spec = CHILDREN.get(child.type)
+        if not spec:
             continue
-
-
-
-        
-                
-        
 
         # ui_child_t initializer
         child_entries.append(
-            emitter.emit_child_initializer(child, index)
+            make_child_initializer(child)
         )
 
         # Job struct (deduplicated)
-        job_struct = emitter.emit_job_struct_def(screen)
+        job_struct = spec.emit_job_struct(screen)
         if job_struct and job_struct not in emitted_job_structs:
             emitted_job_structs.add(job_struct)
             job_structs.append(job_struct)
 
         # Job callback
-        cb = emitter.emit_job_callback(child, screen)
+        cb = spec.emit_job_callback(screen, child, index)
         if cb:
             job_callbacks.append(cb)
 
         # Setter prototype + implementation
-        proto = emitter.emit_setter_prototype(child, screen)
-        impl = emitter.emit_setter(child, screen)
+        proto = spec.emit_setter_prototype(screen, child)
+        impl = spec.emit_setter(screen, child, index)
 
         if proto:
             setter_prototypes.append(proto)
 
         if impl:
             setter_functions.append(impl)
-
-        # LVGL init lines
-        
 
     # ------------------------------
     # Screen struct
@@ -152,7 +141,6 @@ def generate_screen(screen):
         init_fn=init_fn,
         screen_var=screen_var,
         init_body="\n".join(init_cases),
-
     )
 
     # ------------------------------

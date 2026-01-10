@@ -32,8 +32,10 @@ void {fn_name}(int value)
 """
 
 BAR_INIT = """
-    c->lv_obj = lv_bar_create({screen_var}.lv_screen);
-    lv_obj_set_pos(c->lv_obj, c->x, c->y);
-    lv_obj_set_size(c->lv_obj, c->w, c->h);
-    lv_bar_set_value(c->lv_obj, c->initial_value, LV_ANIM_OFF);
+    case UI_CHILD_BAR:
+        c->lv_obj = lv_bar_create({screen_var}.lv_screen);
+        lv_obj_set_pos(c->lv_obj, c->x, c->y);
+        lv_obj_set_size(c->lv_obj, c->w, c->h);
+        lv_bar_set_value(c->lv_obj, c->initial_value, LV_ANIM_OFF);
+        break;
 """

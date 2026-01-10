@@ -33,8 +33,10 @@ void {fn_name}(uint8_t state)
 """
 
 ICON_INIT = """
-    c->lv_obj = lv_img_create({screen_var}.lv_screen);
-    lv_obj_set_pos(c->lv_obj, c->x, c->y);
-    lv_obj_set_size(c->lv_obj, c->w, c->h);
-    lv_obj_set_style_clip_corner(c->lv_obj, true, LV_PART_MAIN);
+    case UI_CHILD_ICON:
+        c->lv_obj = lv_img_create({screen_var}.lv_screen);
+        lv_obj_set_pos(c->lv_obj, c->x, c->y);
+        lv_obj_set_size(c->lv_obj, c->w, c->h);
+        lv_obj_set_style_clip_corner(c->lv_obj, true, LV_PART_MAIN);
+        break;
 """
