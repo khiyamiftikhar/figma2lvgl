@@ -95,7 +95,7 @@ def generate_screen(screen):
             job_structs.append(job_struct)
 
         # Job callback
-        cb = spec.emit_job_callback(screen, child, index)
+        cb = spec.emit_job_callback(screen, child)
         if cb:
             job_callbacks.append(cb)
 
