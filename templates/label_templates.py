@@ -8,16 +8,15 @@ typedef struct {{
 """
 
 LABEL_JOB_CALLBACK = """
-static void {cb_name}(void *arg)
+static void ui_{screen_var}_set_{child_id}_job(void *arg)
 {{
-    {job_struct} *job = ({job_struct} *)arg;
+    {job_struct} *job = arg;
     ui_child_t *c = &{screen_var}.children[job->child_index];
 
-    if(c->lv_obj)
-    {{
+    if (c->lv_obj)
         lv_label_set_text(c->lv_obj, job->text);
-    }}
 }}
+
 """
 
 LABEL_SETTER = """
@@ -32,8 +31,11 @@ void {fn_name}(const char *text)
 """
 
 LABEL_INIT = """
-    c->lv_obj = lv_label_create({screen_var}.lv_screen);
-    lv_obj_set_pos(c->lv_obj, c->x, c->y);
-    lv_obj_set_width(c->lv_obj, c->w);
-    lv_label_set_long_mode(c->lv_obj, LV_LABEL_LONG_CLIP);
+    case UI_CHILD_LABEL:
+        c->lv_obj = lv_label_create({screen_var}.lv_screen);
+        lv_obj_set_pos(c->lv_obj, c->x, c->y);
+        lv_obj_set_width(c->lv_obj, c->w);
+        lv_label_set_long_mode(c->lv_obj, LV_LABEL_LONG_CLIP);
+        break;
+
 """

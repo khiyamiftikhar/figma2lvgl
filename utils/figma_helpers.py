@@ -1,14 +1,27 @@
 
 
 def map_tag_to_child_type(tag, name_attr):
-    if tag == "Text":
+    """
+    Determine UI child type purely from name semantics.
+    Name tokens are '_' delimited; position does not matter.
+    """
+
+    if not name_attr:
+        return None
+
+    tokens = name_attr.lower().split("_")
+
+    if "label" in tokens:
         return "UI_CHILD_LABEL"
-    if tag.lower().startswith("icon_") or name_attr.lower().startswith("icon_"):
+
+    if "icon" in tokens:
         return "UI_CHILD_ICON"
-    # Potential extension: map "Bar" or other tags:
-    if tag.lower() == "bar":
+
+    if "bar" in tokens:
         return "UI_CHILD_BAR"
+
     return None
+
 
 
 
