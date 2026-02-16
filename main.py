@@ -1,11 +1,12 @@
-
 import sys
 import os
 import re
 import xml.etree.ElementTree as ET
-from figma_parser import parse_screen
-from generator import generate_screen
-from utils.utils import write_file
+from core.figma_parser import parse_screen
+from core.generator import generate_screen
+from core.utils.utils import write_file
+
+OUTPUT_DIR = os.path.join("ui_component", "generated")
 
 def main():
     if len(sys.argv) < 2:
@@ -17,6 +18,9 @@ def main():
         print("File not found:", xml_path)
         sys.exit(1)
 
+    # 🔥 Ensure output directory exists
+    os.makedirs(OUTPUT_DIR, exist_ok=True)
+
     try:
         tree = ET.parse(xml_path)
         root = tree.getroot()
@@ -24,7 +28,6 @@ def main():
         print("Failed to parse XML:", e)
         sys.exit(1)
 
-    # locate page -> children -> Frame nodes
     page_children = root.find("children")
     if page_children is None:
         print("No <children> found at top level in XML.")
@@ -36,16 +39,24 @@ def main():
         sys.exit(1)
 
     generated = []
+
     for frame in frames:
         screen = parse_screen(frame)
         c_fname, h_fname, h_text, c_text = generate_screen(screen)
+
         print(f"Generating {c_fname} and {h_fname} ...")
-        write_file(h_fname, h_text)
-        write_file(c_fname, c_text)
-        generated.append((c_fname, h_fname))
+
+        # 🔥 Build full paths
+        c_path = os.path.join(OUTPUT_DIR, c_fname)
+        h_path = os.path.join(OUTPUT_DIR, h_fname)
+
+        write_file(h_path, h_text)
+        write_file(c_path, c_text)
+
+        generated.append((c_path, h_path))
 
     print("\nGenerated files:")
-    for c,h in generated:
+    for c, h in generated:
         print(f" - {c}")
         print(f" - {h}")
 
