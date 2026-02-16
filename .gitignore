@@ -2,3 +2,4 @@ __pycache__/
 generated/
 backup/
 idf_component.yml
+CMakeLists.txt
