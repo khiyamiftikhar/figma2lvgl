@@ -1,6 +1,6 @@
 # child_registry.py
 
-from generic_child import ChildSpec
+from core.generic_child import ChildSpec
 
 
 CHILDREN = {

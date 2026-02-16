@@ -1,8 +1,8 @@
 # generator.py
 
-from utils.utils import to_snake_case, base_name_for_header
-from emit.layouts import C_FILE_LAYOUT, H_FILE_LAYOUT
-from child_registry import CHILDREN
+from core.utils.utils import to_snake_case, base_name_for_header
+from core.emit.layouts import C_FILE_LAYOUT, H_FILE_LAYOUT
+from core.child_registry import CHILDREN
 
 
 # -------------------------------------------------

@@ -1,5 +1,5 @@
-from utils.template_loader import load_template
-from utils.utils import to_snake_case
+from core.utils.template_loader import load_template
+from core.utils.utils import to_snake_case
 
 class ChildSpec:
     def __init__(
