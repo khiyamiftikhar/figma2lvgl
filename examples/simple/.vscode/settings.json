@@ -1,0 +1,9 @@
+{
+  "clangd.path": "e:\\ESPIDF\\tools\\esp-clang\\esp-19.1.2_20250312\\esp-clang\\bin\\clangd.exe",
+  "clangd.arguments": [
+    "--background-index",
+    "--query-driver=**",
+    "--compile-commands-dir=e:\\vscodeespidf\\projectworkspace\\esp-now\\home-node\\build"
+  ],
+  "idf.currentSetup": "e:\\ESPIDF\\frameworks\\esp-idf-v5.5.2"
+}
