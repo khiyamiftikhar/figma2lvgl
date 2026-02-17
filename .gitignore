@@ -3,3 +3,6 @@ generated/
 backup/
 idf_component.yml
 CMakeLists.txt
+build/
+dependencies.lock
+sdkconfig
