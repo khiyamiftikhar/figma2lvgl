@@ -10,9 +10,6 @@
 #include "esp_log.h"
 #include "lvgl.h"
 #include "esp_lvgl_port.h"
-
-#include "ui_home.h"
-#include "ui_worker.h"
 #include "lcd_device.h"
 
 static const char* TAG="gui";
