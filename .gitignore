@@ -6,3 +6,4 @@ CMakeLists.txt
 build/
 dependencies.lock
 sdkconfig
+managed_components/
