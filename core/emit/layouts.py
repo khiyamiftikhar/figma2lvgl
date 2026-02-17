@@ -26,6 +26,33 @@ C_FILE_LAYOUT = """
 // ------------------------------
 {setters}
 
+
+// ------------------------------
+// SCREEN LOAD
+// ------------------------------
+
+// ------------------------------
+// SCREEN LOAD CB
+// ------------------------------
+
+static void {sc_fn_cb_name}(void *arg)
+{{
+    lv_scr_load({screen_var}.lv_screen);
+}}
+
+
+
+// ------------------------------
+// SCREEN LOAD
+// ------------------------------
+
+void {sc_fn_name}(void)
+{{
+    
+    ui_worker_process_job({sc_fn_cb_name}, NULL, 0);
+
+}}
+
 // ------------------------------
 // SCREEN INIT
 // ------------------------------
@@ -63,6 +90,7 @@ extern "C" {{
 // API
 // ------------------------------
 void {init_fn}(void);
+void {sc_fn_name}(void);
 {setter_prototypes}
 
 #ifdef __cplusplus
