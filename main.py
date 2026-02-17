@@ -5,6 +5,9 @@ import xml.etree.ElementTree as ET
 from core.figma_parser import parse_screen
 from core.generator import generate_screen
 from core.utils.utils import write_file
+from core.cmake_generator import generate_cmake
+
+
 
 OUTPUT_DIR = os.path.join("ui_component", "generated")
 
@@ -59,6 +62,11 @@ def main():
     for c, h in generated:
         print(f" - {c}")
         print(f" - {h}")
+        
+    cmake_text = generate_cmake()
+    cmake_path = os.path.join("", "ui_component", "CMakeLists.txt")
+    write_file(cmake_path, cmake_text)
+
 
 if __name__ == "__main__":
     main()
