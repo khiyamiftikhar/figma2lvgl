@@ -30,8 +30,8 @@ static const char* TAG="gui";
 //////////////////// Please update the following configuration according to your LCD spec //////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 #define LCD_PIXEL_CLOCK_HZ    (400 * 1000)
-#define PIN_NUM_SDA           6
-#define PIN_NUM_SCL           7
+#define PIN_NUM_SDA           21
+#define PIN_NUM_SCL           22
 #define PIN_NUM_RST           -1
 #define I2C_HW_ADDR           0x3C
 
@@ -107,7 +107,11 @@ esp_err_t lcd_init(){
 #endif
 
     ESP_ERROR_CHECK(esp_lcd_panel_reset(panel_handle));
-    ESP_ERROR_CHECK(esp_lcd_panel_init(panel_handle));
+    ret=esp_lcd_panel_init(panel_handle);
+    if (ret != ESP_OK) {
+        ESP_LOGE(TAG, "Failed to initialize panel");
+        return ret;
+    }
     ESP_ERROR_CHECK(esp_lcd_panel_disp_on_off(panel_handle, true));
 
 #if CONFIG_LCD_CONTROLLER_SH1107
