@@ -74,6 +74,8 @@ void {init_fn}(void)
                 break;
         }}
     }}
+    
+    ui_worker_init();
 }}
 """
 
@@ -85,7 +87,7 @@ H_FILE_LAYOUT = """
 #ifdef __cplusplus
 extern "C" {{
 #endif
-
+#include <stdint.h>
 // ------------------------------
 // API
 // ------------------------------
