@@ -1,6 +1,6 @@
 # utils/template_loader.py
 
-from templates import (
+from core.templates import (
     label_templates,
     icon_templates,
     bar_templates,
