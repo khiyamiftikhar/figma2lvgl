@@ -1,5 +1,5 @@
-from utils.template_loader import load_template
-from utils.utils import to_snake_case
+from core.utils.template_loader import load_template
+from core.utils.utils import to_snake_case
 
 class ChildSpec:
     def __init__(
@@ -48,8 +48,10 @@ class ChildSpec:
         job_struct = f"ui_{screen_snake}_{self.type_name.lower()}_job_t"
 
         return load_template(self.setter_template).format(
+            #sc_fn_name=f"ui_{screen_snake}_load",
             fn_name=f"ui_{screen_snake}_set_{child.id}",
             cb_name=f"ui_{screen_snake}_set_{child.id}_job",
+            #sc_fn_cb_name=f"ui_{screen_snake}_load_job",
             job_struct=job_struct,
             child_index=index,
         )

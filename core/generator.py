@@ -1,8 +1,8 @@
 # generator.py
 
-from utils.utils import to_snake_case, base_name_for_header
-from emit.layouts import C_FILE_LAYOUT, H_FILE_LAYOUT
-from child_registry import CHILDREN
+from core.utils.utils import to_snake_case, base_name_for_header
+from core.emit.layouts import C_FILE_LAYOUT, H_FILE_LAYOUT
+from core.child_registry import CHILDREN
 
 
 # -------------------------------------------------
@@ -43,6 +43,7 @@ def generate_screen(screen):
 
     frame_name = screen.name
     frame_snake = to_snake_case(frame_name)
+    screen_snake = frame_snake
     base = base_name_for_header(frame_snake)
 
     c_filename = f"{frame_snake}.c"
@@ -50,6 +51,10 @@ def generate_screen(screen):
 
     screen_var = frame_snake
     init_fn = f"ui_{base}_init"
+    
+    sc_fn_name=f"ui_{screen_snake}_load"
+    sc_fn_cb_name=f"ui_{screen_snake}_load_job"
+    
     guard = f"UI_{base.upper()}_H"
 
     # ------------------------------
@@ -140,6 +145,8 @@ def generate_screen(screen):
         setters="\n\n".join(setter_functions),
         init_fn=init_fn,
         screen_var=screen_var,
+        sc_fn_cb_name=sc_fn_cb_name,
+        sc_fn_name=sc_fn_name,
         init_body="\n".join(init_cases),
     )
 
@@ -150,6 +157,7 @@ def generate_screen(screen):
     h_text = H_FILE_LAYOUT.format(
         guard=guard,
         init_fn=init_fn,
+        sc_fn_name=sc_fn_name,
         setter_prototypes="\n".join(setter_prototypes),
     )
 

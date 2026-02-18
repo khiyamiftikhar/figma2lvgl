@@ -1,56 +1,121 @@
-# Figma → LVGL UI Code Generator (Embedded)
+# Figma → LVGL UI Code Generator (ESP-IDF Ready)
 
-A **code-generation tool** that converts **Figma UI layouts** into **static, thread-safe LVGL (v9) C code**, designed specifically for **embedded systems** (ESP32, ESP-IDF, etc.).
+A **code-generation tool** that converts **Figma UI layouts** into a
+complete **ESP-IDF component** containing:
 
----
+-   Static LVGL screen structures
+-   Thread-safe update system
+-   Versioned runtime engine
+-   Auto-generated CMake configuration
+
+Designed specifically for **embedded systems (ESP32 + LVGL v9)**.
+
+------------------------------------------------------------------------
+
 ## ✨ Key Features
-- 📐 Figma → C code (no runtime layout parsing)
-- 🧵 Thread-safe UI updates via job queue
-- 🧱 Static UI structures (`ui_screen_t`, `ui_child_t`)
-- 🧩 Extensible via templates (no generator rewrites)
-- 🧠 Semantics inferred from names, not Figma internals
-- 🎯 Optimized for LVGL on microcontrollers
 
----
-## 🧠 Design Philosophy
-1. Figma is only for layout (position, size, hierarchy)
-2. Semantics come from names (`icon`, `bar`, etc.)
-3. All LVGL calls are centralized and thread-safe
-4. One child = one template file
+-   📐 Figma XML → Deterministic C code
+-   🧵 Thread-safe UI updates via worker queue
+-   🧱 Static metadata-driven UI (`ui_screen_t`, `ui_child_t`)
+-   📦 Generates full ESP-IDF component
+-   🔁 Versioned runtime (safe upgrades)
+-   🧩 Extensible via template system
+-   🎯 Zero dynamic layout parsing at runtime
 
----
+------------------------------------------------------------------------
+
+## 🧠 Architecture Overview
+
+    Figma XML
+        ↓
+    Parser
+        ↓
+    Model (Screen + Children)
+        ↓
+    Templates
+        ↓
+    Generated Code
+        ↓
+    ESP-IDF Component (ui_component/)
+            ├── generated/
+            ├── runtime_vX_Y_Z/
+            ├── CMakeLists.txt
+            └── idf_component.yml
+
+------------------------------------------------------------------------
+
 ## 📁 Repository Layout
-```
-figma-lvgl-generator/
-├── main.py
-├── figma_parser.py
-├── generator.py
-├── child_registry.py
-├── generic_child.py
-├── model/
-├── templates/
-├── utils/
-└── README.md
-```
 
----
-## 🚀 How to Use
-```bash
+    figma-lvgl-generator/
+    │
+    ├── main.py                ← Entry point
+    ├── core/                  ← Generator engine (private)
+    │   ├── model/
+    │   ├── emit/
+    │   ├── templates/
+    │   ├── utils/
+    │   ├── generator.py
+    │   ├── figma_parser.py
+    │   ├── cmake_generator.py
+    │   └── config.py
+    │
+    └── ui_component/          ← Generated ESP-IDF component
+        ├── generated/         ← Screen files (.c/.h)
+        ├── runtime_v1_0_0/    ← Versioned runtime engine
+        ├── CMakeLists.txt
+        └── idf_component.yml
+
+------------------------------------------------------------------------
+
+## 🚀 Usage
+
+``` bash
 python main.py layout.xml
 ```
 
-Generates one `.c` and one `.h` per screen (Frame).
+This generates:
 
----
-## ➕ Extending: Add a New Child
-1. Create a template file in `templates/` (job + callback + setter + init)
-2. Register it in `child_registry.py`
-3. Use naming tokens in Figma (e.g. `_button`)
+    ui_component/
+        generated/
+        runtime_vX_Y_Z/
+        CMakeLists.txt
+        idf_component.yml
 
-No generator changes required.
+Then copy `ui_component/` into your ESP-IDF `components/` directory.
 
----
-## 🏁 Summary
-Design visually in Figma.  
-Generate deterministic, static LVGL code.  
-Control behavior safely from C.
+------------------------------------------------------------------------
+
+## 🧩 Extending with New GUI Elements
+
+To add a new UI element:
+
+1.  Create a new template inside `core/templates/`
+2.  Register it in `child_registry.py`
+3.  Use naming tokens in Figma (e.g. `_button`)
+
+No changes to generator core required.
+
+------------------------------------------------------------------------
+
+## 🔁 Runtime Versioning
+
+Runtime engine is versioned:
+
+    runtime_v1_0_0/
+    runtime_v1_1_0/
+    runtime_v2_0_0/
+
+Generated CMake automatically references the correct version.
+
+This ensures: - Safe upgrades - Backward compatibility - Deterministic
+builds
+
+------------------------------------------------------------------------
+
+## 🏁 Design Philosophy
+
+-   Figma = layout only
+-   Naming = semantics
+-   Generator = metadata builder
+-   Runtime = LVGL execution engine
+-   All UI updates = thread-safe
