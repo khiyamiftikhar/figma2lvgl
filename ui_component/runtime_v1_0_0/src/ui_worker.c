@@ -38,8 +38,13 @@ static void ui_worker_task(void *arg)
 // --------------------------------------------------------
 // PUBLIC API
 // --------------------------------------------------------
+//Not thread safe, assuming that the init part of formware is single threaded.
 void ui_worker_init(void)
 {
+    if(notify_queue != NULL) {
+        // already initialized
+        return;
+    }
     notify_queue = xQueueCreate(16, sizeof(notify_msg_t));
     ESP_ERROR_CHECK(notify_queue==NULL);
 
