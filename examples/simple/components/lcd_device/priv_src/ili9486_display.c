@@ -43,6 +43,17 @@ static const char *TAG = "ili9486_display";
 static esp_lcd_panel_io_handle_t s_io_handle = NULL;
 static esp_lcd_panel_handle_t   s_panel      = NULL;
 
+static bool ili9486_color_trans_done_cb(
+    esp_lcd_panel_io_handle_t panel_io,
+    esp_lcd_panel_io_event_data_t *edata,
+    void *user_ctx)
+{
+    lvgl_port_flush_ready(user_ctx);
+    return false;
+}
+
+
+
 esp_err_t ili9486_display_init(void)
 {
     esp_err_t ret;
@@ -63,14 +74,15 @@ esp_err_t ili9486_display_init(void)
 
     /* ── Panel IO ──────────────────────────────────────────────────────────── */
     ESP_LOGI(TAG, "Install panel IO");
-    esp_lcd_panel_io_spi_config_t io_config = {
-        .dc_gpio_num      = PIN_NUM_DC,
-        .cs_gpio_num      = PIN_NUM_CS,
-        .pclk_hz          = LCD_PIXEL_CLOCK_HZ,
-        .lcd_cmd_bits     = 8,
-        .lcd_param_bits   = 8,
-        .spi_mode         = 0,
+   esp_lcd_panel_io_spi_config_t io_config = {
+        .dc_gpio_num       = PIN_NUM_DC,
+        .cs_gpio_num       = PIN_NUM_CS,
+        .pclk_hz           = LCD_PIXEL_CLOCK_HZ,
+        .lcd_cmd_bits      = 16,   // was 8
+        .lcd_param_bits    = 16,   // was 8
+        .spi_mode          = 0,
         .trans_queue_depth = 10,
+        //.on_color_trans_done = ili9486_color_trans_done_cb
     };
     ESP_RETURN_ON_ERROR(
         esp_lcd_new_panel_io_spi((esp_lcd_spi_bus_handle_t)LCD_HOST,
@@ -110,7 +122,7 @@ esp_err_t ili9486_display_init(void)
     const lvgl_port_display_cfg_t disp_cfg = {
         .io_handle     = s_io_handle,
         .panel_handle  = s_panel,           // ← valid handle, no crash
-        .buffer_size   = LCD_H_RES * 40,
+        .buffer_size   = LCD_H_RES * 80,
         .double_buffer = true,
         .hres          = LCD_H_RES,
         .vres          = LCD_V_RES,
@@ -125,22 +137,29 @@ esp_err_t ili9486_display_init(void)
         },
         .flags = {
 #if LVGL_VERSION_MAJOR >= 9
-            .swap_bytes = true,   // ILI9486 is big-endian; LVGL is little-endian
+            .swap_bytes = false,   // ILI9486 is big-endian; LVGL is little-endian
 #endif
             .sw_rotate  = false,
         }
     };
-    lvgl_port_add_disp(&disp_cfg);
+    //lvgl_port_add_disp(&disp_cfg);
 
 
-    lv_obj_set_style_bg_color(lv_scr_act(), lv_color_make(255, 0, 0), 0);
-    lv_obj_t *label = lv_label_create(lv_scr_act());
-    lv_label_set_text(label, "Hello ILI9486");
-    lv_obj_center(label);
+   // lv_obj_set_style_bg_color(lv_scr_act(), lv_color_make(255, 0, 0), 0);
+    //lv_obj_t *label = lv_label_create(lv_scr_act());
+    //lv_label_set_text(label, "Hello ILI9486");
+    //lv_obj_center(label);
 
-    vTaskDelay(pdMS_TO_TICKS(3000));   // wait for LVGL to flush the first frame before setting resolution
+    //vTaskDelay(pdMS_TO_TICKS(3000));   // wait for LVGL to flush the first frame before setting resolution
 
     display_set_resolution(LCD_H_RES, LCD_V_RES);
     ESP_LOGI(TAG, "ILI9486 initialization complete");
     return ESP_OK;
+}
+
+
+
+esp_lcd_panel_handle_t ili9486_display_get_panel(void)
+{
+    return s_panel;
 }
