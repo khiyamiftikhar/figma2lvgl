@@ -40,6 +40,25 @@ typedef struct {
     bool invert_color;
 } ili9486_panel_t;
 
+#define LCD_H_RES 320
+#define CONV_BUF_PIXELS (LCD_H_RES * 80)
+static uint8_t s_conv_buf[CONV_BUF_PIXELS * 3];
+
+static void rgb565_to_rgb666(
+    const uint16_t *src,
+    uint8_t *dst,
+    size_t pixels)
+{
+    for (size_t i = 0; i < pixels; i++) {
+        uint16_t p = src[i];
+
+        dst[3*i + 0] = ((p >> 11) & 0x1F) << 3;
+        dst[3*i + 1] = ((p >> 5)  & 0x3F) << 2;
+        dst[3*i + 2] = ( p        & 0x1F) << 3;
+    }
+}
+
+
 // ── Forward declarations ─────────────────────────────────────────────────────
 static esp_err_t panel_ili9486_del(esp_lcd_panel_t *panel);
 static esp_err_t panel_ili9486_reset(esp_lcd_panel_t *panel);
@@ -90,11 +109,11 @@ static void ili9486_send_init_sequence(esp_lcd_panel_io_handle_t io)
         (uint8_t[]){0x0F,0x32,0x2E,0x0B,0x0D,0x05,0x47,0x75,
                     0x37,0x06,0x10,0x03,0x24,0x20,0x00}, 15);
 
-    /* Pixel format: 16-bit (RGB565) */
+    /* Pixel format: 16-bit (RGB666) */
     ili9486_send(io, ILI9486_CMD_COLMOD, (uint8_t[]){0x66}, 1);
 
 
-    ili9486_send(io, ILI9486_CMD_MADCTL, (uint8_t[]){0x08}, 1); // portrait normal
+    ili9486_send(io, ILI9486_CMD_MADCTL, (uint8_t[]){0x48}, 1);
 
     ili9486_send(io, ILI9486_CMD_DISPON, NULL, 0);
     vTaskDelay(pdMS_TO_TICKS(20));
@@ -135,6 +154,7 @@ esp_err_t esp_lcd_new_panel_ili9486(esp_lcd_panel_io_handle_t io,
     ili->base.disp_on_off  = panel_ili9486_disp_on_off;
 
     *ret_panel = &ili->base;
+    
     return ESP_OK;
 }
 
@@ -166,12 +186,12 @@ static esp_err_t panel_ili9486_init(esp_lcd_panel_t *panel)
 }
 
 static int flush_count = 0;
-static esp_err_t panel_ili9486_draw_bitmap(esp_lcd_panel_t *panel,
-                                            int x_start, int y_start,
-                                            int x_end,   int y_end,
-                                            const void *color_data)
+static esp_err_t panel_ili9486_draw_bitmap(
+    esp_lcd_panel_t *panel,
+    int x_start, int y_start,
+    int x_end,   int y_end,
+    const void *color_data)
 {
-    
     ili9486_panel_t *ili = __containerof(panel, ili9486_panel_t, base);
     esp_lcd_panel_io_handle_t io = ili->io;
 
@@ -180,64 +200,41 @@ static esp_err_t panel_ili9486_draw_bitmap(esp_lcd_panel_t *panel,
     y_start += ili->y_gap;
     y_end   += ili->y_gap;
 
-
+    /* CASET — 8 bytes, each coordinate byte padded with 0x00 */
     uint8_t caset[] = {
-        (uint8_t)((x_start >> 8) & 0xFF),
-        (uint8_t)(x_start & 0xFF),
-        (uint8_t)(((x_end - 1) >> 8) & 0xFF),
-        (uint8_t)((x_end - 1) & 0xFF),
+        0x00, (uint8_t)((x_start >> 8) & 0xFF),
+        0x00, (uint8_t)(x_start & 0xFF),
+        0x00, (uint8_t)(((x_end - 1) >> 8) & 0xFF),
+        0x00, (uint8_t)((x_end - 1) & 0xFF),
     };
 
+    /* RASET — 8 bytes, same padding */
     uint8_t raset[] = {
-        (uint8_t)((y_start >> 8) & 0xFF),
-        (uint8_t)(y_start & 0xFF),
-        (uint8_t)(((y_end - 1) >> 8) & 0xFF),
-        (uint8_t)((y_end - 1) & 0xFF),
+        0x00, (uint8_t)((y_start >> 8) & 0xFF),
+        0x00, (uint8_t)(y_start & 0xFF),
+        0x00, (uint8_t)(((y_end - 1) >> 8) & 0xFF),
+        0x00, (uint8_t)((y_end - 1) & 0xFF),
     };
 
-        
-    // send command only
-    ESP_RETURN_ON_ERROR(
-        esp_lcd_panel_io_tx_param(io, ILI9486_CMD_CASET, NULL, 0),
-        TAG, "CASET cmd failed");
+    esp_lcd_panel_io_tx_param(io, ILI9486_CMD_CASET, NULL, 0);
+    esp_lcd_panel_io_tx_color(io, -1, caset, 8);
 
-    // send raw bytes as color payload (no swap)
-    ESP_RETURN_ON_ERROR(
-        esp_lcd_panel_io_tx_color(io, -1, caset, sizeof(caset)),
-        TAG, "CASET data failed");
+    esp_lcd_panel_io_tx_param(io, ILI9486_CMD_RASET, NULL, 0);
+    esp_lcd_panel_io_tx_color(io, -1, raset, 8);
 
+    /* Pixel data */
+    size_t pixels = (x_end - x_start) * (y_end - y_start);
 
+    if (pixels > CONV_BUF_PIXELS) {
+        ESP_LOGE(TAG, "Flush too large! pixels=%u max=%u",
+                 (unsigned)pixels, (unsigned)CONV_BUF_PIXELS);
+        return ESP_ERR_INVALID_SIZE;
+    }
 
-    ESP_RETURN_ON_ERROR(
-    esp_lcd_panel_io_tx_param(io, ILI9486_CMD_RASET, NULL, 0),
-    TAG, "RASET cmd failed");
+    rgb565_to_rgb666((const uint16_t *)color_data, s_conv_buf, pixels);
 
-    ESP_RETURN_ON_ERROR(
-    esp_lcd_panel_io_tx_color(io, -1, raset, sizeof(raset)),
-    TAG, "RASET data failed");
-
-
-    /* Write pixel data */
-    size_t len = (x_end - x_start) * (y_end - y_start) * sizeof(uint16_t);
-
-    esp_err_t err = esp_lcd_panel_io_tx_color(io, ILI9486_CMD_RAMWR, color_data, len);
-
-    
-    ESP_LOGI(TAG, "DEBUG build: %02X %02X %02X %02X",
-         (uint8_t)((x_start >> 8) & 0xFF),
-         (uint8_t)(x_start & 0xFF),
-         (uint8_t)(((x_end - 1) >> 8) & 0xFF),
-         (uint8_t)((x_end - 1) & 0xFF));
-
-
-    ESP_LOGI(TAG, "DEBUG raw x_end-1 = 0x%04X", (x_end - 1));
-
-    ESP_LOGI(TAG, "CASET bytes: %02X %02X %02X %02X", 
-             caset[0], caset[1], caset[2], caset[3]);
-    ESP_LOGI(TAG, "RASET bytes: %02X %02X %02X %02X", 
-             raset[0], raset[1], raset[2], raset[3]);
-    
-    return err;
+    esp_lcd_panel_io_tx_param(io, ILI9486_CMD_RAMWR, NULL, 0);
+    return esp_lcd_panel_io_tx_color(io, -1, s_conv_buf, pixels * 3);
 }
 
 static esp_err_t panel_ili9486_invert_color(esp_lcd_panel_t *panel, bool invert)
@@ -276,3 +273,6 @@ static esp_err_t panel_ili9486_disp_on_off(esp_lcd_panel_t *panel, bool on)
     int cmd = on ? ILI9486_CMD_DISPON : 0x28;
     return esp_lcd_panel_io_tx_param(ili->io, cmd, NULL, 0);
 }
+
+
+
