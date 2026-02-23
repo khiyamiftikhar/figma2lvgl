@@ -1,7 +1,6 @@
 __pycache__/
 generated/
 backup/
-idf_component.yml
 build/
 dependencies.lock
 sdkconfig

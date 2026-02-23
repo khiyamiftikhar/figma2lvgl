@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?figml version="1.0"?>
+<page id="0:1" name="Page_1" type="PAGE">
+  <children>
+    <Frame id="6:3" name="home" expanded="true" maskType="ALPHA" x="-170" y="-287" width="320" height="480" clipsContent="true" type="FRAME">
+      <children>
+        <Text id="6:4" name="Time" maskType="ALPHA" strokeAlign="OUTSIDE" x="94" y="79" width="133" height="34" fontSize="12" fontWeight="400" hyperlink="" characters="Time is 15:00" type="TEXT" textAlignVertical="TOP">
+          <fills>
+            <fill blendMode="NORMAL" color="#000000" />
+          </fills>
+          <constraints horizontal="MIN" vertical="MIN" />
+          <fontName family="Inter" style="Regular" />
+          <letterSpacing value="0" unit="PERCENT" />
+          <lineHeight unit="AUTO" />
+        </Text>
+        <Text id="6:6" name="Welcome" maskType="ALPHA" strokeAlign="OUTSIDE" x="83" y="240" width="165" height="52" fontSize="12" fontWeight="400" hyperlink="" characters="Welcome to the test" type="TEXT" textAlignVertical="TOP">
+          <fills>
+            <fill blendMode="NORMAL" color="#000000" />
+          </fills>
+          <constraints horizontal="MIN" vertical="MIN" />
+          <fontName family="Inter" style="Regular" />
+          <letterSpacing value="0" unit="PERCENT" />
+          <lineHeight unit="AUTO" />
+        </Text>
+      </children>
+      <fills>
+        <fill blendMode="NORMAL" color="#ffffff" />
+      </fills>
+      <constraints horizontal="MIN" vertical="MIN" />
+    </Frame>
+  </children>
+  <backgrounds>
+    <background blendMode="NORMAL" color="#f5f5f5" />
+  </backgrounds>
+</page>
