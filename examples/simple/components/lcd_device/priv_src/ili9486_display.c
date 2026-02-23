@@ -1,4 +1,3 @@
-#include "display.h"
 
 #include "esp_log.h"
 #include "esp_err.h"
@@ -11,8 +10,11 @@
 #include "freertos/task.h"
 
 #include "esp_lcd_panel_io.h"
+#include "esp_lcd_panel_vendor.h"
+#include "esp_ili9486_panel.h"
 #include "esp_lvgl_port.h"
 #include "lvgl.h"
+#include "ili9486_display.h"
 
 static const char *TAG = "ili9486_display";
 
@@ -20,25 +22,20 @@ static const char *TAG = "ili9486_display";
 /* ---- USER CONFIG AREA --- */
 /* ------------------------- */
 
-#define LCD_HOST           SPI2_HOST
-
-#define PIN_NUM_MOSI       23
-#define PIN_NUM_MISO       -1
-#define PIN_NUM_CLK        18
-#define PIN_NUM_CS         5
-#define PIN_NUM_DC         21
-#define PIN_NUM_RST        22
-#define PIN_NUM_BK_LIGHT   4
-
-#define LCD_PIXEL_CLOCK_HZ (5 * 1000 * 1000)
-
-#define LCD_H_RES          320
-#define LCD_V_RES          480
-
-/* ------------------------- */
+#define LCD_HOST           CONFIG_ILI9486_SPI_HOST
+#define PIN_NUM_MOSI       CONFIG_ILI9486_PIN_MOSI
+#define PIN_NUM_MISO        -1 // not used, but required by bus config
+#define PIN_NUM_CLK        CONFIG_ILI9486_PIN_CLK
+#define PIN_NUM_CS         CONFIG_ILI9486_PIN_CS
+#define PIN_NUM_DC         CONFIG_ILI9486_PIN_DC
+#define PIN_NUM_RST        CONFIG_ILI9486_PIN_RST
+#define PIN_NUM_BK_LIGHT   CONFIG_ILI9486_PIN_BL
+#define LCD_PIXEL_CLOCK_HZ CONFIG_ILI9486_PIXEL_CLK_HZ
+#define LCD_H_RES          CONFIG_ILI9486_H_RES
+#define LCD_V_RES          CONFIG_ILI9486_V_RES/* ------------------------- */
 
 // ─── ili9486_display.c ──────────────────────────────────────────────────────
-#include "esp_ili9486_panel.h"
+
 
 static esp_lcd_panel_io_handle_t s_io_handle = NULL;
 static esp_lcd_panel_handle_t   s_panel      = NULL;
@@ -109,6 +106,7 @@ esp_err_t ili9486_display_init(void)
 
     ESP_ERROR_CHECK(esp_lcd_panel_reset(s_panel));
     ESP_ERROR_CHECK(esp_lcd_panel_init(s_panel));
+    //ESP_ERROR_CHECK(esp_lcd_panel_mirror(s_panel, true, false));  // mirror X only
     ESP_ERROR_CHECK(esp_lcd_panel_disp_on_off(s_panel, true));
 
     /* Backlight ON */
@@ -132,7 +130,7 @@ esp_err_t ili9486_display_init(void)
 #endif
         .rotation = {
             .swap_xy  = false,
-            .mirror_x = false,
+            .mirror_x = true,
             .mirror_y = false,
         },
         .flags = {
@@ -142,24 +140,25 @@ esp_err_t ili9486_display_init(void)
             .sw_rotate  = false,
         }
     };
-    //lvgl_port_add_disp(&disp_cfg);
+    lvgl_port_add_disp(&disp_cfg);
 
 
-   // lv_obj_set_style_bg_color(lv_scr_act(), lv_color_make(255, 0, 0), 0);
-    //lv_obj_t *label = lv_label_create(lv_scr_act());
-    //lv_label_set_text(label, "Hello ILI9486");
-    //lv_obj_center(label);
 
-    //vTaskDelay(pdMS_TO_TICKS(3000));   // wait for LVGL to flush the first frame before setting resolution
+//    vTaskDelay(pdMS_TO_TICKS(3000));   // wait for LVGL to flush the first frame before setting resolution
 
-    display_set_resolution(LCD_H_RES, LCD_V_RES);
+
     ESP_LOGI(TAG, "ILI9486 initialization complete");
     return ESP_OK;
 }
 
 
 
+
 esp_lcd_panel_handle_t ili9486_display_get_panel(void)
 {
+    if(!s_panel) {
+        ESP_LOGE(TAG, "Panel not initialized");
+        return NULL;
+    }
     return s_panel;
 }
