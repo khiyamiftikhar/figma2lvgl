@@ -1,3 +1,4 @@
+#include "display.h"
 
 #include <stdio.h>
 #include "freertos/FreeRTOS.h"
@@ -10,7 +11,7 @@
 #include "esp_log.h"
 #include "lvgl.h"
 #include "esp_lvgl_port.h"
-#include "lcd_device.h"
+#include "display.h"
 
 static const char* TAG="gui";
 
@@ -36,20 +37,29 @@ static const char* TAG="gui";
 #define I2C_HW_ADDR           0x3C
 
 // The pixel number in horizontal and vertical
-#if CONFIG_LCD_CONTROLLER_SSD1306
-#define LCD_H_RES              128
-#define LCD_V_RES              CONFIG_SSD1306_HEIGHT
-#elif CONFIG_LCD_CONTROLLER_SH1107
-#define LCD_H_RES              64
-#define LCD_V_RES              128
-#endif
+//#if CONFIG_LCD_CONTROLLER_SSD1306
+#define LCD_H_RES              CONFIG_LCD_H_RES
+#define LCD_V_RES              CONFIG_LCD_V_RES
+//#elif CONFIG_LCD_CONTROLLER_SH1107
+//#define LCD_H_RES              64
+//#define LCD_V_RES              128
+//#endif
 // Bit number used to represent command and parameter
 #define LCD_CMD_BITS           8
 #define LCD_PARAM_BITS         8
 
 
+static bool ili9486_color_trans_done_cb(
+    esp_lcd_panel_io_handle_t panel_io,
+    esp_lcd_panel_io_event_data_t *edata,
+    void *user_ctx)
+{
+    lvgl_port_flush_ready(user_ctx);
+    return false;
+}
 
-esp_err_t lcd_init(){
+
+esp_err_t ssd1306_display_init(void){
     
     esp_err_t ret=0;
     ESP_LOGI(TAG, "Initialize I2C bus");
@@ -158,6 +168,8 @@ esp_err_t lcd_init(){
         lvgl_port_unlock();
     }*/
    /* --- YOUR UI INITIALIZATION --- */
+
+   display_set_resolution(128, 32);  // or CONFIG height
 
 
 
