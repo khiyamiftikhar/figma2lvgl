@@ -1,0 +1,3 @@
+dependencies:
+  esp-lcd-ili9486:
+    git: https://github.com/khiyamiftikhar/esp-lcd-ili9486
