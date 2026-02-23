@@ -11,7 +11,7 @@
 #include "esp_log.h"
 #include "lvgl.h"
 #include "esp_lvgl_port.h"
-#include "lcd_device.h"
+#include "display.h"
 
 static const char* TAG="gui";
 
@@ -48,6 +48,15 @@ static const char* TAG="gui";
 #define LCD_CMD_BITS           8
 #define LCD_PARAM_BITS         8
 
+
+static bool ili9486_color_trans_done_cb(
+    esp_lcd_panel_io_handle_t panel_io,
+    esp_lcd_panel_io_event_data_t *edata,
+    void *user_ctx)
+{
+    lvgl_port_flush_ready(user_ctx);
+    return false;
+}
 
 
 esp_err_t ssd1306_display_init(void){
