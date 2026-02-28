@@ -20,7 +20,7 @@ ui_screen_t ${screen_var} = {
 
 void ui_{screen_name}_init(void)
 {
-    ${screen_var}.lv_screen = lv_obj_create(NULL);
+    {screen_var}.lv_screen = lv_obj_create(NULL);
 
     for (int i = 0; i < {child_count}; i++)
     {

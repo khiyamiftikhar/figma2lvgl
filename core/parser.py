@@ -143,11 +143,11 @@ c_template = """#include "{header_filename}"
 // ------------------------------
 void {init_fn}(void)
 {{
-    ${screen_var}.lv_screen = lv_obj_create(NULL);
+    {screen_var}.lv_screen = lv_obj_create(NULL);
 
-    for(int i = 0; i < ${screen_var}.child_count; i++)
+    for(int i = 0; i < {screen_var}.child_count; i++)
     {{
-        ui_child_t *c = &${screen_var}.children[i];
+        ui_child_t *c = &{screen_var}.children[i];
 
         switch(c->type)
         {{
@@ -170,7 +170,7 @@ void {init_fn}(void)
 
 
             case UI_CHILD_LABEL:
-                c->lv_obj = lv_label_create(${screen_var}.lv_screen);
+                c->lv_obj = lv_label_create({screen_var}.lv_screen);
                 lv_obj_set_pos(c->lv_obj, c->x, c->y);
                 lv_obj_set_style_pad_all(c->lv_obj, 0, 0);
                 lv_obj_set_width(c->lv_obj, c->w);

@@ -44,7 +44,7 @@ void ${fn_name}(const char *text)
 
 LABEL_INIT = """
     case UI_CHILD_LABEL:
-        c->lv_obj = lv_label_create(${screen_var}.lv_screen);
+        c->lv_obj = lv_label_create({screen_var}.lv_screen);
         lv_obj_set_pos(c->lv_obj, c->x, c->y);
         lv_obj_set_width(c->lv_obj, c->w);
         lv_label_set_long_mode(c->lv_obj, LV_LABEL_LONG_CLIP);
