@@ -17,7 +17,7 @@ static void {cb_name}_exec_cb(void *obj, int32_t v)
 static void {cb_name}(ui_job_t *job)
 {{
     uint8_t idx = job->child_index;
-    ui_child_t *c = &{screen_var}.children[idx];
+    ui_child_t *c = &${screen_var}.children[idx];
 
     if (!c->lv_obj || c->type != UI_CHILD_BAR)
         return;
@@ -50,10 +50,10 @@ static void {cb_name}(ui_job_t *job)
 """
 
 BAR_SETTER = """
-void {fn_name}(int value, uint32_t duration_ms)
+void ${fn_name}(int value, uint32_t duration_ms)
 {{
     ui_job_t job = {{0}};
-    job.child_index = {child_index};
+    job.child_index = ${child_index};
     job.type = UI_JOB_SET_BAR;
 
     job.data.bar.value = value;
@@ -65,7 +65,7 @@ void {fn_name}(int value, uint32_t duration_ms)
 
 BAR_INIT = """
     case UI_CHILD_BAR:
-        c->lv_obj = lv_bar_create({screen_var}.lv_screen);
+        c->lv_obj = lv_bar_create(${screen_var}.lv_screen);
         lv_obj_set_pos(c->lv_obj, c->x, c->y);
         lv_obj_set_size(c->lv_obj, c->w, c->h);
 
