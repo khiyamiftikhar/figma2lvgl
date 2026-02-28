@@ -6,6 +6,7 @@ from core.emit.h_file import HFile
 from core.emit.layouts import C_FILE_LAYOUT, H_FILE_LAYOUT
 from core.utils.utils import to_snake_case
 from core.utils.template_loader import load_template
+from string import Template
 
 def generate_screen(screen):
 
@@ -25,37 +26,66 @@ def generate_screen(screen):
     child_entries = []
 
     for child in screen.children:
+
+        data_block = ""
+
+        if child.type == "UI_CHILD_LABEL":
+            data_block = """
+                .data.label = {
+                    .text = ""
+                }
+    """
+
+        elif child.type == "UI_CHILD_IMAGE":
+            data_block = """
+                .data.image = {
+                    .src = NULL
+                }
+    """
+
+        elif child.type == "UI_CHILD_BAR":
+            data_block = """
+                .data.bar = {
+                    .value = 0
+                }
+    """
+
         entry = f"""
-        {{
-            .type = {child.type},
-            .id = "{child.id}",
-            .lv_obj = NULL,
-            .x = {child.x},
-            .y = {child.y},
-            .w = {child.w},
-            .h = {child.h}
-        }},"""
+            {{
+                .type = {child.type},
+                .id = "{child.id}",
+                .lv_obj = NULL,
+                .x = {child.x},
+                .y = {child.y},
+                .w = {child.w},
+                .h = {child.h},
+        {data_block}
+            }},
+        """
         child_entries.append(entry)
 
+    children_block = "".join(child_entries)
+
     screen_struct = f"""
-ui_screen_t {screen_snake} = {{
-    .name = "{screen.name}",
-    .child_count = {len(screen.children)},
-    .children = {{
-        {''.join(child_entries)}
-    }},
-    .lv_screen = NULL
-}};
-"""
+    ui_screen_t {screen_snake} = {{
+        .name = "{screen.name}",
+        .child_count = {len(screen.children)},
+        .children = {{
+            {"".join(child_entries)}
+        }},
+        .lv_screen = NULL
+    }};
+    """
 
     # --------------------------
-    # Callbacks / setters / init
+    # Callbacks / setters
     # --------------------------
 
     job_callbacks = []
     setters = []
     setter_prototypes = []
-    init_cases = []
+
+    unique_types = set()
 
     for index, child in enumerate(screen.children):
 
@@ -63,35 +93,53 @@ ui_screen_t {screen_snake} = {{
         if not spec:
             continue
 
-        cb_name = f"ui_{screen_snake}_set_{child.id}_job"
-        fn_name = f"ui_{screen_snake}_set_{child.id}"
+        unique_types.add(child.type)
 
+        if child.type == "UI_CHILD_IMAGE":
+            cb_name = f"ui_{screen_snake}_display_{child.id}_job"
+            fn_name = f"ui_{screen_snake}_display_{child.id}"
+        else:
+            cb_name = f"ui_{screen_snake}_set_{child.id}_job"
+            fn_name = f"ui_{screen_snake}_set_{child.id}"
         # Callback
         callback_tpl = load_template(spec.callback_template)
 
         job_callbacks.append(
-            callback_tpl.format(
+            Template(callback_tpl).safe_substitute(
                 cb_name=cb_name,
                 screen_var=screen_snake
             )
         )
-
         # Setter
         setter_tpl = load_template(spec.setter_template)
 
         setters.append(
-            setter_tpl.format(
+            Template(setter_tpl).safe_substitute(
                 fn_name=fn_name,
                 child_index=index,
-                screen_var=screen_snake
+                screen_var=screen_snake,
+                child_id=child.id,
+                cb_name=cb_name
             )
         )
         # Prototype
         setter_prototypes.append(
-            f"void {fn_name}({spec.setter_args});"
+            f"void ${fn_name}({spec.setter_args});"
         )
 
-        # Init
+
+    # --------------------------
+    # Init cases (ONE PER TYPE)
+    # --------------------------
+
+    init_cases = []
+
+    for type_name in unique_types:
+
+        spec = CHILDREN.get(type_name)
+        if not spec:
+            continue
+
         init_tpl = load_template(spec.init_template)
 
         init_cases.append(
