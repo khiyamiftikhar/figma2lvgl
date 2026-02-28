@@ -37,7 +37,7 @@ C_FILE_LAYOUT = """
 
 static void {sc_fn_cb_name}(void *arg)
 {{
-    lv_scr_load({screen_var}.lv_screen);
+    lv_scr_load(${screen_var}.lv_screen);
 }}
 
 
@@ -61,11 +61,11 @@ void {sc_fn_name}(void)
 // ------------------------------
 void {init_fn}(void)
 {{
-    {screen_var}.lv_screen = lv_obj_create(NULL);
+    ${screen_var}.lv_screen = lv_obj_create(NULL);
 
-    for (int i = 0; i < {screen_var}.child_count; i++)
+    for (int i = 0; i < ${screen_var}.child_count; i++)
     {{
-        ui_child_t *c = &{screen_var}.children[i];
+        ui_child_t *c = &${screen_var}.children[i];
 
         switch (c->type)
         {{
