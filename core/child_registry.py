@@ -19,7 +19,7 @@ CHILDREN = {
         callback_template="image_callback",
         setter_template="image_setter",
         init_template="image_init",
-        setter_args="uint8_t state",
+        setter_args="void",
     ),
 
     "UI_CHILD_BAR": ChildSpec(
