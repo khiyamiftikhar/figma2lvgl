@@ -86,26 +86,26 @@ def write_file(path, text):
 # Code generation templates
 # ---------------------------
 
-label_job_struct = """
-typedef struct {{
-    uint8_t child_index;
-    char text[UI_MAX_STRING_LENGTH];
-}} {struct_name};
-"""
+#label_job_struct = """
+#typedef struct {{
+#    uint8_t child_index;
+#    char text[UI_MAX_STRING_LENGTH];
+#}} {struct_name};
+#"""
 
-icon_job_struct = """
-typedef struct {{
-    uint8_t child_index;
-    uint8_t state;
-}} {struct_name};
-"""
+#icon_job_struct = """
+#typedef struct {{
+#    uint8_t child_index;
+#    uint8_t state;
+#}} {struct_name};
+#"""
 
-bar_job_struct = """
-typedef struct {{
-    uint8_t child_index;
-    int value;
-}} {struct_name};
-"""
+#bar_job_struct = """
+#typedef struct {{
+#    uint8_t child_index;
+#    int value;
+#}} {struct_name};
+#"""
 
 
 
@@ -195,54 +195,54 @@ void {init_fn}(void)
 """
 
 
-label_job_cb_template = """
-static void {cb_name}(void *arg)
-{{
-    {job_struct} *job = ({job_struct} *)arg;
-    ui_child_t *c = &{screen_var}.children[job->child_index];
+# label_job_cb_template = """
+# static void {cb_name}(void *arg)
+# {{
+#     {job_struct} *job = ({job_struct} *)arg;
+#     ui_child_t *c = &{screen_var}.children[job->child_index];
 
-    if(c->lv_obj)
-    {{
-        lv_label_set_text(c->lv_obj, job->text);
-    }}
-}}
-"""
-
-
-icon_job_cb_template = """
-static void {cb_name}(void *arg)
-{{
-    {job_struct} *job = ({job_struct} *)arg;
-    ui_child_t *c = &{screen_var}.children[job->child_index];
-
-    if(c->lv_obj && c->icon)
-    {{
-        c->current_state = job->state;
-        lv_img_set_src(
-            c->lv_obj,
-            c->icon->state_src[job->state]
-        );
-    }}
-}}
-"""
+#     if(c->lv_obj)
+#     {{
+#         lv_label_set_text(c->lv_obj, job->text);
+#     }}
+# }}
+# """
 
 
-bar_job_cb_template = """
-static void {cb_name}(void *arg)
-{{
-    {job_struct} *job = ({job_struct} *)arg;
-    ui_child_t *c = &{screen_var}.children[job->child_index];
+# icon_job_cb_template = """
+# static void {cb_name}(void *arg)
+# {{
+#     {job_struct} *job = ({job_struct} *)arg;
+#     ui_child_t *c = &{screen_var}.children[job->child_index];
 
-    if(c->lv_obj)
-    {{
-        lv_bar_set_value(
-            c->lv_obj,
-            job->value,
-            LV_ANIM_OFF
-        );
-    }}
-}}
-"""
+#     if(c->lv_obj && c->icon)
+#     {{
+#         c->current_state = job->state;
+#         lv_img_set_src(
+#             c->lv_obj,
+#             c->icon->state_src[job->state]
+#         );
+#     }}
+# }}
+# """
+
+
+# bar_job_cb_template = """
+# static void {cb_name}(void *arg)
+# {{
+#     {job_struct} *job = ({job_struct} *)arg;
+#     ui_child_t *c = &{screen_var}.children[job->child_index];
+
+#     if(c->lv_obj)
+#     {{
+#         lv_bar_set_value(
+#             c->lv_obj,
+#             job->value,
+#             LV_ANIM_OFF
+#         );
+#     }}
+# }}
+# """
 
 # ---------------------------
 # Main parser + generator

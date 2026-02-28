@@ -30,10 +30,8 @@ def parse_screen(frame_node):
         return screen
 
     for child in list(children_parent):
-        tag = child.tag
-        name_attr = child.attrib.get("name", "")
 
-        mapped = map_tag_to_child_type(tag, name_attr)
+        mapped = map_tag_to_child_type(child)
         if mapped is None:
             continue
 
@@ -42,7 +40,7 @@ def parse_screen(frame_node):
         w = int_attr(child, "width")
         h = int_attr(child, "height")
 
-        raw_id = name_attr if name_attr else f"child_{len(screen.children)}"
+        raw_id = child.attrib.get("name", f"child_{len(screen.children)}")
         child_id = normalize_id(raw_id)
 
         existing_ids = {c.id for c in screen.children}
@@ -61,5 +59,4 @@ def parse_screen(frame_node):
                 h=h
             )
         )
-
     return screen

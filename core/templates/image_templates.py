@@ -1,42 +1,50 @@
 # templates/icon_templates.py
 
-ICON_JOB_STRUCT = """
-typedef struct {{
-    uint8_t child_index;
-    uint8_t state;
-}} {job_struct};
-"""
+#ICON_JOB_STRUCT = """
+#typedef struct {{
+#    uint8_t child_index;
+#    uint8_t state;
+#}} {job_struct};
+#"""
 
-ICON_JOB_CALLBACK = """
-static void {cb_name}(void *arg)
+IMAGE_JOB_CALLBACK = """
+static void {cb_name}(ui_job_t *job)
 {{
-    {job_struct} *job = ({job_struct} *)arg;
+    
+
     ui_child_t *c = &{screen_var}.children[job->child_index];
 
-    if(c->lv_obj && c->icon)
-    {{
-        c->current_state = job->state;
-        lv_img_set_src(c->lv_obj, c->icon->state_src[job->state]);
-    }}
+    if (c->type != UI_CHILD_IMAGE || c->lv_obj == NULL)
+        return;
+
+    // Store source inside child
+    c->data.image.src = job->data.image.src;
+
+    // Apply to LVGL object
+    lv_image_set_src(c->lv_obj, job->data.image.src);
 }}
 """
 
-ICON_SETTER = """
-void {fn_name}(uint8_t state)
+IMAGE_SETTER = """
+void {fn_name}(const lv_image_dsc_t *src)
 {{
-    {job_struct} job;
+    ui_job_t job = {{0}};
     job.child_index = {child_index};
-    job.state = state;
+    job.type = UI_JOB_SET_IMAGE;
 
-    ui_worker_process_job({cb_name}, &job, sizeof(job));
+    job.data.image.src = src;
+
+    ui_worker_post_job(&job);
 }}
 """
 
-ICON_INIT = """
-    case UI_CHILD_ICON:
-        c->lv_obj = lv_img_create({screen_var}.lv_screen);
+IMAGE_INIT = """
+    case UI_CHILD_IMAGE:
+        c->lv_obj = lv_image_create({screen_var}.lv_screen);
         lv_obj_set_pos(c->lv_obj, c->x, c->y);
-        lv_obj_set_size(c->lv_obj, c->w, c->h);
-        lv_obj_set_style_clip_corner(c->lv_obj, true, LV_PART_MAIN);
+
+        if(c->data.image.src)
+            lv_image_set_src(c->lv_obj, c->data.image.src);
+
         break;
 """
