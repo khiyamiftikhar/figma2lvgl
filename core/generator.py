@@ -124,7 +124,7 @@ def generate_screen(screen):
         )
         # Prototype
         setter_prototypes.append(
-            f"void ${fn_name}({spec.setter_args});"
+            f"void {fn_name}({spec.setter_args});"
         )
 
 
