@@ -143,16 +143,16 @@ c_template = """#include "{header_filename}"
 // ------------------------------
 void {init_fn}(void)
 {{
-    {screen_var}.lv_screen = lv_obj_create(NULL);
+    ${screen_var}.lv_screen = lv_obj_create(NULL);
 
-    for(int i = 0; i < {screen_var}.child_count; i++)
+    for(int i = 0; i < ${screen_var}.child_count; i++)
     {{
-        ui_child_t *c = &{screen_var}.children[i];
+        ui_child_t *c = &${screen_var}.children[i];
 
         switch(c->type)
         {{
             case UI_CHILD_ICON:
-                c->lv_obj = lv_img_create({screen_var}.lv_screen);
+                c->lv_obj = lv_img_create(${screen_var}.lv_screen);
                 lv_obj_set_pos(c->lv_obj, c->x, c->y);
 
                 /* enforce icon boundaries */
@@ -170,7 +170,7 @@ void {init_fn}(void)
 
 
             case UI_CHILD_LABEL:
-                c->lv_obj = lv_label_create({screen_var}.lv_screen);
+                c->lv_obj = lv_label_create(${screen_var}.lv_screen);
                 lv_obj_set_pos(c->lv_obj, c->x, c->y);
                 lv_obj_set_style_pad_all(c->lv_obj, 0, 0);
                 lv_obj_set_width(c->lv_obj, c->w);
@@ -180,7 +180,7 @@ void {init_fn}(void)
 
             case UI_CHILD_BAR:
                 // Create a bar (progress) object
-                c->lv_obj = lv_bar_create({screen_var}.lv_screen);
+                c->lv_obj = lv_bar_create(${screen_var}.lv_screen);
                 lv_obj_set_pos(c->lv_obj, c->x, c->y);
                 lv_obj_set_size(c->lv_obj, c->w, c->h);
                 lv_bar_set_value(c->lv_obj, c->initial_value, LV_ANIM_OFF);
@@ -199,7 +199,7 @@ void {init_fn}(void)
 # static void {cb_name}(void *arg)
 # {{
 #     {job_struct} *job = ({job_struct} *)arg;
-#     ui_child_t *c = &{screen_var}.children[job->child_index];
+#     ui_child_t *c = &${screen_var}.children[job->child_index];
 
 #     if(c->lv_obj)
 #     {{
@@ -213,7 +213,7 @@ void {init_fn}(void)
 # static void {cb_name}(void *arg)
 # {{
 #     {job_struct} *job = ({job_struct} *)arg;
-#     ui_child_t *c = &{screen_var}.children[job->child_index];
+#     ui_child_t *c = &${screen_var}.children[job->child_index];
 
 #     if(c->lv_obj && c->icon)
 #     {{
@@ -231,7 +231,7 @@ void {init_fn}(void)
 # static void {cb_name}(void *arg)
 # {{
 #     {job_struct} *job = ({job_struct} *)arg;
-#     ui_child_t *c = &{screen_var}.children[job->child_index];
+#     ui_child_t *c = &${screen_var}.children[job->child_index];
 
 #     if(c->lv_obj)
 #     {{
@@ -320,7 +320,7 @@ def generate_screen_c_and_h(frame_node):
         
         child_index = len(child_entries)
         
-        raw_id = child.attrib.get("name", f"child_{child_index}")
+        raw_id = child.attrib.get("name", f"child_${child_index}")
         
         child_id = normalize_id(raw_id)
 
@@ -356,7 +356,7 @@ def generate_screen_c_and_h(frame_node):
             void {base_fn}_text(const char *text)
             {{
                 {job_struct} job;
-                job.child_index = {child_index};
+                job.child_index = ${child_index};
                 snprintf(job.text, UI_MAX_STRING_LENGTH, "%s", text);
 
                 ui_worker_process_job({cb_name}, &job, sizeof(job));
@@ -391,7 +391,7 @@ def generate_screen_c_and_h(frame_node):
             void {base_fn}_state(uint8_t state)
             {{
                 {job_struct} job;
-                job.child_index = {child_index};
+                job.child_index = ${child_index};
                 job.state = state;
 
                 ui_worker_process_job({cb_name}, &job);
@@ -426,7 +426,7 @@ def generate_screen_c_and_h(frame_node):
             void {base_fn}_value(int value)
             {{
                 {job_struct} job;
-                job.child_index = {child_index};
+                job.child_index = ${child_index};
                 job.value = value;
 
                 ui_worker_process_job({cb_name}, &job);
@@ -458,7 +458,7 @@ def generate_screen_c_and_h(frame_node):
 
     # Create screen struct definition string
     screen_struct_lines = []
-    screen_struct_lines.append(f"ui_screen_t {screen_var} = {{")
+    screen_struct_lines.append(f"ui_screen_t ${screen_var} = {{")
     screen_struct_lines.append(INDENT + f'.name = "{frame_name}",')
     screen_struct_lines.append(INDENT + f".child_count = {child_count},")
     screen_struct_lines.append(INDENT + ".children = {")
