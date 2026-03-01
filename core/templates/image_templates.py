@@ -8,12 +8,11 @@
 #"""
 
 IMAGE_JOB_CALLBACK = """
-static void {cb_name}(ui_job_t *job)
+static void ${cb_name}(ui_job_t *job)
 {
     
 
     ui_child_t *c = &${screen_var}.children[job->child_index];
-
     if (c->type != UI_CHILD_IMAGE || c->lv_obj == NULL)
         return;
 
@@ -33,7 +32,6 @@ void ${fn_name}(void)
     job.type = UI_JOB_SET_IMAGE;
 
     job.data.image.src = &${child_id};
-
     ui_worker_post_job(&job);
 }
 """

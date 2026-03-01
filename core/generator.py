@@ -143,10 +143,10 @@ def generate_screen(screen):
         init_tpl = load_template(spec.init_template)
 
         init_cases.append(
-            init_tpl.format(
-                screen_var=screen_snake
-            )
+        Template(init_tpl).safe_substitute(
+            screen_var=screen_snake
         )
+    )
 
     # --------------------------
     # Assemble C file

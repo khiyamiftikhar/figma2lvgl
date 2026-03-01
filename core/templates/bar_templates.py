@@ -36,7 +36,7 @@ static void {cb_name}(ui_job_t *job)
     lv_anim_init(&a);
 
     lv_anim_set_var(&a, c->lv_obj);
-    lv_anim_set_exec_cb(&a, {cb_name}_exec_cb);
+    lv_anim_set_exec_cb(&a, ${cb_name}_exec_cb);
 
     lv_anim_set_values(&a,
                        lv_bar_get_value(c->lv_obj),
@@ -52,7 +52,7 @@ static void {cb_name}(ui_job_t *job)
 BAR_SETTER = """
 void ${fn_name}(int value, uint32_t duration_ms)
 {{
-    ui_job_t job = {{0}};
+    ui_job_t job = {0};
     job.child_index = ${child_index};
     job.type = UI_JOB_SET_BAR;
 
