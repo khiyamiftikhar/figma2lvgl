@@ -188,10 +188,15 @@ def generate_screen(screen):
     # Assemble C file
     # --------------------------
 
-    c_text = C_FILE_LAYOUT.format(
+#    from string import Template
+
+    # --------------------------
+    # Assemble C file
+    # --------------------------
+
+    c_text = Template(C_FILE_LAYOUT).safe_substitute(
         header_filename=header_filename,
         screen_struct=screen_struct,
-        job_structs="",  # removed permanently
         job_callbacks="\n".join(job_callbacks),
         setters="\n".join(setters),
         sc_fn_cb_name=load_cb,
@@ -205,7 +210,7 @@ def generate_screen(screen):
     # Assemble H file
     # --------------------------
 
-    h_text = H_FILE_LAYOUT.format(
+    h_text = Template(H_FILE_LAYOUT).safe_substitute(
         guard=guard,
         init_fn=init_fn,
         sc_fn_name=load_fn,
