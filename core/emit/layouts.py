@@ -48,9 +48,10 @@ static void {sc_fn_cb_name}(void *arg)
 
 void {sc_fn_name}(void)
 {{
-    
-    ui_worker_process_job({sc_fn_cb_name}, NULL, 0);
-
+    ui_job_t job = {{0}};
+    job.cb = {sc_fn_cb_name};
+    job.type = UI_JOB_LOAD_SCREEN;  
+    ui_worker_post_job(&job);
 }}
 
 // ------------------------------
