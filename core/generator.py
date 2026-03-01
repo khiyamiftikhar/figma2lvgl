@@ -87,6 +87,10 @@ def generate_screen(screen):
 
     unique_types = set()
 
+    # --------------------------
+    # CHILD LOOP → setters only
+    # --------------------------
+
     for index, child in enumerate(screen.children):
 
         spec = CHILDREN.get(child.type)
@@ -95,22 +99,23 @@ def generate_screen(screen):
 
         unique_types.add(child.type)
 
-        if child.type == "UI_CHILD_IMAGE":
-            cb_name = f"ui_{screen_snake}_display_{child.id}_job"
-            fn_name = f"ui_{screen_snake}_display_{child.id}"
-        else:
-            cb_name = f"ui_{screen_snake}_set_{child.id}_job"
+        # Determine callback + API name per type
+        if child.type == "UI_CHILD_LABEL":
+            cb_name = f"ui_{screen_snake}_label_job_cb"
             fn_name = f"ui_{screen_snake}_set_{child.id}"
-        # Callback
-        callback_tpl = load_template(spec.callback_template)
 
-        job_callbacks.append(
-            Template(callback_tpl).safe_substitute(
-                cb_name=cb_name,
-                screen_var=screen_snake
-            )
-        )
-        # Setter
+        elif child.type == "UI_CHILD_IMAGE":
+            cb_name = f"ui_{screen_snake}_display_image_job_cb"
+            fn_name = f"ui_{screen_snake}_display_{child.id}"
+
+        elif child.type == "UI_CHILD_BAR":
+            cb_name = f"ui_{screen_snake}_bar_job_cb"
+            fn_name = f"ui_{screen_snake}_set_{child.id}"
+
+        else:
+            continue
+
+        # ----- Setter generation (PER CHILD) -----
         setter_tpl = load_template(spec.setter_template)
 
         setters.append(
@@ -122,9 +127,41 @@ def generate_screen(screen):
                 cb_name=cb_name
             )
         )
-        # Prototype
+
         setter_prototypes.append(
             f"void {fn_name}({spec.setter_args});"
+        )
+
+
+    # --------------------------
+    # TYPE LOOP → callbacks only
+    # --------------------------
+
+    for type_name in unique_types:
+
+        spec = CHILDREN.get(type_name)
+        if not spec:
+            continue
+
+        if type_name == "UI_CHILD_LABEL":
+            cb_name = f"ui_{screen_snake}_label_job_cb"
+
+        elif type_name == "UI_CHILD_IMAGE":
+            cb_name = f"ui_{screen_snake}_display_image_job_cb"
+
+        elif type_name == "UI_CHILD_BAR":
+            cb_name = f"ui_{screen_snake}_bar_job_cb"
+
+        else:
+            continue
+
+        callback_tpl = load_template(spec.callback_template)
+
+        job_callbacks.append(
+            Template(callback_tpl).safe_substitute(
+                cb_name=cb_name,
+                screen_var=screen_snake
+            )
         )
 
 
@@ -143,11 +180,10 @@ def generate_screen(screen):
         init_tpl = load_template(spec.init_template)
 
         init_cases.append(
-        Template(init_tpl).safe_substitute(
-            screen_var=screen_snake
+            Template(init_tpl).safe_substitute(
+                screen_var=screen_snake
+            )
         )
-    )
-
     # --------------------------
     # Assemble C file
     # --------------------------
