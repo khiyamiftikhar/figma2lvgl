@@ -30,7 +30,7 @@ void ${fn_name}(void)
     ui_job_t job = {0};
     job.child_index = ${child_index};
     job.type = UI_JOB_SET_IMAGE;
-
+    job.cb = ui_${screen_var}_display_image_job_cb;
     job.data.image.src = &${child_id};
     ui_worker_post_job(&job);
 }
