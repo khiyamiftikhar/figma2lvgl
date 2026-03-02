@@ -60,3 +60,20 @@ def parse_screen(frame_node):
             )
         )
     return screen
+    
+class ParsedScreen:
+    def __init__(self, name):
+        self.name = name
+        self.snake = to_snake_case(name)
+        self.children = []
+
+    # NEW: expose required asset IDs
+    def get_required_assets(self, child_registry):
+        assets = []
+
+        for child in self.children:
+            spec = child_registry.get(child.type)
+            if spec and getattr(spec, "requires_asset", False):
+                assets.append(child.id)
+
+        return assets

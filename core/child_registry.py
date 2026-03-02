@@ -14,12 +14,12 @@ CHILDREN = {
     ),
 
     "UI_CHILD_IMAGE": ChildSpec(
-        type_name="UI_CHILD_IMAGE",
-        #job_template="image_job",
-        callback_template="image_callback",
-        setter_template="image_setter",
-        init_template="image_init",
-        setter_args="void",
+    type_name="UI_CHILD_IMAGE",
+    callback_template="image_callback",
+    setter_template="image_setter",
+    init_template="image_init",
+    setter_args="void",
+    requires_asset=True,   # NEW, main needs to know the names of image files and check if those named files exist 
     ),
 
     "UI_CHILD_BAR": ChildSpec(
