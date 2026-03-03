@@ -59,9 +59,11 @@ Designed specifically for **embedded systems (ESP32 + LVGL v9)**.
     │   ├── cmake_generator.py
     │   └── config.py
     │
-    └── ui_component/          ← Generated ESP-IDF component
-        ├── generated/         ← Screen files (.c/.h)
-        ├── runtime_v1_0_0/    ← Versioned runtime engine
+    └── ui_component/               ← Generated ESP-IDF component
+        ├── src_generated/          ← Screen files (.c/.h)
+        ├── runtime/                ← Runtime engine
+        |── assets/images           ← Images png files referred in xml
+        |── assets/src_generated    ← Source file generated for converted images
         ├── CMakeLists.txt
         └── idf_component.yml
 
@@ -76,10 +78,9 @@ python main.py layout.xml
 This generates:
 
     ui_component/
-        generated/
-        runtime_vX_Y_Z/
-        CMakeLists.txt
-        idf_component.yml
+        src_generated/                  #ui C files
+        assets/src_generated            #Converted Image source 
+        CMakeLists.txt        
 
 Then copy `ui_component/` into your ESP-IDF `components/` directory.
 
@@ -97,20 +98,7 @@ No changes to generator core required.
 
 ------------------------------------------------------------------------
 
-## 🔁 Runtime Versioning
 
-Runtime engine is versioned:
-
-    runtime_v1_0_0/
-    runtime_v1_1_0/
-    runtime_v2_0_0/
-
-Generated CMake automatically references the correct version.
-
-This ensures: - Safe upgrades - Backward compatibility - Deterministic
-builds
-
-------------------------------------------------------------------------
 
 ## 🏁 Design Philosophy
 
