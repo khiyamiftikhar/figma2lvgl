@@ -364,7 +364,7 @@ def write_c_array_file(
 #elif defined(LV_BUILD_TEST)
 #include "../lvgl.h"
 #else
-#include "lvgl/lvgl.h"
+#include "lvgl.h"
 #endif
 
 #ifndef LV_ATTRIBUTE_MEM_ALIGN
