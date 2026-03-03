@@ -22,13 +22,15 @@ void app_main(void)
 
    
     ui_home_init();
+    ui_home_load();
 
     vTaskDelay(pdMS_TO_TICKS(DELAY_MS)); // Simulate some delay for the boot screen
     ui_home_set_time("time is 12:34");
     vTaskDelay(pdMS_TO_TICKS(DELAY_MS)); // Simulate some delay for the boot screen
     ui_home_set_welcome("Hello welcome");
+    vTaskDelay(pdMS_TO_TICKS(DELAY_MS)); // Simulate some delay for the boot screen
+    ui_home_display_icon_wifi();
     
-    ui_home_load();
 
     while(1){
         vTaskDelay(pdMS_TO_TICKS(1000));

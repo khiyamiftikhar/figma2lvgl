@@ -6,3 +6,5 @@ dependencies.lock
 sdkconfig
 managed_components/
 .vscode/
+dump_repo.py
+*.txt

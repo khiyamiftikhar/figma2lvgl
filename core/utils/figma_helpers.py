@@ -1,29 +1,19 @@
 
 
-def map_tag_to_child_type(tag, name_attr):
-    """
-    Determine UI child type.
-    - TEXT nodes are always labels
-    - Other nodes are classified by name tokens
-    """
+def map_tag_to_child_type(node):
 
-    # Structural rule: TEXT is always a label
-    if tag == "Text":
+    name = node.attrib.get("name", "").lower()
+
+    if node.tag == "Text":
         return "UI_CHILD_LABEL"
 
-    if not name_attr:
-        return None
-
-    tokens = name_attr.lower().split("_")
-
-    if "icon" in tokens:
-        return "UI_CHILD_ICON"
-
-    if "bar" in tokens:
+    if "bar" in name:
         return "UI_CHILD_BAR"
 
-    return None
+    if "icon" in name or "image" in name:
+        return "UI_CHILD_IMAGE"
 
+    return "UI_CHILD_LABEL"
 
 
 

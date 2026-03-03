@@ -1,169 +1,225 @@
-# generator.py
+# core/generator.py
 
-from core.utils.utils import to_snake_case, base_name_for_header
-from core.emit.layouts import C_FILE_LAYOUT, H_FILE_LAYOUT
 from core.child_registry import CHILDREN
-
-
-# -------------------------------------------------
-# Helper: ui_child_t initializer (single source)
-# -------------------------------------------------
-
-def make_child_initializer(child):
-    return f"""        {{
-            .type = {child.type},
-            .id = "{child.id}",
-            .lv_obj = NULL,
-            .x = {child.x}, .y = {child.y},
-            .w = {child.w}, .h = {child.h},
-            .icon = NULL,
-            .current_state = 0,
-            .text = "",
-            .initial_value = 0
-        }}"""
-
-
-# -------------------------------------------------
-# Main generator entry point
-# -------------------------------------------------
+from core.emit.c_file import CFile
+from core.emit.h_file import HFile
+from core.emit.layouts import C_FILE_LAYOUT, H_FILE_LAYOUT
+from core.utils.utils import to_snake_case
+from core.utils.template_loader import load_template
+from string import Template
 
 def generate_screen(screen):
-    """
-    Takes Screen (semantic model)
-    Returns:
-        c_filename,
-        h_filename,
-        h_text,
-        c_text
-    """
 
-    # ------------------------------
-    # Screen-level naming
-    # ------------------------------
-
-    frame_name = screen.name
-    frame_snake = to_snake_case(frame_name)
-    screen_snake = frame_snake
-    base = base_name_for_header(frame_snake)
-
-    c_filename = f"{frame_snake}.c"
-    h_filename = f"ui_{base}.h"
-
-    screen_var = frame_snake
-    init_fn = f"ui_{base}_init"
-    
-    sc_fn_name=f"ui_{screen_snake}_load"
-    sc_fn_cb_name=f"ui_{screen_snake}_load_job"
-    
+    screen_snake = screen.snake
+    base = screen_snake
+    header_filename = f"ui_{base}.h"
     guard = f"UI_{base.upper()}_H"
 
-    # ------------------------------
-    # Collected sections
-    # ------------------------------
+    init_fn = f"ui_{base}_init"
+    load_fn = f"ui_{base}_load"
+    load_cb = f"ui_{base}_load_job"
+
+    # --------------------------
+    # Build screen struct
+    # --------------------------
 
     child_entries = []
-    job_structs = []
+
+    for child in screen.children:
+
+        data_block = ""
+
+        if child.type == "UI_CHILD_LABEL":
+            data_block = """
+                .data.label = {
+                    .text = ""
+                }
+    """
+
+        elif child.type == "UI_CHILD_IMAGE":
+            data_block = """
+                .data.image = {
+                    .src = NULL
+                }
+    """
+
+        elif child.type == "UI_CHILD_BAR":
+            data_block = """
+                .data.bar = {
+                    .value = 0
+                }
+    """
+
+        entry = f"""
+            {{
+                .type = {child.type},
+                .id = "{child.id}",
+                .lv_obj = NULL,
+                .x = {child.x},
+                .y = {child.y},
+                .w = {child.w},
+                .h = {child.h},
+        {data_block}
+            }},
+        """
+        child_entries.append(entry)
+
+    children_block = "".join(child_entries)
+
+    screen_struct = f"""
+    ui_screen_t {screen_snake} = {{
+        .name = "{screen.name}",
+        .child_count = {len(screen.children)},
+        .children = {{
+            {"".join(child_entries)}
+        }},
+        .lv_screen = NULL
+    }};
+    """
+
+    # --------------------------
+    # Callbacks / setters
+    # --------------------------
+
     job_callbacks = []
-    setter_functions = []
+    setters = []
     setter_prototypes = []
-    init_cases = []
 
-    emitted_job_structs = set()
+    unique_types = set()
 
-    # ------------------------------
-    # Init switch cases (PER TYPE)
-    # ------------------------------
-
-    for spec in CHILDREN.values():
-        case = spec.emit_init_case(screen)
-        if case:
-            init_cases.append(case)
-
-    # ------------------------------
-    # Per-child generation
-    # ------------------------------
+    # --------------------------
+    # CHILD LOOP → setters only
+    # --------------------------
 
     for index, child in enumerate(screen.children):
+
         spec = CHILDREN.get(child.type)
         if not spec:
             continue
 
-        # ui_child_t initializer
-        child_entries.append(
-            make_child_initializer(child)
+        unique_types.add(child.type)
+
+        # Determine callback + API name per type
+        if child.type == "UI_CHILD_LABEL":
+            cb_name = f"ui_{screen_snake}_label_job_cb"
+            fn_name = f"ui_{screen_snake}_set_{child.id}"
+
+        elif child.type == "UI_CHILD_IMAGE":
+            cb_name = f"ui_{screen_snake}_display_image_job_cb"
+            fn_name = f"ui_{screen_snake}_display_{child.id}"
+
+        elif child.type == "UI_CHILD_BAR":
+            cb_name = f"ui_{screen_snake}_bar_job_cb"
+            fn_name = f"ui_{screen_snake}_set_{child.id}"
+
+        else:
+            continue
+
+        # ----- Setter generation (PER CHILD) -----
+        setter_tpl = load_template(spec.setter_template)
+
+        setters.append(
+            Template(setter_tpl).safe_substitute(
+                fn_name=fn_name,
+                child_index=index,
+                screen_var=screen_snake,
+                child_id=child.id,
+                cb_name=cb_name
+            )
         )
 
-        # Job struct (deduplicated)
-        job_struct = spec.emit_job_struct(screen)
-        if job_struct and job_struct not in emitted_job_structs:
-            emitted_job_structs.add(job_struct)
-            job_structs.append(job_struct)
+        setter_prototypes.append(
+            f"void {fn_name}({spec.setter_args});"
+        )
 
-        # Job callback
-        cb = spec.emit_job_callback(screen, child)
-        if cb:
-            job_callbacks.append(cb)
 
-        # Setter prototype + implementation
-        proto = spec.emit_setter_prototype(screen, child)
-        impl = spec.emit_setter(screen, child, index)
+    # --------------------------
+    # TYPE LOOP → callbacks only
+    # --------------------------
 
-        if proto:
-            setter_prototypes.append(proto)
+    for type_name in unique_types:
 
-        if impl:
-            setter_functions.append(impl)
+        spec = CHILDREN.get(type_name)
+        if not spec:
+            continue
 
-    # ------------------------------
-    # Screen struct
-    # ------------------------------
+        if type_name == "UI_CHILD_LABEL":
+            cb_name = f"ui_{screen_snake}_label_job_cb"
 
-    screen_struct_lines = []
-    screen_struct_lines.append(f"ui_screen_t {screen_var} = {{")
-    screen_struct_lines.append(f'    .name = "{frame_name}",')
-    screen_struct_lines.append(f"    .child_count = {len(child_entries)},")
-    screen_struct_lines.append("    .children = {")
+        elif type_name == "UI_CHILD_IMAGE":
+            cb_name = f"ui_{screen_snake}_display_image_job_cb"
 
-    for entry in child_entries:
-        screen_struct_lines.append(entry + ",")
+        elif type_name == "UI_CHILD_BAR":
+            cb_name = f"ui_{screen_snake}_bar_job_cb"
 
-    screen_struct_lines.append("    },")
-    screen_struct_lines.append("    .lv_screen = NULL")
-    screen_struct_lines.append("};")
+        else:
+            continue
 
-    screen_struct_def = "\n".join(screen_struct_lines)
+        callback_tpl = load_template(spec.callback_template)
 
-    # ------------------------------
-    # Assemble final C file
-    # ------------------------------
+        job_callbacks.append(
+            Template(callback_tpl).safe_substitute(
+                cb_name=cb_name,
+                screen_var=screen_snake
+            )
+        )
 
-    c_text = C_FILE_LAYOUT.format(
-        header_filename=h_filename,
-        screen_struct=screen_struct_def,
-        job_structs="\n\n".join(job_structs),
-        job_callbacks="\n\n".join(job_callbacks),
-        setters="\n\n".join(setter_functions),
+
+    # --------------------------
+    # Init cases (ONE PER TYPE)
+    # --------------------------
+
+    init_cases = []
+
+    for type_name in unique_types:
+
+        spec = CHILDREN.get(type_name)
+        if not spec:
+            continue
+
+        init_tpl = load_template(spec.init_template)
+
+        init_cases.append(
+            Template(init_tpl).safe_substitute(
+                screen_var=screen_snake
+            )
+        )
+    # --------------------------
+    # Assemble C file
+    # --------------------------
+
+#    from string import Template
+
+    # --------------------------
+    # Assemble C file
+    # --------------------------
+
+    c_text = Template(C_FILE_LAYOUT).safe_substitute(
+        header_filename=header_filename,
+        screen_struct=screen_struct,
+        job_callbacks="\n".join(job_callbacks),
+        setters="\n".join(setters),
+        sc_fn_cb_name=load_cb,
+        sc_fn_name=load_fn,
         init_fn=init_fn,
-        screen_var=screen_var,
-        sc_fn_cb_name=sc_fn_cb_name,
-        sc_fn_name=sc_fn_name,
-        init_body="\n".join(init_cases),
+        screen_var=screen_snake,
+        init_body="\n".join(init_cases)
     )
 
-    # ------------------------------
-    # Assemble final H file
-    # ------------------------------
+    # --------------------------
+    # Assemble H file
+    # --------------------------
 
-    h_text = H_FILE_LAYOUT.format(
+    h_text = Template(H_FILE_LAYOUT).safe_substitute(
         guard=guard,
         init_fn=init_fn,
-        sc_fn_name=sc_fn_name,
-        setter_prototypes="\n".join(setter_prototypes),
+        sc_fn_name=load_fn,
+        setter_prototypes="\n".join(setter_prototypes)
     )
 
     return (
-        c_filename,
-        h_filename,
+        f"ui_{base}.c",
+        header_filename,
         h_text,
-        c_text,
+        c_text
     )

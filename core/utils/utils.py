@@ -14,15 +14,6 @@ INDENT = "    "
 # "Text" -> label
 # tags starting with "icon_" -> icon
 # If you want to add more mappings, change here.
-def map_tag_to_child_type(tag, name_attr):
-    if tag == "Text":
-        return "UI_CHILD_LABEL"
-    if tag.lower().startswith("icon_") or name_attr.lower().startswith("icon_"):
-        return "UI_CHILD_ICON"
-    # Potential extension: map "Bar" or other tags:
-    if tag.lower() == "bar":
-        return "UI_CHILD_BAR"
-    return None
 
 # ---------------------------
 # Helpers
