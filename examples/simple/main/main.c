@@ -30,7 +30,8 @@ void app_main(void)
     ui_home_set_welcome("Hello welcome");
     vTaskDelay(pdMS_TO_TICKS(DELAY_MS)); // Simulate some delay for the boot screen
     ui_home_display_icon_wifi();
-    
+    ui_home_set_bar(100, 2000);
+    //vTaskDelay(pdMS_TO_TICKS(DELAY_MS)); // Simulate some delay for the boot screen
 
     while(1){
         vTaskDelay(pdMS_TO_TICKS(1000));
