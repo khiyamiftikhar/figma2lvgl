@@ -22,6 +22,28 @@
           <letterSpacing value="0" unit="PERCENT" />
           <lineHeight unit="AUTO" />
         </Text>
+        <icon_wifi id="12:9" name="icon_wifi" expanded="true" maskType="ALPHA" x="129" y="143" width="48" height="48" clipsContent="true" variantProperties="" type="INSTANCE">
+          <children>
+            <Vector id="I12:9;7758:12602" name="Icon" maskType="ALPHA" strokeWeight="4" strokeJoin="ROUND" strokeAlign="CENTER" strokeCap="ROUND" x="2.8399999141693115" y="10.00529956817627" width="42.31999969482422" height="29.994701385498047" type="VECTOR">
+              <strokes>
+                <stroke blendMode="NORMAL" color="#1e1e1e" />
+              </strokes>
+              <constraints horizontal="SCALE" vertical="SCALE" />
+            </Vector>
+          </children>
+          <fills>
+            <fill visible="false" blendMode="NORMAL" color="#ffffff" />
+          </fills>
+          <constraints horizontal="MIN" vertical="MIN" />
+          <mainComponent id="12:7" />
+          <overrides>
+            <override id="12:9">
+              <overriddenFields>
+                <overriddenField value="name" index="0" />
+              </overriddenFields>
+            </override>
+          </overrides>
+        </icon_wifi>
       </children>
       <fills>
         <fill blendMode="NORMAL" color="#ffffff" />
