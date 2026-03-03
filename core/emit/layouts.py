@@ -37,7 +37,7 @@ ${setters}
 // SCREEN LOAD CB
 // ------------------------------
 
-static void ${sc_fn_cb_name}(void *arg)
+static void ${sc_fn_cb_name}(ui_job_t *job)
 {
     lv_scr_load(${screen_var}.lv_screen);
 }
