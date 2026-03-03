@@ -13,7 +13,7 @@ file(GLOB RUNTIME_SOURCES
 )
 
 file(GLOB GENERATED_ASSET_SOURCES
-    "${{CMAKE_CURRENT_LIST_DIR}}/resources/asset_generated/*.c"
+    "${{CMAKE_CURRENT_LIST_DIR}}/assets/src_generated/*.c"
 )
 
 
@@ -24,10 +24,10 @@ idf_component_register(
         ${{RUNTIME_SOURCES}}
         ${{GENERATED_ASSET_SOURCES}}
     INCLUDE_DIRS
-        "generated"
+        "src_generated"
     PRIV_INCLUDE_DIRS
         "runtime"
-        ${{GENERATED_ASSET_SOURCES}}
+        "assets/src_generated"
     PRIV_REQUIRES
         lvgl
         esp_lvgl_port
