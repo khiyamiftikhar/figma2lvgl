@@ -22,7 +22,7 @@
           <letterSpacing value="0" unit="PERCENT" />
           <lineHeight unit="AUTO" />
         </Text>
-        <icon_wifi id="12:9" name="icon_wifi" expanded="true" maskType="ALPHA" x="129" y="143" width="48" height="48" clipsContent="true" variantProperties="" type="INSTANCE">
+        <icon_wifi id="12:9" name="icon_wifi" maskType="ALPHA" x="129" y="143" width="48" height="48" clipsContent="true" variantProperties="" type="INSTANCE">
           <children>
             <Vector id="I12:9;7758:12602" name="Icon" maskType="ALPHA" strokeWeight="4" strokeJoin="ROUND" strokeAlign="CENTER" strokeCap="ROUND" x="2.8399999141693115" y="10.00529956817627" width="42.31999969482422" height="29.994701385498047" type="VECTOR">
               <strokes>
@@ -44,6 +44,12 @@
             </override>
           </overrides>
         </icon_wifi>
+        <Rectangle id="21:4" name="bar" maskType="ALPHA" x="33" y="311" width="241" height="35" type="RECTANGLE">
+          <fills>
+            <fill blendMode="NORMAL" color="#d9d9d9" />
+          </fills>
+          <constraints horizontal="MIN" vertical="MIN" />
+        </Rectangle>
       </children>
       <fills>
         <fill blendMode="NORMAL" color="#ffffff" />
