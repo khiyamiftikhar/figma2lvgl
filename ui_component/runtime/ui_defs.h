@@ -48,9 +48,9 @@ typedef struct {
         } label;
 
         struct {    // BAR
-            int32_t initial_value;
-            int32_t min;
-            int32_t max;
+            int32_t value;
+            //int32_t min;
+            //int32_t max;
         } bar;
 
         struct {
