@@ -28,6 +28,6 @@ CHILDREN = {
         callback_template="bar_callback",
         setter_template="bar_setter",
         init_template="bar_init",
-        setter_args="int value",
+        setter_args="int value, uint32_t duration_ms"
     ),
 }
