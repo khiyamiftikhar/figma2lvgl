@@ -8,37 +8,15 @@
 #} {job_struct};
 #"""
 
-LABEL_JOB_CALLBACK = """
-static void ui_${screen_var}_label_job_cb(ui_job_t *job)
-{
-    uint8_t child_index = job->child_index;
-    ui_label_job_t *lbl = &job->data.label;
-    
-
-    //printf("\\n Updating label at index %d with text: %s", child_index, lbl->text);
-    ui_child_t *c = &${screen_var}.children[child_index];
-
-    
-
-    if (c->lv_obj) {
-        lv_label_set_text(c->lv_obj, lbl->text);
-    }
-}
-
-
-"""
+# REMOVED: LABEL_JOB_CALLBACK — no longer needed, logic moves inline to setter
 
 LABEL_SETTER = """
 void ${fn_name}(const char *text)
 {
-    ui_job_t job = {0};
-    job.cb = ui_${screen_var}_label_job_cb;
-    job.child_index = ${child_index};
-    job.type = UI_JOB_SET_LABEL;
-
-    snprintf(job.data.label.text, UI_MAX_STRING_LENGTH, "%s", text);
-
-    ui_worker_post_job(&job);
+    ui_child_t *c = &${screen_var}.children[${child_index}];
+    if (c->lv_obj) {
+        lv_label_set_text(c->lv_obj, text);
+    }
 }
 """
 

@@ -101,15 +101,15 @@ def generate_screen(screen):
 
         # Determine callback + API name per type
         if child.type == "UI_CHILD_LABEL":
-            cb_name = f"ui_{screen_snake}_label_job_cb"
+            #cb_name = f"ui_{screen_snake}_label_job_cb"
             fn_name = f"ui_{screen_snake}_set_{child.id}"
 
         elif child.type == "UI_CHILD_IMAGE":
-            cb_name = f"ui_{screen_snake}_display_image_job_cb"
+            #cb_name = f"ui_{screen_snake}_display_image_job_cb"
             fn_name = f"ui_{screen_snake}_display_{child.id}"
 
         elif child.type == "UI_CHILD_BAR":
-            cb_name = f"ui_{screen_snake}_bar_job_cb"
+            #cb_name = f"ui_{screen_snake}_bar_job_cb"
             fn_name = f"ui_{screen_snake}_set_{child.id}"
 
         else:
@@ -124,7 +124,7 @@ def generate_screen(screen):
                 child_index=index,
                 screen_var=screen_snake,
                 child_id=child.id,
-                cb_name=cb_name
+             #   cb_name=cb_name
             )
         )
 
@@ -143,26 +143,26 @@ def generate_screen(screen):
         if not spec:
             continue
 
-        if type_name == "UI_CHILD_LABEL":
-            cb_name = f"ui_{screen_snake}_label_job_cb"
+        #if type_name == "UI_CHILD_LABEL":
+            #cb_name = f"ui_{screen_snake}_label_job_cb"
 
-        elif type_name == "UI_CHILD_IMAGE":
-            cb_name = f"ui_{screen_snake}_display_image_job_cb"
+       # elif type_name == "UI_CHILD_IMAGE":
+            #cb_name = f"ui_{screen_snake}_display_image_job_cb"
 
-        elif type_name == "UI_CHILD_BAR":
-            cb_name = f"ui_{screen_snake}_bar_job_cb"
+        #elif type_name == "UI_CHILD_BAR":
+            #cb_name = f"ui_{screen_snake}_bar_job_cb"
 
-        else:
-            continue
+        #else:
+         #   continue
 
-        callback_tpl = load_template(spec.callback_template)
+        #callback_tpl = load_template(spec.callback_template)
 
-        job_callbacks.append(
-            Template(callback_tpl).safe_substitute(
-                cb_name=cb_name,
-                screen_var=screen_snake
-            )
-        )
+        # job_callbacks.append(
+        #     Template(callback_tpl).safe_substitute(
+        #         cb_name=cb_name,
+        #         screen_var=screen_snake
+        #     )
+        # )
 
 
     # --------------------------
@@ -197,9 +197,9 @@ def generate_screen(screen):
     c_text = Template(C_FILE_LAYOUT).safe_substitute(
         header_filename=header_filename,
         screen_struct=screen_struct,
-        job_callbacks="\n".join(job_callbacks),
+        #job_callbacks="\n".join(job_callbacks),
         setters="\n".join(setters),
-        sc_fn_cb_name=load_cb,
+        #sc_fn_cb_name=load_cb,
         sc_fn_name=load_fn,
         init_fn=init_fn,
         screen_var=screen_snake,
