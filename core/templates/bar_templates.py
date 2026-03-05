@@ -10,7 +10,7 @@
 # REMOVED: BAR_JOB_CALLBACK outer shell — logic moves inline to setter
 # KEPT: _exec_cb as a static LVGL animation helper, renamed to be standalone
 
-BAR_ANIM_EXEC_CB = """
+BAR_CALLBACK = """
 static void ${cb_name}_exec_cb(void *obj, int32_t v)
 {
     lv_bar_set_value(obj, v, LV_ANIM_OFF);

@@ -8,6 +8,7 @@
 #"""
 
 # REMOVED: IMAGE_JOB_CALLBACK — logic moves inline to setter
+IMAGE_CALLBACK = ""
 
 IMAGE_SETTER = """
 void ${fn_name}(void)

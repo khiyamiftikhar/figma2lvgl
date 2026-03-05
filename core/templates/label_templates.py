@@ -10,6 +10,8 @@
 
 # REMOVED: LABEL_JOB_CALLBACK — no longer needed, logic moves inline to setter
 
+LABEL_CALLBACK=""
+
 LABEL_SETTER = """
 void ${fn_name}(const char *text)
 {
