@@ -20,7 +20,7 @@ ${screen_struct}
 // ------------------------------
 // UI JOB CALLBACKS
 // ------------------------------
-//${job_callbacks}
+${job_callbacks}
 
 // ------------------------------
 // UI SETTERS

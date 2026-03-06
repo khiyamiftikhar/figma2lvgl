@@ -105,7 +105,7 @@ def generate_screen(screen):
             fn_name = f"ui_{screen_snake}_set_{child.id}"
 
         elif child.type == "UI_CHILD_IMAGE":
-            #cb_name = ""#f"ui_{screen_snake}_display_image_job_cb"
+            cb_name = ""#f"ui_{screen_snake}_display_image_job_cb"
             fn_name = f"ui_{screen_snake}_display_{child.id}"
 
         elif child.type == "UI_CHILD_BAR":
@@ -197,9 +197,9 @@ def generate_screen(screen):
     c_text = Template(C_FILE_LAYOUT).safe_substitute(
         header_filename=header_filename,
         screen_struct=screen_struct,
-        #job_callbacks="\n".join(job_callbacks),
+        job_callbacks="\n".join(job_callbacks),
         setters="\n".join(setters),
-        #sc_fn_cb_name=load_cb,
+        sc_fn_cb_name=load_cb,
         sc_fn_name=load_fn,
         init_fn=init_fn,
         screen_var=screen_snake,
