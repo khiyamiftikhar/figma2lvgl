@@ -1,4 +1,4 @@
 dependencies:
   esp-lcd-device:
     git: https://github.com/khiyamiftikhar/esp-lcd-device.git
- 
+  
