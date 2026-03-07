@@ -1,0 +1,47 @@
+name: Publish to PyPI
+
+on:
+  push:
+    tags:
+      - "v*"          # triggers on v1.0.0, v1.2.3, etc.
+
+jobs:
+  build-and-publish:
+    name: Build and publish
+    runs-on: ubuntu-latest
+    environment: pypi                  # you create this in GitHub repo settings
+
+    permissions:
+      id-token: write                  # required for trusted publishing (no API key needed)
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install build tools
+        run: pip install build
+
+      - name: Build package
+        run: python -m build           # produces dist/*.whl and dist/*.tar.gz
+
+      - name: Publish to PyPI
+        uses: pypa/gh-action-pypi-publish@release/v1
+        # No API token needed — uses PyPI trusted publisher
+```
+
+---
+
+### One-time setup you need to do on PyPI
+
+Before the first tag push, go to `pypi.org` → your account → **Publishing** → add a new trusted publisher:
+```
+PyPI project name:  figma2lvgl
+GitHub owner:       your-github-username
+GitHub repo:        your-repo-name
+Workflow name:      publish.yml
+Environment name:   pypi
