@@ -101,11 +101,11 @@ def generate_screen(screen):
 
         # Determine callback + API name per type
         if child.type == "UI_CHILD_LABEL":
-            cb_name = f"ui_{screen_snake}_label_job_cb"
+            cb_name = ""#f"ui_{screen_snake}_label_job_cb"
             fn_name = f"ui_{screen_snake}_set_{child.id}"
 
         elif child.type == "UI_CHILD_IMAGE":
-            cb_name = f"ui_{screen_snake}_display_image_job_cb"
+            cb_name = ""#f"ui_{screen_snake}_display_image_job_cb"
             fn_name = f"ui_{screen_snake}_display_{child.id}"
 
         elif child.type == "UI_CHILD_BAR":
@@ -144,16 +144,16 @@ def generate_screen(screen):
             continue
 
         if type_name == "UI_CHILD_LABEL":
-            cb_name = f"ui_{screen_snake}_label_job_cb"
+            cb_name = ""#f"ui_{screen_snake}_label_job_cb"
 
         elif type_name == "UI_CHILD_IMAGE":
-            cb_name = f"ui_{screen_snake}_display_image_job_cb"
+            cb_name = ""#f"ui_{screen_snake}_display_image_job_cb"
 
         elif type_name == "UI_CHILD_BAR":
             cb_name = f"ui_{screen_snake}_bar_job_cb"
 
         else:
-            continue
+           continue
 
         callback_tpl = load_template(spec.callback_template)
 
