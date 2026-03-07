@@ -3,7 +3,6 @@
 C_FILE_LAYOUT = """
 #include "${header_filename}"
 #include "assets.h"     //The converted images will be declared here
-#include "ui_worker.h"
 #include "ui_defs.h"
 #include <stdio.h>
 
