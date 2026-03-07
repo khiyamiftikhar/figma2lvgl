@@ -3,9 +3,7 @@
 C_FILE_LAYOUT = """
 #include "${header_filename}"
 #include "assets.h"     //The converted images will be declared here
-#include "ui_worker.h"
 #include "ui_defs.h"
-#include "ui_worker.h"
 #include <stdio.h>
 
 // ------------------------------
@@ -37,23 +35,13 @@ ${setters}
 // SCREEN LOAD CB
 // ------------------------------
 
-static void ${sc_fn_cb_name}(ui_job_t *job)
-{
-    lv_scr_load(${screen_var}.lv_screen);
-}
-
-
 
 // ------------------------------
 // SCREEN LOAD
 // ------------------------------
-
 void ${sc_fn_name}(void)
 {
-    ui_job_t job = {0};
-    job.cb = ${sc_fn_cb_name};
-    job.type = UI_JOB_LOAD_SCREEN;  
-    ui_worker_post_job(&job);
+    lv_scr_load(${screen_var}.lv_screen);
 }
 
 // ------------------------------
@@ -77,7 +65,7 @@ void ${init_fn}(void)
         }
     }
     
-    ui_worker_init();
+
 }
 """
 
