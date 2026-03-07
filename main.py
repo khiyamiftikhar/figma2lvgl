@@ -177,6 +177,26 @@ def parse_args():
 
     return parser.parse_args()
 
+# -------------------------------------------------
+# Copy static headers into priv_include
+# -------------------------------------------------
+def copy_static_headers(priv_inc: Path) -> bool:
+    static_src = Path(__file__).parent / "static_src"
+
+    if not static_src.is_dir():
+        print(f"WARNING: static_src/ not found at {static_src}, skipping.")
+        return True  # non-fatal, pipeline can still continue
+
+    copied = 0
+    for header in static_src.glob("*.h"):
+        shutil.copy2(str(header), str(priv_inc / header.name))
+        print(f"  Copied {header.name} -> priv_include/")
+        copied += 1
+
+    if copied == 0:
+        print("WARNING: static_src/ exists but contains no .h files.")
+
+    return True
 
 # -------------------------------------------------
 # Main
@@ -195,6 +215,8 @@ def main():
     if not images_dir.is_dir():
         print(f"ERROR: Images directory not found: {images_dir}")
         sys.exit(1)
+    
+    
 
     # --- Resolve destination dir (default: folder containing the XML) ---
     dest_dir = Path(args.dest).resolve() if args.dest else xml_path.parent
@@ -257,6 +279,11 @@ def main():
 
     # --- Run image converter ---
     if not run_image_converter(images_dir, priv_src, priv_inc):
+        sys.exit(1)
+
+    # --- Copy static headers ---
+    print("\nCopying static headers...")
+    if not copy_static_headers(priv_inc):
         sys.exit(1)
 
     # --- Generate UI source files ---
