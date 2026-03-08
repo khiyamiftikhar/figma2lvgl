@@ -1,10 +1,10 @@
 [build-system]
-requires = ["setuptools>=68", "wheel"]
+requires = ["setuptools>=68", "setuptools-scm>=8", "wheel"]
 build-backend = "setuptools.backends.legacy:build"
 
 [project]
 name = "figma2lvgl"
-version = "1.0.0"
+dynamic = ["version"]          # ← tell setuptools version comes from git
 description = "Generate LVGL C source files from Figma XML exports"
 readme = "README.md"
 license = { file = "LICENSE" }
