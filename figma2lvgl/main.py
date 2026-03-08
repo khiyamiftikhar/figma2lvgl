@@ -6,11 +6,11 @@ import argparse
 import xml.etree.ElementTree as ET
 from pathlib import Path
 
-from core.figma_parser import parse_screen
-from core.generator import generate_screen
-from core.utils.utils import write_file
-from core.cmake_generator import generate_cmake
-from core.child_registry import CHILDREN
+from figma2lvgl.core.figma_parser import parse_screen
+from figma2lvgl.core.generator import generate_screen
+from figma2lvgl.core.utils.utils import write_file
+from figma2lvgl.core.cmake_generator import generate_cmake
+from figma2lvgl.core.child_registry import CHILDREN
 
 
 # -------------------------------------------------

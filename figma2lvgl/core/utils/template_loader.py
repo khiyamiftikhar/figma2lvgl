@@ -1,6 +1,6 @@
 # core/utils/template_loader.py
 
-from core.templates import (
+from figma2lvgl.core.templates import (
     label_templates,
     image_templates,
     bar_templates,

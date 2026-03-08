@@ -1,11 +1,11 @@
 # core/generator.py
 
-from core.child_registry import CHILDREN
-from core.emit.c_file import CFile
-from core.emit.h_file import HFile
-from core.emit.layouts import C_FILE_LAYOUT, H_FILE_LAYOUT
-from core.utils.utils import to_snake_case
-from core.utils.template_loader import load_template
+from figma2lvgl.core.child_registry import CHILDREN
+from figma2lvgl.core.emit.c_file import CFile
+from figma2lvgl.core.emit.h_file import HFile
+from figma2lvgl.core.emit.layouts import C_FILE_LAYOUT, H_FILE_LAYOUT
+from figma2lvgl.core.utils.utils import to_snake_case
+from figma2lvgl.core.utils.template_loader import load_template
 from string import Template
 
 def generate_screen(screen):
