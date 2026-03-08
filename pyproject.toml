@@ -1,0 +1,29 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.backends.legacy:build"
+
+[project]
+name = "figma2lvgl"
+version = "1.0.0"
+description = "Generate LVGL C source files from Figma XML exports"
+readme = "README.md"
+license = { file = "LICENSE" }
+requires-python = ">=3.8"
+keywords = ["lvgl", "figma", "codegen", "embedded", "ui"]
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+    "Topic :: Software Development :: Code Generators",
+]
+
+[project.scripts]
+figma2lvgl = "figma2lvgl.main:main"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["figma2lvgl*"]
+
+[tool.setuptools.package-data]
+"figma2lvgl.static_src" = ["*.h"]
+"figma2lvgl.tools" = ["*.py"]
