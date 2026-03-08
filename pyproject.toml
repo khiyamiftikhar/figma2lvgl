@@ -9,6 +9,9 @@ description = "Generate LVGL C source files from Figma XML exports"
 readme = "README.md"
 license = { file = "LICENSE" }
 requires-python = ">=3.8"
+dependencies = [
+    "platformdirs>=3.0",
+]
 keywords = ["lvgl", "figma", "codegen", "embedded", "ui"]
 classifiers = [
     "Programming Language :: Python :: 3",
