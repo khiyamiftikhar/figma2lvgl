@@ -69,16 +69,59 @@ ui_src/
   src/              ← Generated screen .c files
   include/          ← Generated screen .h files
   priv_src/         ← Converted image .c files
-  priv_include/     ← Image headers + assets.h + ui_defs.h
-  CMakeLists.txt    ← Ready to include in your build system
+  priv_include/     ← Image header (assets.h) + and all struct definition header (ui_defs.h)
 ```
 
-Drop `ui_src/` into your project as a component or library.
+Drop `ui_src/` into your project and add the source files to your build system manually.
 
+
+## 🎨 Designing in Figma
+
+figma2lvgl reads the **Figma node name** to identify each UI element.
+Three element types are currently supported:
+
+### Text / Label
+Any `Text` node is automatically mapped to an LVGL label.
+Just create a text element in Figma — no special naming required.
+```
+Figma node type: Text
+Figma name:      anything (e.g. "Time", "Welcome", "status_label")
+Maps to:         LV_OBJ label
+```
+
+### Image
+Any node whose name contains `icon` or `image` is mapped to an LVGL image.
+The name must match the PNG filename placed in your images folder.
+```
+Figma node type: INSTANCE or FRAME
+Figma name:      must contain "icon" or "image" (e.g. "icon_wifi", "image_logo")
+Maps to:         LV_OBJ image
+Asset required:  icon_wifi.png / image_logo.png in your images folder
+```
+
+### Bar
+Any node whose name contains `bar` is mapped to an LVGL bar widget.
+```
+Figma node type: RECTANGLE
+Figma name:      must contain "bar" (e.g. "bar", "progress_bar", "battery_bar")
+Maps to:         LV_OBJ bar
+```
+
+### Naming Rules Summary
+
+| Element | Figma Type | Name Requirement |
+|---|---|---|
+| Label | Text | any name |
+| Image | any | must contain `icon` or `image` |
+| Bar | Rectangle | must contain `bar` |
+
+> **Note:** Names are case-insensitive. `Bar`, `BAR`, and `bar` all work.
+> The Figma frame name becomes the screen name in generated code.
 ---
 
 ## 🧠 Architecture Overview
 ```
+
 Figma XML
     ↓
 Parser
@@ -96,26 +139,16 @@ Generated Code (ui_src/)
 
 ---
 
-## 🧩 Extending with New GUI Elements
+## 💡 Example Integrations
 
-To add a new UI element:
-
-1. Create a new template inside `core/templates/`
-2. Register it in `child_registry.py`
-3. Use naming tokens in Figma (e.g. `_button`)
-
-No changes to the generator core required.
-
----
-
-## 💡 Examples
-
-See the `examples/` folder for complete project setups:
+See the `examples/` folder for ready-to-use project setups across different platforms:
 ```
 examples/
   espidf/
-    ili9486/        ← ESP-IDF project with ILI9486 display
+    ili9486/        ← ESP32 + ILI9486 display
 ```
+
+More platform examples (STM32, Zephyr, bare-metal) coming soon.
 
 ---
 
