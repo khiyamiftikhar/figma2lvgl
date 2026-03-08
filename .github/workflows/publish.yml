@@ -17,6 +17,8 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0      # this line, fetches full history + tags
 
       - name: Set up Python
         uses: actions/setup-python@v5
