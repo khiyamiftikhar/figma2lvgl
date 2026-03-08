@@ -30,3 +30,7 @@ include = ["figma2lvgl*"]
 [tool.setuptools.package-data]
 "figma2lvgl.static_src" = ["*.h"]
 "figma2lvgl.tools" = ["*.py"]
+
+[tool.setuptools_scm]
+version_scheme = "no-guess-dev"
+local_scheme = "no-local-version"
