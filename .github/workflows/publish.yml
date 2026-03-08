@@ -32,16 +32,3 @@ jobs:
       - name: Publish to PyPI
         uses: pypa/gh-action-pypi-publish@release/v1
         # No API token needed — uses PyPI trusted publisher
-```
-
----
-
-### One-time setup you need to do on PyPI
-
-Before the first tag push, go to `pypi.org` → your account → **Publishing** → add a new trusted publisher:
-```
-PyPI project name:  figma2lvgl
-GitHub owner:       your-github-username
-GitHub repo:        your-repo-name
-Workflow name:      publish.yml
-Environment name:   pypi
