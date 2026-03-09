@@ -1,4 +1,4 @@
-from core.config_name import runtime_folder_name
+from figma2lvgl.core.config_name import runtime_folder_name
 
 def generate_cmake():
     runtime_dir = runtime_folder_name()

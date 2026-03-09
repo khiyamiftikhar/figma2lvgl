@@ -1,6 +1,6 @@
 # child_registry.py
 
-from core.generic_child import ChildSpec
+from figma2lvgl.core.generic_child import ChildSpec
 
 
 CHILDREN = {

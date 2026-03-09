@@ -3,30 +3,31 @@ import sys
 import shutil
 from pathlib import Path
 
-LVGL_TOOL = Path(__file__).parent / "LVGLImage.py"
 COLOR_FORMAT = "RGB565"
 
 
 def main():
-    if len(sys.argv) != 4:
-        print("Usage: python image_converter.py <images_dir> <priv_src_dir> <priv_include_dir>")
-        print("  All three arguments must be full paths.")
+    if len(sys.argv) != 5:
+        print("Usage: python image_converter.py <images_dir> <priv_src_dir> <priv_include_dir> <lvgl_tool_path>")
         print("  This script is normally called by main.py automatically.")
         sys.exit(1)
 
-    # All three are full paths — no joining needed
     assets_dir = Path(sys.argv[1]).resolve()
     src_dir    = Path(sys.argv[2]).resolve()
     inc_dir    = Path(sys.argv[3]).resolve()
+    lvgl_tool  = Path(sys.argv[4]).resolve()
 
     if not assets_dir.is_dir():
         print(f"ERROR: Images directory not found: {assets_dir}")
         sys.exit(1)
 
+    if not lvgl_tool.is_file():
+        print(f"ERROR: LVGLImage.py not found at: {lvgl_tool}")
+        sys.exit(1)
+
     src_dir.mkdir(parents=True, exist_ok=True)
     inc_dir.mkdir(parents=True, exist_ok=True)
 
-    # Staging dir sits next to src_dir
     staging_dir = src_dir.parent / "_lvgl_staging"
     staging_dir.mkdir(parents=True, exist_ok=True)
 
@@ -40,7 +41,7 @@ def main():
         print(f"Converting {png.name} ...")
         cmd = [
             sys.executable,
-            str(LVGL_TOOL),
+            str(lvgl_tool),       # ← use passed path, no guessing
             "--ofmt", "C",
             "--cf", COLOR_FORMAT,
             "-o", str(staging_dir),
@@ -49,7 +50,6 @@ def main():
         subprocess.run(cmd, check=True)
         image_names.append(png.stem)
 
-    # Move .c to priv_src, .h to priv_include
     for file in staging_dir.iterdir():
         if file.suffix == ".c":
             shutil.move(str(file), str(src_dir / file.name))
@@ -74,17 +74,18 @@ def generate_assets_header(names, inc_dir):
 
 if __name__ == "__main__":
     main()
+r'''
 
-r"""
 ---
 
-### What was wrong
-
-**The hardcoded `ASSETS_DIR`** — the old script completely ignored `sys.argv[1]` for finding PNGs and always looked in `ui_component/assets/images` relative to itself. So it either found nothing (empty `assets.h`) or looked in the wrong place entirely.
-
-**The argument mismatch** — `main.py` passes 3 full paths:
+### Flow summary
 ```
-images_dir   -> e:\project\assets\images      (where PNGs are)
-priv_src     -> e:\project\ui_src\priv_src    (full path)
-priv_include -> e:\project\ui_src\priv_include (full path)
-"""
+main.py
+  find_or_download_lvgl_tool()  ← asks user once, caches in platformdirs
+        ↓ lvgl_tool path
+  run_image_converter(..., lvgl_tool)
+        ↓ passes as sys.argv[4]
+  image_converter.py
+        ↓ uses it directly, no searching
+  LVGLImage.py
+  '''

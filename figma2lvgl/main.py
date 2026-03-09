@@ -6,11 +6,11 @@ import argparse
 import xml.etree.ElementTree as ET
 from pathlib import Path
 
-from core.figma_parser import parse_screen
-from core.generator import generate_screen
-from core.utils.utils import write_file
-from core.cmake_generator import generate_cmake
-from core.child_registry import CHILDREN
+from figma2lvgl.core.figma_parser import parse_screen
+from figma2lvgl.core.generator import generate_screen
+from figma2lvgl.core.utils.utils import write_file
+from figma2lvgl.core.cmake_generator import generate_cmake
+from figma2lvgl.core.child_registry import CHILDREN
 
 
 # -------------------------------------------------
@@ -98,7 +98,7 @@ def validate_assets(screens, images_dir):
 # -------------------------------------------------
 # Run image converter script with dest folders
 # -------------------------------------------------
-def run_image_converter(images_dir, priv_src_dir, priv_include_dir):
+def run_image_converter(images_dir, priv_src_dir, priv_include_dir, lvgl_tool):
     script = Path(__file__).parent / "tools" / "image_converter.py"
 
     if not script.exists():
@@ -109,11 +109,12 @@ def run_image_converter(images_dir, priv_src_dir, priv_include_dir):
 
     result = subprocess.run(
         [
-            sys.executable,       # same Python that's running this script
+            sys.executable,
             str(script),
-            str(images_dir),      # -i equivalent: where the PNGs live
-            str(priv_src_dir),    # where .c files go
-            str(priv_include_dir) # where .h files go
+            str(images_dir),
+            str(priv_src_dir),
+            str(priv_include_dir),
+            str(lvgl_tool)          # ← new 4th argument
         ],
         capture_output=True,
         text=True
@@ -130,8 +131,6 @@ def run_image_converter(images_dir, priv_src_dir, priv_include_dir):
 
     print("Image conversion completed successfully.")
     return True
-
-
 # -------------------------------------------------
 # Argument parsing
 # -------------------------------------------------
@@ -198,6 +197,36 @@ def copy_static_headers(priv_inc: Path) -> bool:
 
     return True
 
+
+#--Dependencies
+def find_or_download_lvgl_tool() -> Path:
+    # Standard user cache directory, cross-platform
+    import platformdirs
+    cache_dir = Path(platformdirs.user_cache_dir("figma2lvgl"))
+    cached = cache_dir / "LVGLImage.py"
+
+    if cached.is_file():
+        return cached
+
+    print("\n  figma2lvgl requires LVGLImage.py from the LVGL project (MIT licensed).")
+    print("  Source: https://github.com/lvgl/lvgl/blob/master/scripts/LVGLImage.py")
+    print()
+
+    answer = input("  Download and cache it now? [y/n]: ").strip().lower()
+    if answer not in ("y", "yes"):
+        print("  Aborted. You can manually place LVGLImage.py next to image_converter.py.")
+        return None
+
+    import urllib.request
+    url = "https://raw.githubusercontent.com/lvgl/lvgl/master/scripts/LVGLImage.py"
+    cache_dir.mkdir(parents=True, exist_ok=True)
+
+    print("  Downloading...")
+    urllib.request.urlretrieve(url, cached)
+    print(f"  Saved to {cached}")
+    return cached
+
+#############
 # -------------------------------------------------
 # Main
 # -------------------------------------------------
@@ -267,6 +296,10 @@ def main():
     if not validate_assets(screens, images_dir):
         sys.exit(1)
 
+    lvgl_tool = find_or_download_lvgl_tool()
+    if lvgl_tool is None:
+        sys.exit(1)
+
     # --- Reset output folders ---
       # --- Confirm overwrite if ui_src already exists ---
     if not confirm_overwrite(ui_src):
@@ -278,8 +311,8 @@ def main():
         reset_directory(folder)
 
     # --- Run image converter ---
-    if not run_image_converter(images_dir, priv_src, priv_inc):
-        sys.exit(1)
+    if not run_image_converter(images_dir, priv_src, priv_inc, lvgl_tool):
+            sys.exit(1)
 
     # --- Copy static headers ---
     print("\nCopying static headers...")
