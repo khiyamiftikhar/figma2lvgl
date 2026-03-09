@@ -1,109 +1,161 @@
-# Figma → LVGL UI Code Generator (ESP-IDF Ready)
+# figma2lvgl — Figma to LVGL C Code Generator
 
-A **code-generation tool** that converts **Figma UI layouts** into a
-complete **ESP-IDF component** containing:
+A **code-generation tool** that converts **Figma UI layouts** into
+**LVGL C source files** ready to drop into any embedded project.
 
--   Static LVGL screen structures
--   Thread-safe update system
--   Versioned runtime engine
--   Auto-generated CMake configuration
+- Works with **any LVGL v9 project** (ESP-IDF, Zephyr, bare-metal, etc.)
+- Installable via **pip** — no manual script setup
+- Fully cross-platform — Windows, Linux, macOS
 
-Designed specifically for **embedded systems (ESP32 + LVGL v9)**.
-
-------------------------------------------------------------------------
+---
 
 ## ✨ Key Features
 
--   📐 Figma XML → Deterministic C code
--   🧵 Thread-safe UI updates via worker queue
--   🧱 Static metadata-driven UI (`ui_screen_t`, `ui_child_t`)
--   📦 Generates full ESP-IDF component
--   🔁 Versioned runtime (safe upgrades)
--   🧩 Extensible via template system
--   🎯 Zero dynamic layout parsing at runtime
+- 📐 Figma XML → Deterministic C code
+- 🧵 Thread-safe UI updates via worker queue
+- 🧱 Static metadata-driven UI (`ui_screen_t`, `ui_child_t`)
+- 📦 Generates self-contained `ui_src/` folder
+- 🔁 Versioned runtime (safe upgrades)
+- 🧩 Extensible via template system
+- 🎯 Zero dynamic layout parsing at runtime
 
-------------------------------------------------------------------------
+---
 
-## 🧠 Architecture Overview
-
-    Figma XML
-        ↓
-    Parser
-        ↓
-    Model (Screen + Children)
-        ↓
-    Templates
-        ↓
-    Generated Code
-        ↓
-    ESP-IDF Component (ui_component/)
-            ├── generated/
-            ├── runtime_vX_Y_Z/
-            ├── CMakeLists.txt
-            └── idf_component.yml
-
-------------------------------------------------------------------------
-
-## 📁 Repository Layout
-
-    figma-lvgl-generator/
-    │
-    ├── main.py                ← Entry point
-    ├── core/                  ← Generator engine (private)
-    │   ├── model/
-    │   ├── emit/
-    │   ├── templates/
-    │   ├── utils/
-    │   ├── generator.py
-    │   ├── figma_parser.py
-    │   ├── cmake_generator.py
-    │   └── config.py
-    │
-    └── ui_component/               ← Generated ESP-IDF component
-        ├── src_generated/          ← Screen files (.c/.h)
-        ├── runtime/                ← Runtime engine
-        |── assets/images           ← Images png files referred in xml
-        |── assets/src_generated    ← Source file generated for converted images
-        ├── CMakeLists.txt
-        └── idf_component.yml
-
-------------------------------------------------------------------------
-
-## 🚀 Usage
-
-``` bash
-python main.py layout.xml
+## 🚀 Installation
+```bash
+pip install figma2lvgl
 ```
 
-This generates:
+### Prerequisite — LVGLImage.py
 
-    ui_component/
-        src_generated/                  #ui C files
-        assets/src_generated            #Converted Image source 
-        CMakeLists.txt        
+Image conversion requires `LVGLImage.py` from the official LVGL repository.
+On first run, figma2lvgl will ask to download and cache it automatically.
+You can also place it manually next to your XML file.
 
-Then copy `ui_component/` into your ESP-IDF `components/` directory.
+---
 
-------------------------------------------------------------------------
+## 📖 Usage
+```bash
+figma2lvgl -x diagram.xml
+```
 
-## 🧩 Extending with New GUI Elements
+All arguments:
 
-To add a new UI element:
+| Argument | Description | Default |
+|---|---|---|
+| `-x` | Path to Figma XML file | **Required** |
+| `-i` | Folder containing PNG images | Same directory as XML |
+| `-d` | Destination for generated output | Same directory as XML |
 
-1.  Create a new template inside `core/templates/`
-2.  Register it in `child_registry.py`
-3.  Use naming tokens in Figma (e.g. `_button`)
+Examples:
+```bash
+# Minimal — everything next to the XML
+figma2lvgl -x /home/user/project/layout.xml
 
-No changes to generator core required.
+# Full control
+figma2lvgl -x layout.xml -i assets/images -d build/output
 
-------------------------------------------------------------------------
+# Windows
+figma2lvgl -x E:\project\layout.xml -i E:\project\images -d E:\project\output
+```
+
+---
+
+## 📁 Output Layout
+
+Running the tool produces a `ui_src/` folder at the destination:
+```
+ui_src/
+  src/              ← Generated screen .c files
+  include/          ← Generated screen .h files
+  priv_src/         ← Converted image .c files
+  priv_include/     ← Image header (assets.h) + and all struct definition header (ui_defs.h)
+```
+
+Drop `ui_src/` into your project and add the source files to your build system manually.
 
 
+## 🎨 Designing in Figma
+
+figma2lvgl reads the **Figma node name** to identify each UI element.
+Three element types are currently supported:
+
+### Text / Label
+Any `Text` node is automatically mapped to an LVGL label.
+Just create a text element in Figma — no special naming required.
+```
+Figma node type: Text
+Figma name:      anything (e.g. "Time", "Welcome", "status_label")
+Maps to:         LV_OBJ label
+```
+
+### Image
+Any node whose name contains `icon` or `image` is mapped to an LVGL image.
+The name must match the PNG filename placed in your images folder.
+```
+Figma node type: INSTANCE or FRAME
+Figma name:      must contain "icon" or "image" (e.g. "icon_wifi", "image_logo")
+Maps to:         LV_OBJ image
+Asset required:  icon_wifi.png / image_logo.png in your images folder
+```
+
+### Bar
+Any node whose name contains `bar` is mapped to an LVGL bar widget.
+```
+Figma node type: RECTANGLE
+Figma name:      must contain "bar" (e.g. "bar", "progress_bar", "battery_bar")
+Maps to:         LV_OBJ bar
+```
+
+### Naming Rules Summary
+
+| Element | Figma Type | Name Requirement |
+|---|---|---|
+| Label | Text | any name |
+| Image | any | must contain `icon` or `image` |
+| Bar | Rectangle | must contain `bar` |
+
+> **Note:** Names are case-insensitive. `Bar`, `BAR`, and `bar` all work.
+> The Figma frame name becomes the screen name in generated code.
+---
+
+## 🧠 Architecture Overview
+```
+
+Figma XML
+    ↓
+Parser
+    ↓
+Model (Screen + Children)
+    ↓
+Templates
+    ↓
+Generated Code (ui_src/)
+    ├── src/
+    ├── include/
+    ├── priv_src/
+    └── priv_include/
+```
+
+---
+
+## 💡 Example Integrations
+
+See the `examples/` folder for ready-to-use project setups across different platforms:
+```
+examples/
+  espidf/
+    ili9486/        ← ESP32 + ILI9486 display
+```
+
+More platform examples (STM32, Zephyr, bare-metal) coming soon.
+
+---
 
 ## 🏁 Design Philosophy
 
--   Figma = layout only
--   Naming = semantics
--   Generator = metadata builder
--   Runtime = LVGL execution engine
--   All UI updates = thread-safe
+- **Figma** = layout only
+- **Naming conventions** = semantics
+- **Generator** = metadata builder
+- **Output** = portable C, no runtime dependencies beyond LVGL
+- **All UI updates** = thread-safe

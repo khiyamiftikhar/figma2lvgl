@@ -1,8 +1,8 @@
 # figma_parser.py
 
-from core.utils.utils import normalize_id
-from core.utils.utils import to_snake_case
-from core.utils.figma_helpers import map_tag_to_child_type, int_attr
+from figma2lvgl.core.utils.utils import normalize_id
+from figma2lvgl.core.utils.utils import to_snake_case
+from figma2lvgl.core.utils.figma_helpers import map_tag_to_child_type, int_attr
 
 
 class ParsedChild:
