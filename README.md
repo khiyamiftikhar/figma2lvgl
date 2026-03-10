@@ -79,6 +79,23 @@ Drop `ui_src/` into your project and add the source files to your build system m
 
 figma2lvgl reads the **Figma node name** to identify each UI element.
 Three element types are currently supported:
+### Example Links
+    ILI9486 320 x 480 screen
+    https://www.figma.com/design/JU5Og9SLLkJiLlspSwfRCb/ili9486?node-id=0-1&t=0rfYzdqqKZITkTkW-1
+
+    128 x 32 OLED
+    https://www.figma.com/design/uBkcRNjG82tD8hR1sb4wjW/Home-Lock-Gate-Node?node-id=0-1&t=cxgoN9O1GflqxDJP-1
+
+### Exporting XML from Figma
+
+figma2lvgl reads XML exported via the **FigML — Figma XML Exporter Plugin**.
+
+To export your design:
+1. Right-click on your frame in Figma
+2. Go to **Plugins → FigML - Figma XML Exporter Plugin → FigML**
+3. Export and save the `.xml` file
+4. Pass it to figma2lvgl using `-x`
+![Figma XML Export](https://raw.githubusercontent.com/khiyamiftikhar/figma2lvgl/main/docs/figma-export.png)
 
 ### Text / Label
 Any `Text` node is automatically mapped to an LVGL label.
