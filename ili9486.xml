@@ -2,7 +2,7 @@
 <?figml version="1.0"?>
 <page id="0:1" name="Page_1" type="PAGE">
   <children>
-    <Frame id="6:3" name="home" expanded="true" maskType="ALPHA" x="-170" y="-287" width="320" height="480" clipsContent="true" type="FRAME">
+    <Frame id="6:3" name="ili9486_home" expanded="true" maskType="ALPHA" x="-170" y="-287" width="320" height="480" clipsContent="true" type="FRAME">
       <children>
         <Text id="6:4" name="Time" maskType="ALPHA" strokeAlign="OUTSIDE" x="94" y="79" width="133" height="34" fontSize="12" fontWeight="400" hyperlink="" characters="Time is 15:00" type="TEXT" textAlignVertical="TOP">
           <fills>
@@ -14,11 +14,16 @@
           <lineHeight unit="AUTO" />
         </Text>
         <Text id="6:6" name="Welcome" maskType="ALPHA" strokeAlign="OUTSIDE" x="83" y="240" width="165" height="52" fontSize="12" fontWeight="400" hyperlink="" characters="Welcome to the test" type="TEXT" textAlignVertical="TOP">
+          <effects>
+            <effect type="INNER_SHADOW" radius="4" spread="0" blendMode="NORMAL" color="#000000">
+              <offset x="0" y="4" />
+            </effect>
+          </effects>
           <fills>
-            <fill blendMode="NORMAL" color="#000000" />
+            <fill blendMode="NORMAL" color="#5ded10" />
           </fills>
           <constraints horizontal="MIN" vertical="MIN" />
-          <fontName family="Inter" style="Regular" />
+          <fontName family="Instrument Sans" style="Regular" />
           <letterSpacing value="0" unit="PERCENT" />
           <lineHeight unit="AUTO" />
         </Text>
@@ -46,10 +51,33 @@
         </icon_wifi>
         <Rectangle id="21:4" name="bar" maskType="ALPHA" x="33" y="311" width="241" height="35" type="RECTANGLE">
           <fills>
-            <fill blendMode="NORMAL" color="#d9d9d9" />
+            <fill blendMode="NORMAL" color="#e56060" />
           </fills>
           <constraints horizontal="MIN" vertical="MIN" />
         </Rectangle>
+        <Wifi_off id="36:5" name="Wifi_off" maskType="ALPHA" x="129" y="143" width="48" height="48" clipsContent="true" variantProperties="" type="INSTANCE">
+          <children>
+            <Vector id="I36:5;7758:12594" name="Icon" maskType="ALPHA" strokeWeight="3" strokeJoin="ROUND" strokeAlign="CENTER" strokeCap="ROUND" x="1.9999992847442627" y="1.9999992847442627" width="44" height="44" type="VECTOR">
+              <strokes>
+                <stroke blendMode="NORMAL" color="#1e1e1e" />
+              </strokes>
+              <constraints horizontal="SCALE" vertical="SCALE" />
+            </Vector>
+          </children>
+          <fills>
+            <fill visible="false" blendMode="NORMAL" color="#ffffff" />
+          </fills>
+          <constraints horizontal="MIN" vertical="MIN" />
+          <mainComponent id="36:3" />
+          <overrides>
+            <override id="36:5">
+              <overriddenFields>
+                <overriddenField value="height" index="0" />
+                <overriddenField value="width" index="1" />
+              </overriddenFields>
+            </override>
+          </overrides>
+        </Wifi_off>
       </children>
       <fills>
         <fill blendMode="NORMAL" color="#ffffff" />
