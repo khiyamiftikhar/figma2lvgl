@@ -395,9 +395,9 @@ def main():
         print(f"  - {h}")
 
     # --- Generate CMake ---
-    cmake_text = generate_cmake()
-    cmake_path = ui_src / "CMakeLists.txt"
-    write_file(str(cmake_path), cmake_text)
+    #cmake_text = generate_cmake()
+    #cmake_path = ui_src / "CMakeLists.txt"
+    #write_file(str(cmake_path), cmake_text)
 
     print("\n==========================================")
     print(" PIPELINE COMPLETED SUCCESSFULLY")
