@@ -4,20 +4,27 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "figma2lvgl"
-dynamic = ["version"]          # ← tell setuptools version comes from git
-description = "Generate LVGL C source files from Figma XML exports"
+dynamic = ["version"]
+description = "Generate LVGL9 C source files from Figma XML exports"
 readme = "README.md"
 license = { file = "LICENSE" }
 requires-python = ">=3.8"
+authors = [
+    { name = "Khiyam Iftikhar", email = "khiyamiftikhar@gmail.com" }
+]
 dependencies = [
     "platformdirs>=3.0",
 ]
-keywords = ["lvgl", "figma", "codegen", "embedded", "ui"]
+keywords = ["lvgl", "lvgl9" ,"figma", "codegen", "embedded", "ui" , "lvgl-ui"]
 classifiers = [
+    "Development Status :: 3 - Alpha",
     "Programming Language :: Python :: 3",
     "License :: OSI Approved :: MIT License",
     "Operating System :: OS Independent",
     "Topic :: Software Development :: Code Generators",
+    "Topic :: Software Development :: Embedded Systems",
+    "Environment :: Console",
+    "Intended Audience :: Developers",
 ]
 
 [project.scripts]
@@ -34,3 +41,7 @@ include = ["figma2lvgl*"]
 [tool.setuptools_scm]
 version_scheme = "no-guess-dev"
 local_scheme = "no-local-version"
+
+[project.urls]
+Homepage = "https://github.com/khiyamiftikhar/figma2lvgl"
+Issues = "https://github.com/khiyamiftikhar/figma2lvgl/issues"
