@@ -13,6 +13,49 @@ from figma2lvgl.core.cmake_generator import generate_cmake
 from figma2lvgl.core.child_registry import CHILDREN
 
 
+
+
+
+#The image converion code downloaded and used from offical lvgl repo, has header inclusion
+#which falss back to "lvgl/lvgl.h" which causes compile error for esp32. it relaces that
+# block after generation
+#
+def fix_lvgl_includes(priv_src_dir):
+    old_block = '''#if defined(LV_LVGL_H_INCLUDE_SIMPLE)
+#include "lvgl.h"
+#elif defined(LV_LVGL_H_INCLUDE_SYSTEM)
+#include <lvgl.h>
+#elif defined(LV_BUILD_TEST)
+#include "../lvgl.h"
+#else
+#include "lvgl/lvgl.h"
+#endif'''
+
+    new_block = '''#if defined(LV_LVGL_H_INCLUDE_SIMPLE)
+#include "lvgl.h"
+#elif defined(LV_LVGL_H_INCLUDE_SYSTEM)
+#include <lvgl.h>
+#elif defined(LV_BUILD_TEST)
+#include "../lvgl.h"
+#elif defined(ESP_PLATFORM)
+#include "lvgl.h"
+#else
+#include "lvgl/lvgl.h"
+#endif'''
+
+    for c_file in Path(priv_src_dir).glob("*.c"):
+        with open(c_file, "r", encoding="utf-8") as f:
+            content = f.read()
+
+        if old_block in content:
+            content = content.replace(old_block, new_block)
+
+            with open(c_file, "w", encoding="utf-8") as f:
+                f.write(content)
+
+            print(f"  Patched LVGL include block in {c_file.name}")
+
+
 # -------------------------------------------------
 # Clean directory completely and recreate it
 # -------------------------------------------------
@@ -321,6 +364,11 @@ def main():
     # --- Run image converter ---
     if not run_image_converter(images_dir, priv_src, priv_inc, lvgl_tool):
             sys.exit(1)
+    
+    # --- Fix LVGL includes in converted files ---
+    fix_lvgl_includes(priv_src)
+
+     # --- Generate UI source files ---
 
     #---Copy static files, so both headers and src
     print("\nCopying static files...")
