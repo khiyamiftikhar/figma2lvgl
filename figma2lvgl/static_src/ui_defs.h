@@ -17,35 +17,25 @@ extern "C" {
 
 typedef struct {
     bool        has_bg;
-    lv_color_t  bg;
-
+    uint32_t    bg;              // raw hex e.g. 0xFFFFFF
     bool        has_bg_opa;
     uint8_t     bg_opa;
-
     bool        has_border_color;
-    lv_color_t  border_color;
-
+    uint32_t    border_color;    // raw hex
     bool        has_border_width;
     lv_coord_t  border_width;
-
     bool        has_radius;
     lv_coord_t  radius;
-
 } ui_style_box_t;
 
-
 typedef struct {
-    bool            has_color;
-    lv_color_t      color;
-
-    bool            has_size;
-    uint16_t        size;
-
-    bool            has_align;
+    bool        has_color;
+    uint32_t    color;           // raw hex
+    bool        has_size;
+    uint16_t    size;
+    bool        has_align;
     lv_text_align_t align;
-
 } ui_style_text_t;
-
 
 typedef struct {
     bool        has_opacity;
