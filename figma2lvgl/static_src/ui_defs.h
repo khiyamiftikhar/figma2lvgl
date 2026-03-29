@@ -14,6 +14,42 @@ extern "C" {
 #define UI_MAX_STRING_LENGTH    30
 #define UI_MAX_ID_LENGTH        30
 
+
+typedef struct {
+    bool        has_bg;
+    uint32_t    bg;              // raw hex e.g. 0xFFFFFF
+    bool        has_bg_opa;
+    uint8_t     bg_opa;
+    bool        has_border_color;
+    uint32_t    border_color;    // raw hex
+    bool        has_border_width;
+    lv_coord_t  border_width;
+    bool        has_radius;
+    lv_coord_t  radius;
+} ui_style_box_t;
+
+typedef struct {
+    bool        has_color;
+    uint32_t    color;           // raw hex
+    bool        has_size;
+    uint16_t    size;
+    bool        has_align;
+    lv_text_align_t align;
+} ui_style_text_t;
+
+typedef struct {
+    bool        has_opacity;
+    uint8_t     opacity;
+} ui_style_effects_t;
+
+
+typedef struct {
+    ui_style_box_t      box;
+    ui_style_text_t     text;
+    ui_style_effects_t  effects;
+} ui_style_t;
+
+
 typedef enum
 {
     UI_CHILD_ICON,
@@ -40,7 +76,7 @@ typedef struct {
     int y;
     int w;
     int h;
-
+    ui_style_t style;       // ← add this, zero-initialized = "no styles"
     union {
 
         struct {    // LABEL
@@ -73,44 +109,6 @@ typedef struct {
 
 
 
-typedef struct ui_job_t ui_job_t;
-typedef void (*ui_job_cb_t)(ui_job_t *job);
-
-typedef enum {
-    UI_JOB_SET_LABEL,
-    UI_JOB_LOAD_SCREEN,
-    UI_JOB_SET_BAR,
-    UI_JOB_SET_IMAGE,
-} ui_job_type_t;
-
-typedef struct {
-    
-    char text[UI_MAX_STRING_LENGTH];
-} ui_label_job_t;
-
-
-typedef struct {
-    int32_t value;        // Target value
-    uint32_t duration_ms; // Animation duration
-} ui_bar_job_t;
-
-typedef struct {
-    const lv_image_dsc_t *src;   // pointer to compiled image
-} ui_image_job_t;
-
-
-typedef struct ui_job_t {
-    ui_job_cb_t cb;
-    uint8_t child_index;
-    ui_job_type_t type;
-
-    union {
-        ui_label_job_t label;
-        ui_bar_job_t   bar;
-        ui_image_job_t image;
-    } data;
-
-} ui_job_t;
 
 #ifdef __cplusplus
 }

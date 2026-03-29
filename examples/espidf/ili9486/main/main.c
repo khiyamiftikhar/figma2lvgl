@@ -1,8 +1,8 @@
 
 
 #include "display.h"
-#include "ui_home.h"
-//#include "ui_boot.h"
+#include "ui_ili9486_home.h"
+//#include "ui_ili9486_boot.h"
 
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
@@ -22,24 +22,24 @@ void app_main(void)
     }
 
    
-    ui_home_init();
+    ui_ili9486_home_init();
     lvgl_port_lock(portMAX_DELAY);
-    ui_home_load();
+    ui_ili9486_home_load();
     lvgl_port_unlock();
 
     vTaskDelay(pdMS_TO_TICKS(DELAY_MS)); // Simulate some delay for the boot screen
     lvgl_port_lock(portMAX_DELAY);
-    ui_home_set_time("time is 12:34");
+    ui_ili9486_home_set_time("time is 12:34");
     lvgl_port_unlock();
     
     vTaskDelay(pdMS_TO_TICKS(DELAY_MS)); // Simulate some delay for the boot screen
     lvgl_port_lock(portMAX_DELAY);
-    ui_home_set_welcome("Hello welcome");
+    ui_ili9486_home_set_welcome("Hello welcome");
     lvgl_port_unlock();
     vTaskDelay(pdMS_TO_TICKS(DELAY_MS)); // Simulate some delay for the boot screen
     lvgl_port_lock(portMAX_DELAY);
-    ui_home_display_icon_wifi();
-    ui_home_set_bar(100, 2000);
+    ui_ili9486_home_display_icon_wifi();
+    ui_ili9486_home_set_bar(100, 2000);
     lvgl_port_unlock();
     //vTaskDelay(pdMS_TO_TICKS(DELAY_MS)); // Simulate some delay for the boot screen
 

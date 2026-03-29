@@ -8,3 +8,10 @@ managed_components/
 .vscode/
 dump_repo.py
 *.txt
+  3.0
+dist/
+figma2lvgl.egg-info/
+images/
+pip
+test_envtest_env/
+ui_src/
