@@ -79,4 +79,8 @@ void ui_apply_style(lv_obj_t *obj, ui_child_type_t type, const ui_style_t *s)
 
     if (s->effects.has_opacity)
         lv_obj_set_style_opa(obj, s->effects.opacity, LV_PART_MAIN);
+    
+    // ── Bar indicator — apply fill color to the animated part ───────────────────
+    if (type == UI_CHILD_BAR && s->box.has_bg)
+        lv_obj_set_style_bg_color(obj, lv_color_hex(s->box.bg), LV_PART_INDICATOR);
 }
