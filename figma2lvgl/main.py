@@ -13,6 +13,49 @@ from figma2lvgl.core.cmake_generator import generate_cmake
 from figma2lvgl.core.child_registry import CHILDREN
 
 
+
+
+
+#The image converion code downloaded and used from offical lvgl repo, has header inclusion
+#which falss back to "lvgl/lvgl.h" which causes compile error for esp32. it relaces that
+# block after generation
+#
+def fix_lvgl_includes(priv_src_dir):
+    old_block = '''#if defined(LV_LVGL_H_INCLUDE_SIMPLE)
+#include "lvgl.h"
+#elif defined(LV_LVGL_H_INCLUDE_SYSTEM)
+#include <lvgl.h>
+#elif defined(LV_BUILD_TEST)
+#include "../lvgl.h"
+#else
+#include "lvgl/lvgl.h"
+#endif'''
+
+    new_block = '''#if defined(LV_LVGL_H_INCLUDE_SIMPLE)
+#include "lvgl.h"
+#elif defined(LV_LVGL_H_INCLUDE_SYSTEM)
+#include <lvgl.h>
+#elif defined(LV_BUILD_TEST)
+#include "../lvgl.h"
+#elif defined(ESP_PLATFORM)
+#include "lvgl.h"
+#else
+#include "lvgl/lvgl.h"
+#endif'''
+
+    for c_file in Path(priv_src_dir).glob("*.c"):
+        with open(c_file, "r", encoding="utf-8") as f:
+            content = f.read()
+
+        if old_block in content:
+            content = content.replace(old_block, new_block)
+
+            with open(c_file, "w", encoding="utf-8") as f:
+                f.write(content)
+
+            print(f"  Patched LVGL include block in {c_file.name}")
+
+
 # -------------------------------------------------
 # Clean directory completely and recreate it
 # -------------------------------------------------
@@ -100,6 +143,7 @@ def validate_assets(screens, images_dir):
 # -------------------------------------------------
 def run_image_converter(images_dir, priv_src_dir, priv_include_dir, lvgl_tool):
     script = Path(__file__).parent / "tools" / "image_converter.py"
+    print(f"DEBUG: Running script at -> {script}")
 
     if not script.exists():
         print(f"ERROR: image_converter.py not found at {script}")
@@ -177,26 +221,33 @@ def parse_args():
     return parser.parse_args()
 
 # -------------------------------------------------
-# Copy static headers into priv_include
+# Copy static files into priv_include
 # -------------------------------------------------
-def copy_static_headers(priv_inc: Path) -> bool:
+def copy_static_files(priv_src: Path, priv_inc: Path) -> bool:
     static_src = Path(__file__).parent / "static_src"
 
     if not static_src.is_dir():
         print(f"WARNING: static_src/ not found at {static_src}, skipping.")
-        return True  # non-fatal, pipeline can still continue
+        return True
 
     copied = 0
+
+    # Copy headers → priv_include
     for header in static_src.glob("*.h"):
         shutil.copy2(str(header), str(priv_inc / header.name))
         print(f"  Copied {header.name} -> priv_include/")
         copied += 1
 
+    # Copy sources → priv_src
+    for source in static_src.glob("*.c"):
+        shutil.copy2(str(source), str(priv_src / source.name))
+        print(f"  Copied {source.name} -> priv_src/")
+        copied += 1
+
     if copied == 0:
-        print("WARNING: static_src/ exists but contains no .h files.")
+        print("WARNING: static_src/ exists but contains no .h/.c files.")
 
     return True
-
 
 #--Dependencies
 def find_or_download_lvgl_tool() -> Path:
@@ -313,10 +364,15 @@ def main():
     # --- Run image converter ---
     if not run_image_converter(images_dir, priv_src, priv_inc, lvgl_tool):
             sys.exit(1)
+    
+    # --- Fix LVGL includes in converted files ---
+    fix_lvgl_includes(priv_src)
 
-    # --- Copy static headers ---
-    print("\nCopying static headers...")
-    if not copy_static_headers(priv_inc):
+     # --- Generate UI source files ---
+
+    #---Copy static files, so both headers and src
+    print("\nCopying static files...")
+    if not copy_static_files(priv_src, priv_inc):
         sys.exit(1)
 
     # --- Generate UI source files ---
@@ -339,9 +395,9 @@ def main():
         print(f"  - {h}")
 
     # --- Generate CMake ---
-    cmake_text = generate_cmake()
-    cmake_path = ui_src / "CMakeLists.txt"
-    write_file(str(cmake_path), cmake_text)
+    #cmake_text = generate_cmake()
+    #cmake_path = ui_src / "CMakeLists.txt"
+    #write_file(str(cmake_path), cmake_text)
 
     print("\n==========================================")
     print(" PIPELINE COMPLETED SUCCESSFULLY")

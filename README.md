@@ -12,6 +12,7 @@ A **code-generation tool** that converts **Figma UI layouts** into
 ## ✨ Key Features
 
 - 📐 Figma XML → Deterministic C code
+- 🎨 Figma styles (color, font, radius, border) → LVGL style calls
 - 🧵 Thread-safe UI updates via worker queue
 - 🧱 Static metadata-driven UI (`ui_screen_t`, `ui_child_t`)
 - 📦 Generates self-contained `ui_src/` folder
@@ -68,17 +69,18 @@ Running the tool produces a `ui_src/` folder at the destination:
 ui_src/
   src/              ← Generated screen .c files
   include/          ← Generated screen .h files
-  priv_src/         ← Converted image .c files
-  priv_include/     ← Image header (assets.h) + and all struct definition header (ui_defs.h)
+  priv_src/         ← Converted image .c files + ui_style.c
+  priv_include/     ← Image header (assets.h), struct definitions (ui_defs.h), ui_style.h
 ```
 
 Drop `ui_src/` into your project and add the source files to your build system manually.
 
+---
 
 ## 🎨 Designing in Figma
 
-figma2lvgl reads the **Figma node name** to identify each UI element.
-Three element types are currently supported:
+figma2lvgl reads the **Figma node name** to identify each UI element and the **Figma styles**
+to generate matching LVGL style calls.
 
 ### Exporting XML from Figma
 
@@ -92,16 +94,19 @@ To export your design:
 
 ![Figma XML Export](https://raw.githubusercontent.com/khiyamiftikhar/figma2lvgl/main/docs/figma-export.png)
 
-### Text / Label
+---
+
+### Supported Elements
+
+#### Text / Label
 Any `Text` node is automatically mapped to an LVGL label.
-Just create a text element in Figma — no special naming required.
 ```
 Figma node type: Text
 Figma name:      anything (e.g. "Time", "Welcome", "status_label")
 Maps to:         LV_OBJ label
 ```
 
-### Image
+#### Image
 Any node whose name contains `icon` or `image` is mapped to an LVGL image.
 The name must match the PNG filename placed in your images folder.
 ```
@@ -111,7 +116,7 @@ Maps to:         LV_OBJ image
 Asset required:  icon_wifi.png / image_logo.png in your images folder
 ```
 
-### Bar
+#### Bar
 Any node whose name contains `bar` is mapped to an LVGL bar widget.
 ```
 Figma node type: RECTANGLE
@@ -119,7 +124,7 @@ Figma name:      must contain "bar" (e.g. "bar", "progress_bar", "battery_bar")
 Maps to:         LV_OBJ bar
 ```
 
-### Naming Rules Summary
+#### Naming Rules Summary
 
 | Element | Figma Type | Name Requirement |
 |---|---|---|
@@ -129,7 +134,42 @@ Maps to:         LV_OBJ bar
 
 > **Note:** Names are case-insensitive. `Bar`, `BAR`, and `bar` all work.
 > The Figma frame name becomes the screen name in generated code.
+
 ---
+
+### Supported Styles
+
+Styles applied in Figma are automatically extracted and translated to LVGL style calls at runtime.
+No manual style code needed.
+
+| Figma Property | Applies To | LVGL Call |
+|---|---|---|
+| Fill color | All widgets | `lv_obj_set_style_bg_color` |
+| Fill opacity | All widgets | `lv_obj_set_style_bg_opa` |
+| Text color | Labels | `lv_obj_set_style_text_color` |
+| Font size | Labels | `lv_obj_set_style_text_font` |
+| Text alignment | Labels | `lv_obj_set_style_text_align` |
+| Corner radius | All widgets | `lv_obj_set_style_radius` |
+| Stroke color | All widgets | `lv_obj_set_style_border_color` |
+| Stroke weight | All widgets | `lv_obj_set_style_border_width` |
+| Opacity | All widgets | `lv_obj_set_style_opa` |
+
+#### Font Sizes
+
+figma2lvgl maps Figma font sizes to LVGL Montserrat fonts. The following sizes are supported:
+`10, 12, 14, 16, 18, 20, 22, 24`. Any unmapped size falls back to the LVGL default font.
+
+Each font size must be enabled in your `lv_conf.h`:
+```c
+#define LV_FONT_MONTSERRAT_12  1
+#define LV_FONT_MONTSERRAT_14  1
+// ... enable only the sizes your design uses
+```
+
+> Only enable the sizes you actually use — each font adds flash usage on embedded targets.
+
+---
+
 ### Example Figma Files
 
 | Display | Link |
@@ -137,21 +177,23 @@ Maps to:         LV_OBJ bar
 | ILI9486 320x480 | [Open in Figma](https://www.figma.com/design/JU5Og9SLLkJiLlspSwfRCb/ili9486?node-id=0-1&t=0rfYzdqqKZITkTkW-1) |
 | 128x32 OLED | [Open in Figma](https://www.figma.com/design/uBkcRNjG82tD8hR1sb4wjW/Home-Lock-Gate-Node?node-id=0-1&t=cxgoN9O1GflqxDJP-1) |
 
+---
+
 ## 🧠 Architecture Overview
 ```
 Figma XML
     ↓
-Parser
+Parser  (layout + styles)
     ↓
-Model (Screen + Children)
+Model (Screen + Children + Styles)
     ↓
 Templates
     ↓
 Generated Code (ui_src/)
-    ├── src/
-    ├── include/
-    ├── priv_src/
-    └── priv_include/
+    ├── src/           ← screen .c files
+    ├── include/       ← screen .h files
+    ├── priv_src/      ← image .c files + ui_style.c
+    └── priv_include/  ← assets.h, ui_defs.h, ui_style.h
 ```
 
 ---
@@ -171,8 +213,8 @@ More platform examples (STM32, Zephyr, bare-metal) coming soon.
 
 ## 🏁 Design Philosophy
 
-- **Figma** = layout only
+- **Figma** = layout + visual style
 - **Naming conventions** = semantics
-- **Generator** = metadata builder
+- **Generator** = metadata + style builder
 - **Output** = portable C, no runtime dependencies beyond LVGL
 - **All UI updates** = thread-safe
