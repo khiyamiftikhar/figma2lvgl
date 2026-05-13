@@ -25,6 +25,7 @@ IMAGE_INIT = """
     case UI_CHILD_IMAGE:
         c->lv_obj = lv_image_create(${screen_var}.lv_screen);
         lv_obj_set_pos(c->lv_obj, c->x, c->y);
+        lv_obj_set_size(c->lv_obj, c->w, c->h);
         if(c->data.image.src)
             lv_image_set_src(c->lv_obj, c->data.image.src);
         break;

@@ -1,7 +1,11 @@
 # figma_parser.py
 
-from figma2lvgl.core.utils.utils import normalize_id, to_snake_case
-from figma2lvgl.core.utils.figma_helpers import map_tag_to_child_type, int_attr
+from figma2lvgl.core.utils.utils import normalize_id, to_snake_case, sanitize_c_string, UI_MAX_STRING_LENGTH, int_attr
+from figma2lvgl.core.utils.figma_helpers import map_tag_to_child_type
+from figma2lvgl.core.widget_type import WidgetType
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 # ── Color helpers ─────────────────────────────────────────────────────────────
@@ -100,8 +104,11 @@ def parse_style(node, child_type) -> ParsedStyle:
     node_type = node.attrib.get("type", "")
 
     # Infer text context from either Figma node type or mapped child type
-    # so labels are handled correctly even if node type attribute is absent
-    is_text = (node_type == "TEXT") or (child_type == "UI_CHILD_LABEL")
+    # so labels are handled correctly even if node type attribute is absent.
+    # CRITICAL: child_type is now a WidgetType enum — must use WidgetType.LABEL,
+    # not the string "UI_CHILD_LABEL". If this comparison is wrong, every label's
+    # fill color routes to bg_color instead of text.color.
+    is_text = (node_type == "TEXT") or (child_type == WidgetType.LABEL)
 
     # ── Fill color ────────────────────────────────────────────────────────────
     fill = _first_visible_fill(node)
@@ -157,9 +164,9 @@ def parse_style(node, child_type) -> ParsedStyle:
             except ValueError:
                 pass
 
-        align = node.attrib.get("textAlignHorizontal")
-        if align in ("LEFT", "CENTER", "RIGHT"):
-            style.text.align = align
+        # FigML does not export horizontal text alignment — the attribute is
+        # absent from all Text nodes. LVGL default (left) matches FigML default.
+        # lv_obj_set_style_text_align is therefore not emitted for labels.
 
     # ── Whole-widget opacity ──────────────────────────────────────────────────
     opacity = node.attrib.get("opacity")
@@ -175,14 +182,15 @@ def parse_style(node, child_type) -> ParsedStyle:
 # ── Parsed data classes ───────────────────────────────────────────────────────
 
 class ParsedChild:
-    def __init__(self, type, id, x, y, w, h, style=None):
-        self.type   = type
-        self.id     = id
-        self.x      = x
-        self.y      = y
-        self.w      = w
-        self.h      = h
-        self.style  = style or ParsedStyle()
+    def __init__(self, type, id, x, y, w, h, style=None, text_content=""):
+        self.type         = type
+        self.id           = id
+        self.x            = x
+        self.y            = y
+        self.w            = w
+        self.h            = h
+        self.style        = style or ParsedStyle()
+        self.text_content = text_content   # design-time default from Figma characters attr
 
 
 class ParsedScreen:
@@ -213,6 +221,17 @@ def parse_screen(frame_node):
     for child in list(children_parent):
         mapped = map_tag_to_child_type(child)
         if mapped is None:
+            # FIX-2: warn with frame name so user knows exactly where to look
+            logger.warning(
+                "In screen '%s': skipping node '%s' (tag='%s', type='%s'). "
+                "To generate a widget from this node, rename it in Figma to "
+                "include one of: 'icon' or 'image' (-> lv_image), "
+                "'bar' (-> lv_bar). Example: rename 'Wifi_off' -> 'icon_wifi_off'.",
+                frame_name,
+                child.attrib.get("name", "?"),
+                child.tag,
+                child.attrib.get("type", "?"),
+            )
             continue
 
         x = int_attr(child, "x")
@@ -231,12 +250,22 @@ def parse_screen(frame_node):
 
         style = parse_style(child, mapped)
 
+        # FIX-1: extract text content from characters attribute.
+        # In FigML, text content is a node attribute, not child text or element.
+        # sanitize_c_string escapes quotes, backslashes, and control characters
+        # (including embedded newlines which FigML may place in the attribute).
+        text_content = ""
+        if child.tag == "Text":
+            raw_text = child.attrib.get("characters", "")
+            text_content = sanitize_c_string(raw_text, UI_MAX_STRING_LENGTH)
+
         screen.children.append(
             ParsedChild(
                 type=mapped,
                 id=child_id,
                 x=x, y=y, w=w, h=h,
-                style=style
+                style=style,
+                text_content=text_content,
             )
         )
 
