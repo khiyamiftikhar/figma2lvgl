@@ -32,7 +32,7 @@ void ${sc_fn_name}(void)
 // ------------------------------
 // SCREEN INIT
 // ------------------------------
-void ${init_fn}(void)
+${bars_comment}void ${init_fn}(void)
 {
     ${screen_var}.lv_screen = lv_obj_create(NULL);
     for (int i = 0; i < ${screen_var}.child_count; i++)
