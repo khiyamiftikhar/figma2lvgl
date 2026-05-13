@@ -3,14 +3,19 @@ import os
 import shutil
 import subprocess
 import argparse
+import logging
 import xml.etree.ElementTree as ET
 from pathlib import Path
 
 from figma2lvgl.core.figma_parser import parse_screen
 from figma2lvgl.core.generator import generate_screen
 from figma2lvgl.core.utils.utils import write_file
-from figma2lvgl.core.cmake_generator import generate_cmake
 from figma2lvgl.core.child_registry import CHILDREN
+from figma2lvgl.core.config_writer import write_ui_config
+from figma2lvgl.tools.image_converter import convert_images
+
+logging.basicConfig(level=logging.INFO, format="%(levelname)s: %(message)s")
+logger = logging.getLogger(__name__)
 
 
 
@@ -71,15 +76,14 @@ def reset_directory(path):
 # -------------------------------------------------
 # Check if ui_src already has content and ask user
 # -------------------------------------------------
-def confirm_overwrite(ui_src: Path) -> bool:
+def confirm_overwrite(ui_src: Path, auto_yes: bool = False) -> bool:
     """
-    Returns True if it's safe to proceed (either folder is fresh,
-    or the user explicitly said yes).
+    Returns True if it's safe to proceed (folder is fresh, empty,
+    or user confirmed / --yes flag was passed).
     """
     if not ui_src.exists():
-        return True  # nothing there yet, no need to ask
+        return True
 
-    # Check if any of the 4 subfolders exist AND have files in them
     subfolders = ["src", "include", "priv_src", "priv_include"]
     has_content = any(
         (ui_src / sub).is_dir() and any((ui_src / sub).iterdir())
@@ -87,7 +91,11 @@ def confirm_overwrite(ui_src: Path) -> bool:
     )
 
     if not has_content:
-        return True  # folders exist but are empty, safe to proceed
+        return True
+
+    if auto_yes:
+        logger.info("--yes flag set: overwriting existing output in %s", ui_src)
+        return True
 
     print("\n==========================================")
     print(" WARNING: Output folder already has content")
@@ -118,11 +126,11 @@ def validate_assets(screens, images_dir):
     for screen in screens:
         required_assets.update(screen.get_required_assets(CHILDREN))
 
-    missing = []
-    for asset_id in required_assets:
-        expected_file = os.path.join(images_dir, asset_id + ".png")
-        if not os.path.exists(expected_file):
-            missing.append(expected_file)
+    missing = [
+        os.path.join(images_dir, asset_id + ".png")
+        for asset_id in required_assets
+        if not os.path.exists(os.path.join(images_dir, asset_id + ".png"))
+    ]
 
     if missing:
         print("\n==========================================")
@@ -138,43 +146,44 @@ def validate_assets(screens, images_dir):
     return True
 
 
-# -------------------------------------------------
-# Run image converter script with dest folders
-# -------------------------------------------------
-def run_image_converter(images_dir, priv_src_dir, priv_include_dir, lvgl_tool):
-    script = Path(__file__).parent / "tools" / "image_converter.py"
-    print(f"DEBUG: Running script at -> {script}")
+# run_image_converter removed — FIX-8: use convert_images() directly
 
-    if not script.exists():
-        print(f"ERROR: image_converter.py not found at {script}")
-        return False
 
-    print("\nRunning image conversion...")
+def _verify_compile(src_dir: Path, include_dir: Path, priv_inc: Path):
+    """
+    Syntax-check generated C files using gcc -fsyntax-only.
+    Does not link or run — just checks that the C is syntactically valid.
+    Exits with code 1 if any file fails.
 
-    result = subprocess.run(
-        [
-            sys.executable,
-            str(script),
-            str(images_dir),
-            str(priv_src_dir),
-            str(priv_include_dir),
-            str(lvgl_tool)          # ← new 4th argument
-        ],
-        capture_output=True,
-        text=True
-    )
+    Requires gcc on PATH. A stub lvgl.h is not required for syntax checking
+    since we pass -DLVGL_COMPILE_CHECK to suppress #include resolution.
+    In practice, most LVGL type errors are caught regardless.
+    """
+    import shutil
+    if not shutil.which("gcc"):
+        logger.warning("--verify-compile: gcc not found on PATH, skipping.")
+        return
+
+    c_files = sorted(src_dir.glob("*.c"))
+    if not c_files:
+        logger.warning("--verify-compile: no .c files found in %s", src_dir)
+        return
+
+    cmd = [
+        "gcc", "-fsyntax-only",
+        f"-I{include_dir}",
+        f"-I{priv_inc}",
+        "-DLVGL_COMPILE_CHECK",
+    ] + [str(f) for f in c_files]
+
+    logger.debug("Compile check: %s", " ".join(cmd))
+    result = subprocess.run(cmd, capture_output=True, text=True)
 
     if result.returncode != 0:
-        print("\n==========================================")
-        print(" IMAGE CONVERSION FAILED")
-        print("==========================================")
-        print(result.stdout)
-        print(result.stderr)
-        print("==========================================\n")
-        return False
+        logger.error("Compile check FAILED:\n%s", result.stderr)
+        sys.exit(1)
 
-    print("Image conversion completed successfully.")
-    return True
+    logger.info("Compile check passed (%d file(s)).", len(c_files))
 # -------------------------------------------------
 # Argument parsing
 # -------------------------------------------------
@@ -184,37 +193,75 @@ def parse_args():
         formatter_class=argparse.RawTextHelpFormatter,
         epilog=(
             "Examples:\n"
-            "  Windows:  python main.py -x E:/project/diagram.xml\n"
-            "  Linux:    python main.py -x /home/user/project/diagram.xml\n"
-            "  Full:     python main.py -x diagram.xml -i ./assets/images -d ./output\n"
+            "  Basic:      figma2lvgl -x layout.xml\n"
+            "  Full:       figma2lvgl -x layout.xml -i ./assets -d ./output\n"
+            "  CI:         figma2lvgl -x layout.xml --yes --lvgl-tool ./tools/LVGLImage.py\n"
+            "  Air-gapped: figma2lvgl -x layout.xml -y --lvgl-tool /ci/tools/LVGLImage.py\n"
         )
     )
 
     parser.add_argument(
         "-x", "--xml",
-        required=True,
-        metavar="PATH",
-        help="(Required) Path to the diagram XML file."
+        required=True, metavar="PATH",
+        help="(Required) Path to the Figma XML file exported by FigML."
     )
-
     parser.add_argument(
         "-i", "--images",
-        metavar="PATH",
-        default=None,
-        help=(
-            "Path to the folder containing PNG images.\n"
-            "Default: same directory as the XML file."
-        )
+        metavar="PATH", default=None,
+        help="Folder containing PNG image assets.\nDefault: same directory as the XML file."
     )
-
     parser.add_argument(
         "-d", "--dest",
-        metavar="PATH",
-        default=None,
+        metavar="PATH", default=None,
+        help="Destination folder where ui_src/ will be created.\nDefault: same directory as the XML file."
+    )
+    parser.add_argument(
+        "-y", "--yes",
+        action="store_true", default=False,
         help=(
-            "Destination folder where ui_src/ will be created.\n"
-            "Default: same directory as the XML file.\n"
-            "         This is recommended — output stays next to your project."
+            "Skip all interactive prompts.\n"
+            "Assumes yes to overwrite and auto-downloads LVGLImage.py if not cached.\n"
+            "For air-gapped CI use --lvgl-tool instead of relying on download."
+        )
+    )
+    parser.add_argument(
+        "--lvgl-tool",
+        metavar="PATH", default=None, type=Path,
+        help=(
+            "Path to LVGLImage.py. Skips cache lookup and download prompt.\n"
+            "Use in CI to pin the tool version or in air-gapped environments."
+        )
+    )
+    parser.add_argument(
+        "-f", "--color-format",
+        choices=["RGB565", "RGB888", "ARGB8888", "L8"],
+        default="RGB565", metavar="FMT",
+        help=(
+            "Pixel encoding for PNG image asset conversion.\n"
+            "Must match your display hardware color depth.\n"
+            "Options: RGB565, RGB888, ARGB8888, L8.  Default: RGB565."
+        )
+    )
+    parser.add_argument(
+        "--patch-esp-includes",
+        action="store_true", default=False,
+        help=(
+            "Patch LVGL include guards in generated image .c files for ESP-IDF.\n"
+            "Prefer setting LV_LVGL_H_INCLUDE_SIMPLE=1 in your CMakeLists.txt instead."
+        )
+    )
+    parser.add_argument(
+        "-v", "--verbose",
+        action="store_true", default=False,
+        help="Enable debug-level logging."
+    )
+    parser.add_argument(
+        "--verify-compile",
+        action="store_true", default=False,
+        help=(
+            "After generation, syntax-check generated C files using gcc.\n"
+            "Requires gcc on PATH. Checks syntax only — does not link or run.\n"
+            "Useful for catching template or substitution bugs early."
         )
     )
 
@@ -227,31 +274,36 @@ def copy_static_files(priv_src: Path, priv_inc: Path) -> bool:
     static_src = Path(__file__).parent / "static_src"
 
     if not static_src.is_dir():
-        print(f"WARNING: static_src/ not found at {static_src}, skipping.")
+        logger.warning("static_src/ not found at %s, skipping.", static_src)
         return True
 
-    copied = 0
-
-    # Copy headers → priv_include
     for header in static_src.glob("*.h"):
         shutil.copy2(str(header), str(priv_inc / header.name))
-        print(f"  Copied {header.name} -> priv_include/")
-        copied += 1
+        logger.info("Copied %s -> priv_include/", header.name)
 
-    # Copy sources → priv_src
     for source in static_src.glob("*.c"):
         shutil.copy2(str(source), str(priv_src / source.name))
-        print(f"  Copied {source.name} -> priv_src/")
-        copied += 1
-
-    if copied == 0:
-        print("WARNING: static_src/ exists but contains no .h/.c files.")
+        logger.info("Copied %s -> priv_src/", source.name)
 
     return True
 
-#--Dependencies
-def find_or_download_lvgl_tool() -> Path:
-    # Standard user cache directory, cross-platform
+#-- Dependencies
+def find_or_download_lvgl_tool(
+    auto_yes: bool = False,
+    tool_override: Path = None,
+) -> Path:
+    """
+    Resolve LVGLImage.py path.
+    --lvgl-tool bypasses cache and download entirely (best for CI).
+    --yes auto-confirms the download prompt.
+    """
+    if tool_override is not None:
+        if not tool_override.is_file():
+            logger.error("--lvgl-tool path not found: %s", tool_override)
+            return None
+        logger.info("Using LVGLImage.py from --lvgl-tool: %s", tool_override)
+        return tool_override
+
     import platformdirs
     cache_dir = Path(platformdirs.user_cache_dir("figma2lvgl"))
     cached = cache_dir / "LVGLImage.py"
@@ -263,18 +315,22 @@ def find_or_download_lvgl_tool() -> Path:
     print("  Source: https://github.com/lvgl/lvgl/blob/master/scripts/LVGLImage.py")
     print()
 
-    answer = input("  Download and cache it now? [y/n]: ").strip().lower()
+    if auto_yes:
+        answer = "y"
+        logger.info("--yes flag set: auto-downloading LVGLImage.py")
+    else:
+        answer = input("  Download and cache it now? [y/n]: ").strip().lower()
+
     if answer not in ("y", "yes"):
-        print("  Aborted. You can manually place LVGLImage.py next to image_converter.py.")
+        print("  Aborted. Use --lvgl-tool <path> to provide it manually.")
         return None
 
     import urllib.request
     url = "https://raw.githubusercontent.com/lvgl/lvgl/master/scripts/LVGLImage.py"
     cache_dir.mkdir(parents=True, exist_ok=True)
-
     print("  Downloading...")
     urllib.request.urlretrieve(url, cached)
-    print(f"  Saved to {cached}")
+    logger.info("Saved to %s", cached)
     return cached
 
 #############
@@ -284,31 +340,22 @@ def find_or_download_lvgl_tool() -> Path:
 def main():
     args = parse_args()
 
-    # --- Resolve XML path ---
+    if args.verbose:
+        logging.getLogger().setLevel(logging.DEBUG)
+
+    # --- Resolve paths ---
     xml_path = Path(args.xml).resolve()
     if not xml_path.is_file():
-        print(f"ERROR: XML file not found: {xml_path}")
+        logger.error("XML file not found: %s", xml_path)
         sys.exit(1)
 
-    # --- Resolve images dir (default: cwd) ---
     images_dir = Path(args.images).resolve() if args.images else xml_path.parent
     if not images_dir.is_dir():
-        print(f"ERROR: Images directory not found: {images_dir}")
+        logger.error("Images directory not found: %s", images_dir)
         sys.exit(1)
-    
-    
 
-    # --- Resolve destination dir (default: folder containing the XML) ---
     dest_dir = Path(args.dest).resolve() if args.dest else xml_path.parent
 
-    # --- Build output folder tree ---
-    #
-    #  <dest>/ui_src/
-    #    src/           ← .c files generated from XML
-    #    include/       ← .h files generated from XML
-    #    priv_src/      ← .c files from image converter
-    #    priv_include/  ← .h files from image converter
-    #
     ui_src      = dest_dir  / "ui_src"
     src_dir     = ui_src    / "src"
     include_dir = ui_src    / "include"
@@ -328,17 +375,17 @@ def main():
         tree = ET.parse(xml_path)
         root = tree.getroot()
     except Exception as e:
-        print(f"ERROR: Failed to parse XML: {e}")
+        logger.error("Failed to parse XML: %s", e)
         sys.exit(1)
 
     page_children = root.find("children")
     if page_children is None:
-        print("ERROR: No <children> element found in XML.")
+        logger.error("No <children> element found in XML.")
         sys.exit(1)
 
     frames = page_children.findall("Frame")
     if not frames:
-        print("ERROR: No <Frame> nodes found in XML.")
+        logger.error("No <Frame> nodes found in XML.")
         sys.exit(1)
 
     screens = [parse_screen(frame) for frame in frames]
@@ -347,57 +394,55 @@ def main():
     if not validate_assets(screens, images_dir):
         sys.exit(1)
 
-    lvgl_tool = find_or_download_lvgl_tool()
+    # --- Resolve LVGLImage.py ---
+    lvgl_tool = find_or_download_lvgl_tool(
+        auto_yes=args.yes,
+        tool_override=args.lvgl_tool,
+    )
     if lvgl_tool is None:
         sys.exit(1)
 
-    # --- Reset output folders ---
-      # --- Confirm overwrite if ui_src already exists ---
-    if not confirm_overwrite(ui_src):
+    # --- Confirm overwrite ---
+    if not confirm_overwrite(ui_src, auto_yes=args.yes):
         sys.exit(0)
 
     # --- Reset output folders ---
-    print("Cleaning output folders...")
+    logger.info("Cleaning output folders...")
     for folder in [src_dir, include_dir, priv_src, priv_inc]:
         reset_directory(folder)
 
     # --- Run image converter ---
-    if not run_image_converter(images_dir, priv_src, priv_inc, lvgl_tool):
-            sys.exit(1)
-    
-    # --- Fix LVGL includes in converted files ---
-    fix_lvgl_includes(priv_src)
+    if not convert_images(
+        images_dir, priv_src, priv_inc, lvgl_tool,
+        color_format=args.color_format,
+    ):
+        sys.exit(1)
 
-     # --- Generate UI source files ---
+    # --- ESP include patching (opt-in only) ---
+    if args.patch_esp_includes:
+        fix_lvgl_includes(priv_src)
+    # else: set LV_LVGL_H_INCLUDE_SIMPLE=1 in your CMakeLists.txt
 
-    #---Copy static files, so both headers and src
-    print("\nCopying static files...")
+    # --- Copy static files ---
+    logger.info("Copying static files...")
     if not copy_static_files(priv_src, priv_inc):
         sys.exit(1)
 
-    # --- Generate UI source files ---
-    print("\nGenerating UI files...\n")
-    generated = []
+    # --- Generate ui_config.h ---
+    max_ch, largest = write_ui_config(screens, priv_inc)
+    logger.info("ui_config.h  → UI_MAX_CHILDREN=%d  (largest: %s)", max_ch, largest)
 
+    # --- Generate screen files ---
+    logger.info("Generating UI files...")
     for screen in screens:
         c_fname, h_fname, h_text, c_text = generate_screen(screen)
+        write_file(str(include_dir / h_fname), h_text)
+        write_file(str(src_dir     / c_fname), c_text)
+        logger.info("  %s  %s", c_fname, h_fname)
 
-        c_path = src_dir     / c_fname
-        h_path = include_dir / h_fname
-
-        write_file(str(h_path), h_text)
-        write_file(str(c_path), c_text)
-        generated.append((c_path, h_path))
-
-    print("Generated files:")
-    for c, h in generated:
-        print(f"  - {c}")
-        print(f"  - {h}")
-
-    # --- Generate CMake ---
-    #cmake_text = generate_cmake()
-    #cmake_path = ui_src / "CMakeLists.txt"
-    #write_file(str(cmake_path), cmake_text)
+    # --- Optional compile check (--verify-compile) ---
+    if args.verify_compile:
+        _verify_compile(src_dir, include_dir, priv_inc)
 
     print("\n==========================================")
     print(" PIPELINE COMPLETED SUCCESSFULLY")
@@ -407,6 +452,8 @@ def main():
     print(f"    include/      ({len(list(include_dir.glob('*.h')))} .h files)")
     print(f"    priv_src/     ({len(list(priv_src.glob('*.c')))} .c files)")
     print(f"    priv_include/ ({len(list(priv_inc.glob('*.h')))} .h files)")
+    if max_ch:
+        print(f"    ui_config.h   → UI_MAX_CHILDREN={max_ch}  ({largest})")
     print()
 
 
