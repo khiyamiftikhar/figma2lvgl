@@ -4,44 +4,50 @@ All parsing logic lives in `core/figma_parser.py` and `core/utils/figma_helpers.
 
 ---
 
-## XML Structure Expected
+## XML Structure (Real FigML Format)
 
-The FigML plugin exports a structure like:
+FigML exports a `<page>` root, not `<root>`. Each `<Frame>` child becomes one screen. Real nodes include noise attributes (`id`, `maskType`, `type`, `blendMode`) that the parser reads through safely.
 
 ```xml
-<root>
+<page id="0:1" name="Page_1" type="PAGE">
   <children>
-    <Frame name="HomeScreen" width="320" height="480" ...>
+    <Frame id="6:3" name="ili9486_home" maskType="ALPHA"
+           x="-170" y="-287" width="320" height="480"
+           clipsContent="true" type="FRAME">
       <children>
-        <Text name="time_label" x="10" y="20" width="100" height="30"
-              fontSize="16" textAlignHorizontal="CENTER"
-              ...>
+        <Text id="6:4" name="Time" maskType="ALPHA" strokeAlign="OUTSIDE"
+              x="94" y="79" width="133" height="34" fontSize="12"
+              fontWeight="400" characters="Time is 15:00" type="TEXT"
+              textAlignVertical="TOP">
           <fills>
-            <fill color="#ffffff" opacity="1.0" />
+            <fill blendMode="NORMAL" color="#000000" />
           </fills>
+          <fontName family="Inter" style="Regular" />
         </Text>
-        <Rectangle name="progress_bar" x="10" y="100" width="200" height="20"
-                   cornerRadius="4" strokeWeight="1" ...>
+        <Rectangle id="21:4" name="bar" maskType="ALPHA"
+                   x="33" y="311" width="241" height="35" type="RECTANGLE">
           <fills>
-            <fill color="#4caf50" visible="true" />
+            <fill blendMode="NORMAL" color="#e56060" />
           </fills>
-          <strokes>
-            <stroke color="#333333" />
-          </strokes>
         </Rectangle>
-        ...
+        <icon_wifi id="12:9" name="icon_wifi" maskType="ALPHA"
+                   x="129" y="143" width="48" height="48" type="INSTANCE">
+          <fills>
+            <fill visible="false" blendMode="NORMAL" color="#ffffff" />
+          </fills>
+        </icon_wifi>
       </children>
     </Frame>
-    <Frame name="StatusScreen" ...>
-      ...
-    </Frame>
   </children>
-</root>
+</page>
 ```
 
-- Each top-level `<Frame>` inside `<children>` becomes one `ParsedScreen`.
-- Each child node inside a frame's `<children>` is parsed as a `ParsedChild`.
-- Nested children (children of children) are **not** traversed — only direct children of the frame are parsed.
+Key observations from the real format:
+- Root tag is `page`, not `root`. `root.find("children")` still works.
+- Text content is in the `characters` **attribute** — not `node.text` (which is whitespace) and not a `<characters>` child element.
+- `textAlignHorizontal` is **absent** — FigML omits it when alignment is default (left).
+- Component instances (type `INSTANCE`) use their component name as the XML tag (e.g. `<icon_wifi>`, `<Wifi_off>`).
+- Nested children are **not** traversed — only direct children of the `<Frame>` are parsed.
 
 ---
 
@@ -49,125 +55,144 @@ The FigML plugin exports a structure like:
 
 `parse_screen(frame_node)` is called once per `<Frame>` node.
 
-1. Reads `name` attribute from the frame → stored as `ParsedScreen.name`
-2. Derives `ParsedScreen.snake` via `to_snake_case(name)` — this becomes the C identifier base (e.g. `"Home Screen"` → `"home_screen"`)
+1. Reads `name` attribute → `ParsedScreen.name`
+2. Derives `ParsedScreen.snake` via `to_snake_case(name)`
 3. Iterates direct children of `<children>`
-4. For each child: runs type detection, reads geometry, normalizes ID, extracts style
-5. Detects duplicate IDs — raises `ValueError` if two children in the same frame produce the same normalized ID
+4. For each child: type detection → geometry → ID normalization → style extraction → text content
+5. Emits warning and skips unrecognized nodes (rather than silently converting them to labels)
+6. Detects duplicate normalized IDs — raises `ValueError`
 
 ---
 
 ## Widget Type Detection
 
-Handled by `map_tag_to_child_type(node)` in `core/utils/figma_helpers.py`.
-
-Rules applied **in order**:
+`map_tag_to_child_type(node)` in `core/utils/figma_helpers.py` returns a `WidgetType` enum value or `None`.
 
 | Priority | Condition | Result |
 |----------|-----------|--------|
-| 1 | XML tag is `Text` | `UI_CHILD_LABEL` |
-| 2 | Node name contains `bar` (case-insensitive) | `UI_CHILD_BAR` |
-| 3 | Node name contains `icon` or `image` (case-insensitive) | `UI_CHILD_IMAGE` |
-| 4 | (fallback) | `UI_CHILD_LABEL` |
+| 1 | XML tag is `Text` | `WidgetType.LABEL` |
+| 2 | Node name contains `bar` (case-insensitive) | `WidgetType.BAR` |
+| 3 | Node name contains `icon` or `image` (case-insensitive) | `WidgetType.IMAGE` |
+| 4 | (no match) | `None` → skip with warning |
 
-> **Important:** The fallback maps unknown nodes to `UI_CHILD_LABEL`. Nodes that don't match any explicit rule are silently treated as labels rather than skipped. This can produce unexpected output if a frame contains non-UI structural nodes (e.g. grouping frames).
+**On `None`:** `parse_screen()` emits a `WARNING` log with the parent screen name and the node name/tag/type, then skips the node. The warning message tells the user exactly how to rename the node in Figma to get it recognized.
 
-A return value of `None` from `map_tag_to_child_type()` causes the child to be skipped. Currently no code path returns `None` — the fallback always returns `UI_CHILD_LABEL`.
+Example: `<Wifi_off name="Wifi_off" type="INSTANCE">` matches none of the rules. The warning says:
+```
+In screen 'ili9486_home': skipping node 'Wifi_off' (tag='Wifi_off', type='INSTANCE').
+To generate a widget from this node, rename it in Figma to include one of:
+'icon' or 'image' (-> lv_image), 'bar' (-> lv_bar).
+Example: rename 'Wifi_off' -> 'icon_wifi_off'.
+```
 
 ---
 
 ## ID Normalization
 
-The `name` attribute of the Figma node becomes the widget's `id` in generated C code.
+`normalize_id(name)` converts a Figma node name to a valid C snake_case identifier:
 
-`normalize_id(name)` applies:
-1. Lowercase the string
-2. Replace `-` with `_`
-3. Replace spaces with `_`
-
-Examples:
+1. Split camelCase/PascalCase boundaries (e.g. `Battery` | `Bar`)
+2. Split before consecutive uppercase sequences (e.g. `HTTP` | `Status`)
+3. Lowercase
+4. Replace spaces and hyphens with `_`
+5. Replace remaining non-alnum with `_`
+6. Collapse multiple underscores
+7. Strip leading/trailing underscores
 
 | Figma name | Normalized ID |
 |-----------|--------------|
 | `time_label` | `time_label` |
 | `Progress Bar` | `progress_bar` |
 | `icon-wifi` | `icon_wifi` |
-| `BatteryBar` | `batterybar` |
+| `BatteryBar` | `battery_bar` |
+| `HTTPStatus` | `http_status` |
+| `Time (Label)` | `time_label` |
 
 The normalized ID is used as:
 - The `id[]` string in `ui_child_t`
-- The suffix in generated setter function names (e.g. `ui_home_screen_set_time_label`)
+- The suffix in generated setter/callback function names
 
 ---
 
 ## Geometry Extraction
 
-`int_attr(node, key)` reads a named XML attribute and converts it to `int`. Returns `0` if the attribute is absent or malformed (no error raised).
+`int_attr(node, key)` reads an XML attribute as `int`. Returns `0` if absent or malformed.
 
 Fields read: `x`, `y`, `width`, `height`.
 
 ---
 
+## Text Content Extraction
+
+For `Text` nodes, text content is read from the `characters` attribute:
+
+```python
+raw_text = child.attrib.get("characters", "")
+text_content = sanitize_c_string(raw_text, UI_MAX_STRING_LENGTH)
+```
+
+`sanitize_c_string()` escapes characters that would produce invalid C string literals:
+
+| Character | Escaped as |
+|-----------|-----------|
+| `\` | `\\` |
+| `"` | `\"` |
+| `\n` (0x0A) | `\n` |
+| `\r` (0x0D) | `\r` |
+| `\t` (0x09) | `\t` |
+| U+2028 (LINE SEPARATOR) | `\n` — FigML sometimes uses this instead of `\n` |
+| U+2029 (PARAGRAPH SEPARATOR) | `\n` |
+
+The result is truncated to `UI_MAX_STRING_LENGTH - 1` characters (leaving room for the null terminator). Silent truncation — no warning is emitted.
+
+---
+
 ## Style Extraction
 
-`parse_style(node, child_type)` is called for every child node. It returns a `ParsedStyle` with only the fields that were actually found in the XML populated. Fields with no data remain `None`.
+`parse_style(node, child_type)` is called for every child node. `child_type` is a `WidgetType` enum value.
 
 ### Fill Color and Opacity
 
-1. Finds the first `<fill>` under `<fills>` where `visible != "false"` (skips hidden fills)
-2. Reads the `color` attribute — hex string like `"#d9d9d9"` → stripped and parsed as integer
-3. **Context-aware:** if the node is a `Text` node or maps to `UI_CHILD_LABEL`, fill color goes to `ParsedStyleText.color` (text color), not `ParsedStyleBox.bg_color`
-4. Reads `opacity` attribute on the fill element → converted to 0–255 range (`float * 255`, rounded). Only applies to non-text nodes as `bg_opa`.
+1. Finds the first `<fill>` under `<fills>` where `visible != "false"`
+2. Reads `color` attribute — hex string → integer
+3. **Routing:** if `node.attrib["type"] == "TEXT"` or `child_type == WidgetType.LABEL`, fill color routes to `ParsedStyleText.color` (text color). Otherwise it routes to `ParsedStyleBox.bg_color`. This comparison uses the `WidgetType` enum — comparing against the string `"UI_CHILD_LABEL"` would always be `False` and silently route every label's fill to bg_color.
+4. `opacity` attribute on the fill element → `ParsedStyleBox.bg_opa` (non-text only)
 
 ### Border / Stroke
 
-1. Reads the first `<stroke>` under `<strokes>` — reads `color` attribute → `ParsedStyleBox.border_color`
-2. Reads `strokeWeight` attribute on the node itself → `ParsedStyleBox.border_width`
-3. **Default width rule:** if a border color is found but no `strokeWeight` attribute is present, `border_width` defaults to `1` so the border is visible in LVGL
+1. First `<stroke>` under `<strokes>` → `ParsedStyleBox.border_color`
+2. `strokeWeight` attribute on the node → `ParsedStyleBox.border_width`
+3. If color set but no width: defaults to `1`
 
 ### Corner Radius
 
-Reads `cornerRadius` attribute on the node → `ParsedStyleBox.radius` (rounded float → int)
+`cornerRadius` attribute → `ParsedStyleBox.radius`
 
 ### Text Properties
 
-Only extracted when `node_type == "TEXT"` or `child_type == "UI_CHILD_LABEL"`:
+For text nodes (`node_type == "TEXT"` or `child_type == WidgetType.LABEL`):
 
 - `fontSize` attribute → `ParsedStyleText.size`
-- `textAlignHorizontal` attribute — accepted values: `"LEFT"`, `"CENTER"`, `"RIGHT"` → `ParsedStyleText.align`. Any other value is ignored.
+- Horizontal text alignment: **not extracted** — the `textAlignHorizontal` attribute does not exist in FigML exports. LVGL's default (left) matches FigML's default. `ParsedStyleText.align` is always `None`.
 
 ### Whole-Widget Opacity
 
-`opacity` attribute on the node itself (not the fill) → `ParsedStyleEffects.opacity` (float * 255, rounded). Applies to all widget types.
+`opacity` attribute on the node → `ParsedStyleEffects.opacity`
 
 ---
 
 ## Empty Style Handling
 
-After extraction, `ParsedStyle.is_empty()` checks whether all fields across all three sub-structs are `None`. If true, the generator emits `{ .box = { 0 }, .text = { 0 }, .effects = { 0 } }` for the style field rather than an explicit struct initialiser.
-
----
-
-## ID Uniqueness Rule
-
-Duplicate IDs within a single screen are detected immediately during parsing:
-
-```python
-existing_ids = {c.id for c in screen.children}
-if child_id in existing_ids:
-    raise ValueError(f"Duplicate child id '{child_id}' in screen '{frame_name}'")
-```
-
-This catches cases where two Figma nodes normalize to the same ID (e.g. nodes named `"Time Label"` and `"time_label"` would both normalize to `"time_label"`).
+`ParsedStyle.is_empty()` is `True` when all fields across all three sub-structs are `None`. The generator emits `{ .box = { 0 }, .text = { 0 }, .effects = { 0 } }` rather than an explicit initialiser.
 
 ---
 
 ## Naming Conventions Summary
 
-| Figma element | Naming requirement | Maps to |
-|--------------|-------------------|---------|
-| Frame | Any name | Screen (name → snake_case) |
-| Text node | Any name | `UI_CHILD_LABEL` |
-| Any node with `bar` in name | Must contain `bar` (case-insensitive) | `UI_CHILD_BAR` |
-| Any node with `icon`/`image` in name | Must contain `icon` or `image` | `UI_CHILD_IMAGE` |
-| Everything else | Any name | `UI_CHILD_LABEL` (fallback) |
+| Figma element | Requirement | Maps to |
+|--------------|-------------|---------|
+| Frame | Any name | Screen (`to_snake_case` → C identifier base) |
+| `Text` node | XML tag must be `Text` | `WidgetType.LABEL` |
+| Any node | Name must contain `bar` | `WidgetType.BAR` |
+| Any node | Name must contain `icon` or `image` | `WidgetType.IMAGE` |
+| Everything else | — | Skipped with warning |

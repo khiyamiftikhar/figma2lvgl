@@ -1,26 +1,46 @@
 # figma2lvgl — CLI and Execution Flow
 
-The CLI entry point is `main()` in `figma2lvgl/main.py`. It owns the full pipeline from argument parsing to the final success report. No parsing or generation logic lives here — it only orchestrates.
+The CLI entry point is `main()` in `figma2lvgl/main.py`. It owns the full pipeline from argument parsing to the final summary. All parsing and generation logic lives in other modules — `main.py` only orchestrates and handles errors.
 
 ---
 
 ## CLI Arguments
 
-Parsed by `argparse`:
+Parsed by `argparse`. Run `figma2lvgl --help` for the full help text.
 
-| Flag | Long form | Required | Default | Description |
-|------|-----------|----------|---------|-------------|
-| `-x` | `--xml` | Yes | — | Path to the Figma XML file |
-| `-i` | `--images` | No | Same directory as XML | Folder containing PNG images |
-| `-d` | `--dest` | No | Same directory as XML | Destination for `ui_src/` output |
+| Flag | Required | Default | Description |
+|------|----------|---------|-------------|
+| `-x` / `--xml` | Yes | — | Path to Figma XML file exported by FigML |
+| `-i` / `--images` | No | Same dir as XML | Folder containing PNG image assets |
+| `-d` / `--dest` | No | Same dir as XML | Destination folder where `ui_src/` is created |
+| `-y` / `--yes` | No | `False` | Skip all interactive prompts; auto-downloads LVGLImage.py if not cached |
+| `--lvgl-tool` | No | `None` | Direct path to LVGLImage.py — skips cache lookup and download entirely |
+| `-f` / `--color-format` | No | `RGB565` | Pixel encoding for PNG→LVGL conversion: `RGB565`, `RGB888`, `ARGB8888`, `L8` |
+| `--patch-esp-includes` | No | `False` | Patch LVGL include guards in generated image `.c` files for ESP-IDF (opt-in; prefer `LV_LVGL_H_INCLUDE_SIMPLE=1` in CMake) |
+| `-v` / `--verbose` | No | `False` | Enable DEBUG-level logging |
 
-All paths are resolved to absolute paths immediately after parsing.
+**CI usage patterns:**
+
+```bash
+# Standard interactive use
+figma2lvgl -x layout.xml
+
+# CI with network access (auto-downloads LVGLImage.py if not cached)
+figma2lvgl -x layout.xml --yes
+
+# CI air-gapped or pinned version
+figma2lvgl -x layout.xml --yes --lvgl-tool ./tools/LVGLImage.py
+
+# Higher-end TFT display
+figma2lvgl -x layout.xml -f ARGB8888
+
+# ESP-IDF without cmake flag
+figma2lvgl -x layout.xml --patch-esp-includes
+```
 
 ---
 
 ## Output Folder Structure
-
-Built from the resolved destination directory:
 
 ```
 <dest>/
@@ -28,194 +48,150 @@ Built from the resolved destination directory:
     src/            ← generated screen .c files
     include/        ← generated screen .h files
     priv_src/       ← image .c files + ui_style.c
-    priv_include/   ← assets.h, ui_defs.h, ui_style.h
+    priv_include/   ← assets.h, ui_config.h, ui_defs.h, ui_style.h
 ```
 
 ---
 
 ## `main()` — Step-by-Step
 
-### Step 1 — Validate Inputs
+### Step 1 — Verbose flag
 
+```python
+if args.verbose:
+    logging.getLogger().setLevel(logging.DEBUG)
 ```
-xml_path    = Path(args.xml).resolve()
-images_dir  = Path(args.images).resolve()  or  xml_path.parent
-dest_dir    = Path(args.dest).resolve()    or  xml_path.parent
-```
 
-- Exits with error if `xml_path` is not a file
-- Exits with error if `images_dir` is not a directory
+Enables debug log output for the rest of the pipeline.
 
-Prints a summary header showing all three resolved paths before proceeding.
+### Step 2 — Resolve paths
 
----
+All three paths (XML, images dir, dest dir) are resolved to absolute paths. Errors here:
 
-### Step 2 — Parse XML
+| Condition | Error message |
+|-----------|--------------|
+| XML file not found | `logger.error("XML file not found: ...")` + `sys.exit(1)` |
+| Images directory not found | `logger.error("Images directory not found: ...")` + `sys.exit(1)` |
+
+### Step 3 — Print header
+
+UX banner printed with resolved paths (always, regardless of log level).
+
+### Step 4 — Parse XML
 
 ```python
 tree = ET.parse(xml_path)
 root = tree.getroot()
+page_children = root.find("children")
+frames = page_children.findall("Frame")
+screens = [parse_screen(frame) for frame in frames]
 ```
 
-- Exits with error if XML is malformed
-- Exits with error if `<children>` element is missing from the root
-- Exits with error if no `<Frame>` nodes are found inside `<children>`
+Errors:
 
-For each `<Frame>` found, calls `parse_screen(frame)` → list of `ParsedScreen` objects.
+| Condition | Error |
+|-----------|-------|
+| Malformed XML | `logger.error("Failed to parse XML: ...")` + `sys.exit(1)` |
+| No `<children>` element | `logger.error("No <children> element found in XML.")` + `sys.exit(1)` |
+| No `<Frame>` nodes | `logger.error("No <Frame> nodes found in XML.")` + `sys.exit(1)` |
 
----
+Unrecognized child nodes (no type keyword in name) are skipped with a `WARNING` log that includes the screen name — no error, pipeline continues.
 
-### Step 3 — Asset Validation
+### Step 5 — Asset validation
 
-For each parsed screen, collects all child IDs where `ChildSpec.requires_asset == True`. Checks that `<images_dir>/<id>.png` exists for each.
+Calls `validate_assets(screens, images_dir)`. Checks `<images_dir>/<child_id>.png` exists for every child where `ChildSpec.requires_asset == True`. If any are missing, prints the missing paths and exits. No output has been written yet.
 
-If any assets are missing:
-```
-==========================================
- ASSET VALIDATION FAILED
-==========================================
-The following image files are missing:
+### Step 6 — Resolve LVGLImage.py
 
-  - /path/to/images/icon_wifi.png
-  - /path/to/images/battery_image.png
+Calls `find_or_download_lvgl_tool(auto_yes=args.yes, tool_override=args.lvgl_tool)`:
 
-Please add the missing files and run again.
-==========================================
-```
-Exits — nothing has been written yet.
+- `--lvgl-tool` provided → validates and returns that path; exits if not found
+- Cached → returns cached path immediately
+- Not cached + `--yes` → downloads automatically
+- Not cached + interactive → prompts; exits on `n`
 
----
+### Step 7 — Confirm overwrite
 
-### Step 4 — Resolve LVGLImage.py
+Calls `confirm_overwrite(ui_src, auto_yes=args.yes)`:
 
-Calls `find_or_download_lvgl_tool()`. Returns the path to a cached `LVGLImage.py`, or downloads it after asking the user. Exits if the user declines and the file is not cached.
+- `ui_src/` doesn't exist → proceed silently
+- `ui_src/` exists but all subfolders empty → proceed silently
+- `ui_src/` has content + `--yes` → proceed, logs a message
+- `ui_src/` has content + interactive → prints subfolder file counts, prompts; exits on `n`
 
----
+### Step 8 — Reset output directories
 
-### Step 5 — Overwrite Guard
+Deletes and recreates `src/`, `include/`, `priv_src/`, `priv_include/`. Unconditional after step 7 confirms.
 
-Calls `confirm_overwrite(ui_src)`.
+### Step 9 — Image conversion
 
-- If `ui_src/` does not exist → proceeds silently
-- If `ui_src/` exists but all subfolders are empty → proceeds silently
-- If `ui_src/` has content in any subfolder → prints a warning listing each subfolder and its file count, then prompts:
-
-```
-==========================================
- WARNING: Output folder already has content
-==========================================
-  /path/to/project/ui_src
-
-  The following subfolders will be wiped and regenerated:
-    src/  (2 file(s))
-    include/  (2 file(s))
-    priv_src/  (5 file(s))
-    priv_include/  (4 file(s))
-
-  Overwrite? [y/n]:
+```python
+convert_images(images_dir, priv_src, priv_inc, lvgl_tool,
+               color_format=args.color_format)
 ```
 
-On `n`, exits without writing anything.
+Direct function call — no subprocess. Uses `args.color_format` (default `"RGB565"`). Exits on failure.
 
----
+### Step 10 — ESP include patching (opt-in)
 
-### Step 6 — Reset Output Directories
-
-Deletes and recreates all four output subdirectories:
-- `ui_src/src/`
-- `ui_src/include/`
-- `ui_src/priv_src/`
-- `ui_src/priv_include/`
-
-This is unconditional after the user confirms. Previous contents are permanently deleted.
-
----
-
-### Step 7 — Image Conversion
-
-Calls `run_image_converter(images_dir, priv_src, priv_inc, lvgl_tool)`.
-
-Runs `image_converter.py` as a subprocess:
-```bash
-python image_converter.py <images_dir> <priv_src> <priv_include> <lvgl_tool>
+```python
+if args.patch_esp_includes:
+    fix_lvgl_includes(priv_src)
 ```
 
-- On failure (non-zero returncode), prints full stdout/stderr and exits
-- On success, proceeds
+Only runs when `--patch-esp-includes` is passed. Off by default. For ESP-IDF users the recommended path is `LV_LVGL_H_INCLUDE_SIMPLE=1` in `CMakeLists.txt`.
 
----
+### Step 11 — Copy static files
 
-### Step 8 — LVGL Include Patching
+`copy_static_files(priv_src, priv_inc)` copies `static_src/*.h` → `priv_include/` and `static_src/*.c` → `priv_src/`. Files: `ui_defs.h`, `ui_style.h`, `ui_style.c`.
 
-Calls `fix_lvgl_includes(priv_src_dir)`.
+### Step 12 — Generate `ui_config.h`
 
-Iterates every `.c` file in `priv_src/`. For each file that contains the standard LVGL include guard block, replaces it with the ESP32-compatible version (adds `ESP_PLATFORM` branch).
+```python
+max_ch, largest = write_ui_config(screens, priv_inc)
+```
 
-Only files that actually contain the old block are modified. Prints a line for each patched file.
+Computes `UI_MAX_CHILDREN` = max children count across all parsed screens. Writes `priv_include/ui_config.h`. Logs the value and which screen is the largest.
 
----
-
-### Step 9 — Copy Static Files
-
-Calls `copy_static_files(priv_src, priv_inc)`.
-
-Copies from `figma2lvgl/static_src/`:
-- `*.h` files → `priv_include/`
-- `*.c` files → `priv_src/`
-
-Files copied: `ui_defs.h`, `ui_style.h`, `ui_style.c`.
-
----
-
-### Step 10 — Generate Screen Files
+### Step 13 — Generate screen files
 
 For each `ParsedScreen`:
-1. Calls `generate_screen(screen)` → `(c_fname, h_fname, h_text, c_text)`
-2. Writes `h_text` → `ui_src/include/<h_fname>`
-3. Writes `c_text` → `ui_src/src/<c_fname>`
+```python
+c_fname, h_fname, h_text, c_text = generate_screen(screen)
+write_file(str(include_dir / h_fname), h_text)
+write_file(str(src_dir     / c_fname), c_text)
+```
+
+### Step 14 — Summary
+
+UX banner with file counts per subfolder and `UI_MAX_CHILDREN` value.
 
 ---
 
-### Step 11 — Summary Report
+## Logging vs Print
 
-```
-==========================================
- PIPELINE COMPLETED SUCCESSFULLY
-==========================================
+The pipeline uses two output mechanisms:
 
-  ui_src/
-    src/          (2 .c files)
-    include/      (2 .h files)
-    priv_src/     (6 .c files)
-    priv_include/ (5 .h files)
-```
+| Type | Used for |
+|------|----------|
+| `logger.error/warning/info/debug` | All diagnostic messages — errors, warnings, progress |
+| `print()` | UX banners (`===...===`), the initial path summary, the final summary, interactive prompts |
+
+This means `--verbose` enables more `logger.*` output but does not affect the UX banners. `2>/dev/null` suppresses only `logger.*` output; banners still print.
 
 ---
 
 ## Error Exit Points Summary
 
-| Point | Condition | Message |
-|-------|-----------|---------|
-| After arg parsing | XML file not found | `ERROR: XML file not found:` |
-| After arg parsing | Images directory not found | `ERROR: Images directory not found:` |
-| XML parse | Malformed XML | `ERROR: Failed to parse XML:` |
-| XML parse | No `<children>` element | `ERROR: No <children> element found in XML.` |
-| XML parse | No `<Frame>` nodes | `ERROR: No <Frame> nodes found in XML.` |
-| Asset validation | Missing PNG files | `ASSET VALIDATION FAILED` + list |
-| LVGLImage resolution | User declined download | Aborted message |
-| Overwrite guard | User answered `n` | `Aborted. No files were changed.` |
-| Image conversion | Non-zero subprocess exit | `IMAGE CONVERSION FAILED` + stderr |
-
----
-
-## CMake Generation (Dormant)
-
-`cmake_generator.py` and `generate_cmake()` exist but are commented out in `main.py`:
-
-```python
-# cmake_text = generate_cmake()
-# cmake_path = ui_src / "CMakeLists.txt"
-# write_file(str(cmake_path), cmake_text)
-```
-
-When enabled, it would generate a `CMakeLists.txt` in `ui_src/` using `idf_component_register()` — intended for ESP-IDF projects. The generated paths in `cmake_generator.py` reference `src_generated/` and `runtime/` which no longer match the current output layout (`src/`, `priv_src/`), so it would need updating before being re-enabled.
+| Step | Condition | Message |
+|------|-----------|---------|
+| 2 | XML file not found | `logger.error` + exit 1 |
+| 2 | Images directory not found | `logger.error` + exit 1 |
+| 4 | Malformed XML | `logger.error` + exit 1 |
+| 4 | No `<children>` in XML | `logger.error` + exit 1 |
+| 4 | No `<Frame>` nodes | `logger.error` + exit 1 |
+| 5 | Missing PNG assets | Print banner + exit 1 |
+| 6 | `--lvgl-tool` path not found | `logger.error` + exit 1 |
+| 6 | User declined download | Print message + return `None` → exit 1 |
+| 7 | User declined overwrite | Print "Aborted" + exit 0 |
+| 9 | Image conversion failure | `logger.error` from `convert_images()` → exit 1 |

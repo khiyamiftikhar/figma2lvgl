@@ -1,17 +1,18 @@
 # figma2lvgl — Child Type System
 
-The child type system is the **primary extension point** of figma2lvgl. Adding a new LVGL widget type means registering a `ChildSpec` in `child_registry.py` and providing the three template strings it references. No other file needs to change for a basic new widget.
+The child type system is the **primary extension point** of figma2lvgl. Adding a new LVGL widget type requires registering a `ChildSpec` in `child_registry.py` and providing three template strings. The generator needs no changes.
 
 ---
 
 ## Components
 
 ```
-child_registry.py      ← CHILDREN dict: "UI_CHILD_*" → ChildSpec
-generic_child.py       ← ChildSpec dataclass definition
+widget_type.py         ← WidgetType enum: LABEL / IMAGE / BAR
+child_registry.py      ← CHILDREN dict: WidgetType → ChildSpec
+generic_child.py       ← ChildSpec dataclass (+ naming pattern methods)
 core/templates/        ← Template strings for each widget
-template_loader.py     ← Name → template string lookup
-figma_helpers.py       ← Figma XML node → "UI_CHILD_*" type detection
+template_loader.py     ← Template name → string lookup
+figma_helpers.py       ← Figma XML node → WidgetType detection
 ui_defs.h              ← ui_child_type_t enum (C side)
 ```
 
@@ -23,12 +24,16 @@ Defined in `core/generic_child.py`:
 
 | Field | Type | Required | Description |
 |-------|------|----------|-------------|
-| `type_name` | `str` | Yes | The `UI_CHILD_*` constant string — must match the key in `CHILDREN` and the C enum value |
-| `callback_template` | `str` | Yes | Template name for the widget's animation/job callback. Pass `""` for widgets with no async callback. |
-| `setter_template` | `str` | Yes | Template name for the public setter function |
-| `init_template` | `str` | Yes | Template name for the `switch` case in `_init()` |
-| `setter_args` | `str` | Yes | C argument list string for the setter signature |
-| `requires_asset` | `bool` | No | Default `False`. Set `True` if the widget requires a matching PNG asset file. `main.py` will validate the file exists before running the pipeline. |
+| `type_name` | `WidgetType` | Yes | Enum value — matches the key in `CHILDREN` and the C enum |
+| `callback_template` | `str` | Yes | Template name for animation callback; `""` = no callback |
+| `setter_template` | `str` | Yes | Template name for the public setter |
+| `init_template` | `str` | Yes | Template name for the `switch` init case |
+| `setter_args` | `str` | Yes | C argument list for the setter |
+| `requires_asset` | `bool` | No | Default `False`; if `True`, main.py validates a matching PNG exists |
+| `setter_name_pattern` | `str` | No | Default `"ui_{screen}_set_{child_id}"` |
+| `callback_name_pattern` | `str` | No | Default `""`; pattern for callback name |
+
+`derive_setter_name(screen_snake, child_id)` and `derive_callback_name(screen_snake)` format these patterns. Because naming is in `ChildSpec`, `generator.py` has **no per-type if/elif branches** — it calls `spec.derive_*` for every widget type uniformly.
 
 ---
 
@@ -36,27 +41,33 @@ Defined in `core/generic_child.py`:
 
 ```python
 CHILDREN = {
-    "UI_CHILD_LABEL": ChildSpec(
-        type_name        = "UI_CHILD_LABEL",
-        callback_template= "",               # no callback
-        setter_template  = "label_setter",
-        init_template    = "label_init",
-        setter_args      = "const char *text",
+    WidgetType.LABEL: ChildSpec(
+        type_name             = WidgetType.LABEL,
+        callback_template     = "",
+        setter_template       = "label_setter",
+        init_template         = "label_init",
+        setter_args           = "const char *text",
+        setter_name_pattern   = "ui_{screen}_set_{child_id}",
+        callback_name_pattern = "",
     ),
-    "UI_CHILD_IMAGE": ChildSpec(
-        type_name        = "UI_CHILD_IMAGE",
-        callback_template= "",               # no callback
-        setter_template  = "image_setter",
-        init_template    = "image_init",
-        setter_args      = "void",
-        requires_asset   = True,
+    WidgetType.IMAGE: ChildSpec(
+        type_name             = WidgetType.IMAGE,
+        callback_template     = "",
+        setter_template       = "image_setter",
+        init_template         = "image_init",
+        setter_args           = "void",
+        requires_asset        = True,
+        setter_name_pattern   = "ui_{screen}_display_{child_id}",
+        callback_name_pattern = "",
     ),
-    "UI_CHILD_BAR": ChildSpec(
-        type_name        = "UI_CHILD_BAR",
-        callback_template= "bar_callback",
-        setter_template  = "bar_setter",
-        init_template    = "bar_init",
-        setter_args      = "int value, uint32_t duration_ms",
+    WidgetType.BAR: ChildSpec(
+        type_name             = WidgetType.BAR,
+        callback_template     = "bar_callback",
+        setter_template       = "bar_setter",
+        init_template         = "bar_init",
+        setter_args           = "int value, uint32_t duration_ms",
+        setter_name_pattern   = "ui_{screen}_set_{child_id}",
+        callback_name_pattern = "ui_{screen}_bar_job_cb",
     ),
 }
 ```
@@ -67,101 +78,52 @@ CHILDREN = {
 
 ### Callback template
 
-A static C function used internally by the widget (e.g. an LVGL animation `exec_cb`). Generated **once per widget type** per screen (not once per widget instance). Empty string = nothing generated.
-
-Example (bar):
-```c
-static void ui_home_screen_bar_job_cb_exec_cb(void *obj, int32_t v)
-{
-    lv_bar_set_value(obj, v, LV_ANIM_OFF);
-}
-```
+A static C function called internally (e.g. LVGL animation `exec_cb`). Generated **once per widget type** per screen. Empty string = nothing generated.
 
 ### Setter template
 
-A public C function that application code calls to update the widget at runtime. Generated **once per widget instance**. The function name encodes the screen name and widget ID.
-
-Example (label):
-```c
-void ui_home_screen_set_time_label(const char *text)
-{
-    ui_child_t *c = &home_screen.children[0];
-    if (c->lv_obj)
-        lv_label_set_text(c->lv_obj, text);
-}
-```
+A public C function firmware calls to update the widget at runtime. Generated **once per widget instance**. Function name derived from `setter_name_pattern`.
 
 ### Init template
 
-A `case` block inside the screen's `_init()` function. Generated **once per widget type** per screen (shared across all instances of the same type). Creates the LVGL object and sets geometry.
-
-Example (label):
-```c
-case UI_CHILD_LABEL:
-    c->lv_obj = lv_label_create(home_screen.lv_screen);
-    lv_obj_set_pos(c->lv_obj, c->x, c->y);
-    lv_obj_set_width(c->lv_obj, c->w);
-    lv_label_set_long_mode(c->lv_obj, LV_LABEL_LONG_CLIP);
-    break;
-```
-
----
-
-## How the Generator Uses the Registry
-
-In `generator.py`, two separate loops walk the children:
-
-**Child loop (setter per instance):**
-```python
-for index, child in enumerate(screen.children):
-    spec = CHILDREN.get(child.type)
-    setter_tpl = load_template(spec.setter_template)
-    # substitute fn_name, child_index, screen_var, child_id, cb_name
-```
-
-**Type loop (callback + init once per type):**
-```python
-for type_name in unique_types:
-    spec = CHILDREN.get(type_name)
-    callback_tpl = load_template(spec.callback_template)
-    init_tpl     = load_template(spec.init_template)
-    # substitute cb_name, screen_var
-```
-
-This means: if a screen has 3 labels, you get 3 setter functions but only 1 `case UI_CHILD_LABEL:` block and no callback (since `callback_template` is `""`).
+A `case UI_CHILD_*:` block inside `_init()`. Generated **once per widget type** per screen (one block handles all instances of that type via the `switch`).
 
 ---
 
 ## Adding a New Widget Type — Step-by-Step
 
-This example adds a `UI_CHILD_ARC` widget.
+This example adds `WidgetType.ARC`.
 
-### Step 1 — Add the C enum value in `ui_defs.h`
+### Step 1 — Add to `WidgetType` enum in `widget_type.py`
+
+```python
+class WidgetType(Enum):
+    LABEL = "UI_CHILD_LABEL"
+    IMAGE = "UI_CHILD_IMAGE"
+    BAR   = "UI_CHILD_BAR"
+    ARC   = "UI_CHILD_ARC"       # ← add
+```
+
+### Step 2 — Add to `ui_child_type_t` in `ui_defs.h`
 
 ```c
 typedef enum {
-    UI_CHILD_ICON,
     UI_CHILD_LABEL,
     UI_CHILD_BAR,
     UI_CHILD_IMAGE,
-    UI_CHILD_ARC,       // ← add here
+    UI_CHILD_ARC,       // ← add
 } ui_child_type_t;
 ```
 
-Also add a `data` union member if the widget needs runtime data:
+Add a `data` union member if the widget needs runtime data:
 ```c
-union {
-    struct { char text[UI_MAX_STRING_LENGTH]; } label;
-    struct { int32_t value; }                  bar;
-    struct { const lv_image_dsc_t *src; }      image;
-    struct { int16_t value; }                  arc;    // ← add here
-} data;
+struct { int16_t value; } arc;    // ← inside the union
 ```
 
-### Step 2 — Create `core/templates/arc_templates.py`
+### Step 3 — Create `core/templates/arc_templates.py`
 
 ```python
-ARC_CALLBACK = ""   # no animation callback needed
+ARC_CALLBACK = ""
 
 ARC_SETTER = """
 void ${fn_name}(int value)
@@ -179,74 +141,68 @@ ARC_INIT = """
         lv_obj_set_pos(c->lv_obj, c->x, c->y);
         lv_obj_set_size(c->lv_obj, c->w, c->h);
         lv_arc_set_range(c->lv_obj, 0, 100);
-        lv_arc_set_value(c->lv_obj, c->data.arc.value);
         break;
 """
 ```
 
-### Step 3 — Register the templates in `template_loader.py`
+### Step 4 — Register templates in `template_loader.py`
 
 ```python
-from figma2lvgl.core.templates import arc_templates   # ← add import
+from figma2lvgl.core.templates import arc_templates
 
 TEMPLATE_MAP = {
     # ... existing entries ...
-    "arc_callback": arc_templates.ARC_CALLBACK,   # ← add
-    "arc_setter":   arc_templates.ARC_SETTER,     # ← add
-    "arc_init":     arc_templates.ARC_INIT,       # ← add
+    "arc_callback": arc_templates.ARC_CALLBACK,
+    "arc_setter":   arc_templates.ARC_SETTER,
+    "arc_init":     arc_templates.ARC_INIT,
 }
 ```
 
-### Step 4 — Register the `ChildSpec` in `child_registry.py`
+### Step 5 — Register `ChildSpec` in `child_registry.py`
 
 ```python
-"UI_CHILD_ARC": ChildSpec(
-    type_name        = "UI_CHILD_ARC",
-    callback_template= "arc_callback",
-    setter_template  = "arc_setter",
-    init_template    = "arc_init",
-    setter_args      = "int value",
+WidgetType.ARC: ChildSpec(
+    type_name             = WidgetType.ARC,
+    callback_template     = "arc_callback",
+    setter_template       = "arc_setter",
+    init_template         = "arc_init",
+    setter_args           = "int value",
+    setter_name_pattern   = "ui_{screen}_set_{child_id}",
+    callback_name_pattern = "",
 ),
 ```
 
-### Step 5 — Add detection in `figma_helpers.py`
+### Step 6 — Add detection in `figma_helpers.py`
 
 ```python
 def map_tag_to_child_type(node):
     name = node.attrib.get("name", "").lower()
-
-    if node.tag == "Text":
-        return "UI_CHILD_LABEL"
-    if "bar" in name:
-        return "UI_CHILD_BAR"
-    if "arc" in name:         # ← add before image check
-        return "UI_CHILD_ARC"
-    if "icon" in name or "image" in name:
-        return "UI_CHILD_IMAGE"
-    return "UI_CHILD_LABEL"
+    if node.tag == "Text":              return WidgetType.LABEL
+    if "bar" in name:                   return WidgetType.BAR
+    if "arc" in name:                   return WidgetType.ARC    # ← before image
+    if "icon" in name or "image" in name: return WidgetType.IMAGE
+    return None
 ```
 
-### Step 6 — Handle the new type in `generator.py`
+### Step 7 — Update `figma_parser.py` (if the widget has a data union member)
 
-In `generate_screen()`, the sections that assign `cb_name` and `fn_name` per child and per type need `elif` branches for `UI_CHILD_ARC`:
+In the screen struct generation section of `generator.py`, add a data block for `WidgetType.ARC`:
 
 ```python
-# In the child loop (setter naming):
-elif child.type == "UI_CHILD_ARC":
-    cb_name = ""
-    fn_name = f"ui_{screen_snake}_set_{child.id}"
-
-# In the type loop (callback naming):
-elif type_name == "UI_CHILD_ARC":
-    cb_name = ""
+elif child.type == WidgetType.ARC:
+    data_block = """
+        .data.arc = {
+            .value = 0
+        }
+"""
 ```
 
-> **Note:** This manual branching in `generator.py` is a design limitation. Currently `cb_name` and `fn_name` naming is hardcoded per type rather than derived from `ChildSpec`. A future refactor could move naming conventions into `ChildSpec` to make step 6 unnecessary.
+**That's all.** Because naming is in `ChildSpec`, `generator.py` derives `fn_name` and `cb_name` via `spec.derive_*()` without any per-type branching.
 
 ---
 
 ## `requires_asset` Flag
 
-When `requires_asset=True`, `main.py` calls `screen.get_required_assets(CHILDREN)` before running the pipeline. For each child whose `ChildSpec.requires_asset` is `True`, the child's `id` is added to a set of required asset names. `main.py` then checks that `<images_dir>/<id>.png` exists. If any are missing, the pipeline aborts with a clear error listing all missing files.
+When `True`, `main.py` calls `screen.get_required_assets(CHILDREN)` for each screen. For each child whose `ChildSpec.requires_asset` is `True`, it checks that `<images_dir>/<child_id>.png` exists. If any are missing, the pipeline aborts before writing any output.
 
-Only `UI_CHILD_IMAGE` uses this today. The flag exists to support any future widget type that requires an external asset file.
+Only `WidgetType.IMAGE` uses this currently.

@@ -1,6 +1,6 @@
 # figma2lvgl — Data Model
 
-Two parallel data models exist: the **Python model** used during generation (in-process, discarded after output is written) and the **C model** that lives in the generated output and runs on the device.
+Two parallel data models exist: the **Python model** used during generation and the **C model** that runs on the device.
 
 ---
 
@@ -12,11 +12,11 @@ Represents one Figma `<Frame>` — one full screen.
 
 | Field | Type | Description |
 |-------|------|-------------|
-| `name` | `str` | Raw Figma frame name (e.g. `"Home Screen"`) |
-| `snake` | `str` | Snake-case version used in C identifiers (e.g. `"home_screen"`) |
+| `name` | `str` | Raw Figma frame name (e.g. `"ili9486_home"`) |
+| `snake` | `str` | Snake-case version used in C identifiers (`to_snake_case(name)`) |
 | `children` | `list[ParsedChild]` | Ordered list of UI children parsed from the frame |
 
-**Key method:** `get_required_assets(child_registry)` — walks children and returns a list of IDs for any child whose `ChildSpec.requires_asset` is `True`. Used by `main.py` to validate PNG files exist before running the pipeline.
+**Key method:** `get_required_assets(child_registry)` — returns IDs for children whose `ChildSpec.requires_asset` is `True`. Used by `main.py` to validate PNG files exist.
 
 ---
 
@@ -26,41 +26,44 @@ Represents one UI element within a screen.
 
 | Field | Type | Description |
 |-------|------|-------------|
-| `type` | `str` | `UI_CHILD_*` string constant (e.g. `"UI_CHILD_LABEL"`) |
-| `id` | `str` | Normalized Figma node name used as the C identifier |
+| `type` | `WidgetType` | Enum value (e.g. `WidgetType.LABEL`) |
+| `id` | `str` | Normalized Figma node name used as C identifier |
 | `x` | `int` | X position in pixels |
 | `y` | `int` | Y position in pixels |
 | `w` | `int` | Width in pixels |
 | `h` | `int` | Height in pixels |
 | `style` | `ParsedStyle` | Extracted style properties |
+| `text_content` | `str` | Design-time label text from Figma `characters` attribute. Non-empty for `LABEL` nodes only. Sanitized via `sanitize_c_string()`. |
 
-IDs are normalized via `normalize_id()`: lowercased, spaces and hyphens replaced with underscores. Duplicate IDs within a screen raise `ValueError` at parse time.
+`text_content` lifecycle: baked into `.data.label.text` in the C struct initialiser → `_init()` applies it via `lv_label_set_text()` on first render → firmware calls the setter to update at runtime. The struct field holds the design-time default; it is not updated by the setter.
+
+IDs are normalized via `normalize_id()`: camelCase/PascalCase boundaries split, spaces/hyphens/non-alnum replaced with underscores. Duplicate IDs within a screen raise `ValueError`.
 
 ---
 
 ### `ParsedStyle`
 
-A composite holding three style sub-groups. A `ParsedStyle` where all fields are `None` is considered empty — `is_empty()` returns `True` and the generator emits `{ 0 }` for the struct.
+Holds three style sub-groups. `is_empty()` returns `True` when all fields are `None`; the generator emits `{ .box = {0}, .text = {0}, .effects = {0} }`.
 
-#### `ParsedStyleBox` — box / background properties
+#### `ParsedStyleBox`
 
 | Field | Type | Description |
 |-------|------|-------------|
-| `bg_color` | `int \| None` | Background color as integer (e.g. `0xd9d9d9`) |
+| `bg_color` | `int \| None` | Background color (e.g. `0xd9d9d9`) |
 | `bg_opa` | `int \| None` | Background opacity, 0–255 |
-| `border_color` | `int \| None` | Border/stroke color as integer |
-| `border_width` | `int \| None` | Border width in pixels (defaults to 1 if color present but width absent) |
+| `border_color` | `int \| None` | Border/stroke color |
+| `border_width` | `int \| None` | Border width in pixels (defaults to 1 if color set but width absent) |
 | `radius` | `int \| None` | Corner radius in pixels |
 
-#### `ParsedStyleText` — text / label properties
+#### `ParsedStyleText`
 
 | Field | Type | Description |
 |-------|------|-------------|
-| `color` | `int \| None` | Text color as integer |
+| `color` | `int \| None` | Text color |
 | `size` | `int \| None` | Font size in points |
-| `align` | `str \| None` | `"LEFT"`, `"CENTER"`, or `"RIGHT"` |
+| `align` | `str \| None` | `"LEFT"`, `"CENTER"`, or `"RIGHT"` — not populated currently (FigML does not export horizontal text alignment) |
 
-#### `ParsedStyleEffects` — widget-level effects
+#### `ParsedStyleEffects`
 
 | Field | Type | Description |
 |-------|------|-------------|
@@ -68,24 +71,42 @@ A composite holding three style sub-groups. A `ParsedStyle` where all fields are
 
 ---
 
+### `WidgetType`
+
+Python `Enum` in `core/widget_type.py`. Used as keys in `CHILDREN` registry and stored in `ParsedChild.type`.
+
+| Member | C value |
+|--------|---------|
+| `WidgetType.LABEL` | `"UI_CHILD_LABEL"` |
+| `WidgetType.IMAGE` | `"UI_CHILD_IMAGE"` |
+| `WidgetType.BAR` | `"UI_CHILD_BAR"` |
+
+`c_enum_name()` returns the string value for embedding in generated C code.
+
+---
+
 ### `ChildSpec`
 
-Describes how the generator handles one widget type. Stored in `CHILDREN` registry in `child_registry.py`.
+Describes how the generator handles one widget type. Stored in `CHILDREN` in `child_registry.py`.
 
 | Field | Type | Description |
 |-------|------|-------------|
-| `type_name` | `str` | `UI_CHILD_*` string (matches the key in `CHILDREN`) |
-| `callback_template` | `str` | Template name for animation callback. Empty string = no callback generated. |
-| `setter_template` | `str` | Template name for the public setter function |
+| `type_name` | `WidgetType` | Enum value (matches the key in `CHILDREN`) |
+| `callback_template` | `str` | Template name for animation callback; `""` = none |
+| `setter_template` | `str` | Template name for the public setter |
 | `init_template` | `str` | Template name for the `switch` init case |
-| `setter_args` | `str` | C argument list for the setter (e.g. `"const char *text"`) |
-| `requires_asset` | `bool` | If `True`, main.py checks that a PNG matching the child ID exists |
+| `setter_args` | `str` | C argument list for the setter |
+| `requires_asset` | `bool` | If `True`, main.py validates a matching PNG exists |
+| `setter_name_pattern` | `str` | Pattern for setter function name, e.g. `"ui_{screen}_set_{child_id}"` |
+| `callback_name_pattern` | `str` | Pattern for callback function name; `""` = no callback |
+
+`derive_setter_name(screen_snake, child_id)` and `derive_callback_name(screen_snake)` format these patterns. This is why `generator.py` has no per-type `if/elif` branches for naming — all naming is driven by the registry.
 
 ---
 
 ## C Model (Device Side)
 
-Defined in `static_src/ui_defs.h`. These structs are what the generated `.c` files populate as static initialisers, and what the device firmware reads at runtime.
+Structs defined in `static_src/ui_defs.h`. Constants defined in the generated `ui_config.h` (included by `ui_defs.h`).
 
 ---
 
@@ -93,67 +114,36 @@ Defined in `static_src/ui_defs.h`. These structs are what the generated `.c` fil
 
 ```c
 typedef enum {
-    UI_CHILD_ICON,
     UI_CHILD_LABEL,
     UI_CHILD_BAR,
     UI_CHILD_IMAGE,
 } ui_child_type_t;
 ```
 
-> Note: `UI_CHILD_ICON` is defined in the enum but has no corresponding `ChildSpec` in the current registry. It is a placeholder for future use.
-
 ---
 
-### `ui_style_box_t` — Box Style
+### Style Structs
 
 ```c
 typedef struct {
-    bool        has_bg;
-    uint32_t    bg;              // raw hex e.g. 0xFFFFFF
-    bool        has_bg_opa;
-    uint8_t     bg_opa;
-    bool        has_border_color;
-    uint32_t    border_color;
-    bool        has_border_width;
-    lv_coord_t  border_width;
-    bool        has_radius;
-    lv_coord_t  radius;
+    bool        has_bg;          uint32_t    bg;
+    bool        has_bg_opa;      uint8_t     bg_opa;
+    bool        has_border_color; uint32_t   border_color;
+    bool        has_border_width; lv_coord_t border_width;
+    bool        has_radius;      lv_coord_t  radius;
 } ui_style_box_t;
-```
 
-Each property has a `has_*` boolean guard. `ui_apply_style()` only calls the corresponding LVGL API if the guard is `true`. This lets zero-initialised structs safely mean "no style set".
-
----
-
-### `ui_style_text_t` — Text Style
-
-```c
 typedef struct {
-    bool            has_color;
-    uint32_t        color;
-    bool            has_size;
-    uint16_t        size;
-    bool            has_align;
-    lv_text_align_t align;
+    bool            has_color;  uint32_t        color;
+    bool            has_size;   uint16_t        size;
+    bool            has_align;  lv_text_align_t align;
 } ui_style_text_t;
-```
 
----
-
-### `ui_style_effects_t` — Effects
-
-```c
 typedef struct {
     bool    has_opacity;
     uint8_t opacity;
 } ui_style_effects_t;
-```
 
----
-
-### `ui_style_t` — Composite Style
-
-```c
 typedef struct {
     ui_style_box_t      box;
     ui_style_text_t     text;
@@ -161,7 +151,7 @@ typedef struct {
 } ui_style_t;
 ```
 
-This is the type of the `style` field in `ui_child_t`.
+Each property has a `has_*` boolean guard — `ui_apply_style()` only calls the LVGL API if the guard is `true`. Zero-initialised structs mean "no style set".
 
 ---
 
@@ -170,22 +160,21 @@ This is the type of the `style` field in `ui_child_t`.
 ```c
 typedef struct {
     ui_child_type_t  type;
-    char             id[UI_MAX_ID_LENGTH];   // 30 chars
-    lv_obj_t        *lv_obj;                 // NULL until _init() runs
-    int              x;
-    int              y;
-    int              w;
-    int              h;
+    char             id[UI_MAX_ID_LENGTH];
+    lv_obj_t        *lv_obj;       // NULL until _init() runs
+    int              x, y, w, h;
     ui_style_t       style;
     union {
-        struct { char text[UI_MAX_STRING_LENGTH]; } label;  // 30 chars
+        struct { char text[UI_MAX_STRING_LENGTH]; } label;
         struct { int32_t value; }                  bar;
         struct { const lv_image_dsc_t *src; }      image;
     } data;
 } ui_child_t;
 ```
 
-The `lv_obj` pointer is `NULL` at compile time. It is filled by the screen's `_init()` function at runtime.
+`lv_obj` is `NULL` in the static initialiser. `_init()` creates the LVGL objects and fills these pointers. All setters guard against `lv_obj == NULL`.
+
+`data.label.text` holds the design-time default from Figma. `_init()` applies it via `lv_label_set_text()`. The setter writes directly to the live LVGL object and does not update the struct field.
 
 ---
 
@@ -194,24 +183,30 @@ The `lv_obj` pointer is `NULL` at compile time. It is filled by the screen's `_i
 ```c
 typedef struct {
     const char  *name;
-    ui_child_t   children[UI_MAX_CHILDREN];  // 16 slots
+    ui_child_t   children[UI_MAX_CHILDREN];  // auto-sized in ui_config.h
     uint8_t      child_count;
-    lv_obj_t    *lv_screen;                  // NULL until _init() runs
+    lv_obj_t    *lv_screen;     // NULL until _init() runs
 } ui_screen_t;
 ```
 
 ---
 
-## Constants
+### `ui_config.h` — Generated Constants
 
-Defined in `ui_defs.h`:
+`ui_config.h` is **auto-generated** by `config_writer.py` on every run. It defines all numeric constants so the C model always matches the actual design:
 
-| Constant | Value | Description |
-|----------|-------|-------------|
-| `UI_MAX_CHILDREN` | 16 | Maximum widgets per screen |
-| `UI_MAX_ICON_STATES` | 8 | Maximum states for multi-state icon (future use) |
-| `UI_MAX_STRING_LENGTH` | 30 | Maximum label text length including null terminator |
-| `UI_MAX_ID_LENGTH` | 30 | Maximum widget ID string length |
+```c
+/* Auto-generated by figma2lvgl — do not edit */
+/* Largest screen: ili9486_home (4 children) */
+#define UI_MAX_CHILDREN      4
+#define UI_MAX_STRING_LENGTH 30
+#define UI_MAX_ID_LENGTH     30
+#define UI_MAX_ICON_STATES   8
+```
+
+`ui_defs.h` includes this header — no constants are hardcoded in `ui_defs.h` itself.
+
+> **Build system note:** `ui_style.c` (in `priv_src/`) includes `ui_defs.h`, which now requires `priv_include/` on the include path. ESP-IDF and Zephyr handle this automatically. For bare-metal Makefiles, add `-Iui_src/priv_include` to the CFLAGS that compile `priv_src/`.
 
 ---
 
@@ -219,9 +214,10 @@ Defined in `ui_defs.h`:
 
 | Python field | C field |
 |-------------|---------|
-| `ParsedChild.type` | `ui_child_t.type` |
+| `ParsedChild.type` | `ui_child_t.type` (via `.c_enum_name()`) |
 | `ParsedChild.id` | `ui_child_t.id[]` |
 | `ParsedChild.x/y/w/h` | `ui_child_t.x/y/w/h` |
+| `ParsedChild.text_content` | `ui_child_t.data.label.text[]` (LABEL only) |
 | `ParsedStyleBox.bg_color` | `ui_style_box_t.has_bg` + `.bg` |
 | `ParsedStyleBox.bg_opa` | `ui_style_box_t.has_bg_opa` + `.bg_opa` |
 | `ParsedStyleBox.border_color` | `ui_style_box_t.has_border_color` + `.border_color` |
@@ -233,3 +229,4 @@ Defined in `ui_defs.h`:
 | `ParsedStyleEffects.opacity` | `ui_style_effects_t.has_opacity` + `.opacity` |
 | `ParsedScreen.name` | `ui_screen_t.name` |
 | `len(ParsedScreen.children)` | `ui_screen_t.child_count` |
+| `max(len(s.children))` | `UI_MAX_CHILDREN` in `ui_config.h` |
