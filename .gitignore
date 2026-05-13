@@ -15,3 +15,4 @@ images/
 pip
 test_envtest_env/
 ui_src/
+figma2lvgl/_version.py
