@@ -15,7 +15,7 @@ authors = [
 dependencies = [
     "platformdirs>=3.0",
 ]
-keywords = ["lvgl", "lvgl9" ,"figma", "codegen", "embedded", "ui" , "lvgl-ui"]
+keywords = ["lvgl", "lvgl9", "figma", "codegen", "embedded", "ui", "lvgl-ui"]
 classifiers = [
     "Development Status :: 3 - Alpha",
     "Programming Language :: Python :: 3",
@@ -30,18 +30,18 @@ classifiers = [
 [project.scripts]
 figma2lvgl = "figma2lvgl.main:main"
 
+[project.urls]
+Homepage = "https://github.com/khiyamiftikhar/figma2lvgl"
+Issues   = "https://github.com/khiyamiftikhar/figma2lvgl/issues"
+
 [tool.setuptools.packages.find]
-where = ["."]
+where   = ["."]
 include = ["figma2lvgl*"]
 
 [tool.setuptools.package-data]
-"figma2lvgl.static_src" = ["*.h"]
-"figma2lvgl.tools" = ["*.py"]
+"figma2lvgl" = ["static_src/*.h", "static_src/*.c"]
 
 [tool.setuptools_scm]
 version_scheme = "no-guess-dev"
-local_scheme = "no-local-version"
-
-[project.urls]
-Homepage = "https://github.com/khiyamiftikhar/figma2lvgl"
-Issues = "https://github.com/khiyamiftikhar/figma2lvgl/issues"
+local_scheme   = "no-local-version"
+write_to       = "figma2lvgl/_version.py"
