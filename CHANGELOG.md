@@ -1,5 +1,27 @@
 # Changelog
 
+## 0.4.1 — 2026-05-15
+
+## Changed
+- Added support for parsing **Figma event modifiers** from widget names.
+- Introduced `parse_widget_name()` to separate widget IDs from modifiers.
+- Added `EVENT_SUFFIX_MAP` and `BUTTON_DEFAULT_EVENT` for standardized event handling.
+- Extended `ParsedNode` to store `event_modifiers`.
+- Generator now strips event modifiers and slider range values before forming struct IDs.
+- Buttons now always register `LV_EVENT_CLICKED` and optionally register additional callbacks for specified modifiers.
+- Weak callback generation now follows the naming pattern:
+  `on_<widget_id>_<event>()`
+- Updated tests and regenerated golden UI outputs.
+
+## Fixed
+- Fixed button text styling behavior in generated LVGL code.
+- Previously, text styles were applied to the button container and relied on LVGL inheritance.
+- Text styles are now applied directly to the internal label object.
+- Button containers now only receive box-related styling (background, border, radius).
+- This makes button styling more explicit and predictable.
+
+---
+
 ## 0.4.0 — 2026-05-14
 
 ### Changed — Architecture (Breaking)
