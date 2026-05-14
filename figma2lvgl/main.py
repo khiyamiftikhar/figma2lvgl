@@ -10,7 +10,6 @@ from pathlib import Path
 from figma2lvgl.core.figma_parser import parse_screen
 from figma2lvgl.core.generator import generate_screen
 from figma2lvgl.core.utils.utils import write_file
-from figma2lvgl.core.child_registry import CHILDREN
 from figma2lvgl.core.config_writer import write_ui_config
 from figma2lvgl.tools.image_converter import convert_images
 
@@ -124,7 +123,7 @@ def confirm_overwrite(ui_src: Path, auto_yes: bool = False) -> bool:
 def validate_assets(screens, images_dir):
     required_assets = set()
     for screen in screens:
-        required_assets.update(screen.get_required_assets(CHILDREN))
+        required_assets.update(screen.get_required_assets())   # v0.4.0: no registry arg
 
     missing = [
         os.path.join(images_dir, asset_id + ".png")

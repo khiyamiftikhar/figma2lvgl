@@ -1,8 +1,8 @@
 #include "ui_style.h"
 
-// ── Font mapping ─────────────────────────────────────────────────────────────
+// ── Font mapping ──────────────────────────────────────────────────────────────
 
-const lv_font_t* ui_get_font(uint16_t size)
+const lv_font_t *ui_get_font(uint16_t size)
 {
     switch (size)
     {
@@ -30,18 +30,18 @@ const lv_font_t* ui_get_font(uint16_t size)
 #if LV_FONT_MONTSERRAT_24
         case 24: return &lv_font_montserrat_24;
 #endif
-        default: return LV_FONT_DEFAULT;   // always available, no config needed
+        default: return LV_FONT_DEFAULT;
     }
 }
-// ── Style application ────────────────────────────────────────────────────────
+
+// ── Style application ─────────────────────────────────────────────────────────
 
 void ui_apply_style(lv_obj_t *obj, ui_child_type_t type, const ui_style_t *s)
 {
     if (!obj || !s)
         return;
 
-    // ── Box styles (applies to most widgets) ────────────────────────────────
-
+    // ── Box styles (all widget types) ─────────────────────────────────────
     if (s->box.has_bg)
         lv_obj_set_style_bg_color(obj, lv_color_hex(s->box.bg), LV_PART_MAIN);
 
@@ -57,9 +57,8 @@ void ui_apply_style(lv_obj_t *obj, ui_child_type_t type, const ui_style_t *s)
     if (s->box.has_radius)
         lv_obj_set_style_radius(obj, s->box.radius, LV_PART_MAIN);
 
-    // ── Text styles (only for labels for now) ───────────────────────────────
-
-    if (type == UI_CHILD_LABEL)
+    // ── Text styles ───────────────────────────────────────────────────────
+    if (type == UI_CHILD_LABEL || type == UI_CHILD_BUTTON)
     {
         if (s->text.has_color)
             lv_obj_set_style_text_color(obj, lv_color_hex(s->text.color), LV_PART_MAIN);
@@ -75,12 +74,15 @@ void ui_apply_style(lv_obj_t *obj, ui_child_type_t type, const ui_style_t *s)
             lv_obj_set_style_text_align(obj, s->text.align, LV_PART_MAIN);
     }
 
-    // ── Global opacity ──────────────────────────────────────────────────────
-
-    if (s->effects.has_opacity)
-        lv_obj_set_style_opa(obj, s->effects.opacity, LV_PART_MAIN);
-    
-    // ── Bar indicator — apply fill color to the animated part ───────────────────
+    // ── Bar indicator: fill color → animated portion ──────────────────────
     if (type == UI_CHILD_BAR && s->box.has_bg)
         lv_obj_set_style_bg_color(obj, lv_color_hex(s->box.bg), LV_PART_INDICATOR);
+
+    // ── Slider indicator: same pattern as bar ─────────────────────────────
+    if (type == UI_CHILD_SLIDER && s->box.has_bg)
+        lv_obj_set_style_bg_color(obj, lv_color_hex(s->box.bg), LV_PART_INDICATOR);
+
+    // ── Global opacity ────────────────────────────────────────────────────
+    if (s->effects.has_opacity)
+        lv_obj_set_style_opa(obj, s->effects.opacity, LV_PART_MAIN);
 }
