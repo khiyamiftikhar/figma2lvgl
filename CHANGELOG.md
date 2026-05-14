@@ -8,17 +8,31 @@
 - Added `EVENT_SUFFIX_MAP` and `BUTTON_DEFAULT_EVENT` for standardized event handling.
 - Extended `ParsedNode` to store `event_modifiers`.
 - Generator now strips event modifiers and slider range values before forming struct IDs.
-- Buttons now always register `LV_EVENT_CLICKED` and optionally register additional callbacks for specified modifiers.
+- Buttons now always register `LV_EVENT_CLICKED` and can optionally register additional callbacks for explicitly defined modifiers.
 - Weak callback generation now follows the naming pattern:
   `on_<widget_id>_<event>()`
-- Updated tests and regenerated golden UI outputs.
 
 ## Fixed
 - Fixed button text styling behavior in generated LVGL code.
 - Previously, text styles were applied to the button container and relied on LVGL inheritance.
 - Text styles are now applied directly to the internal label object.
 - Button containers now only receive box-related styling (background, border, radius).
-- This makes button styling more explicit and predictable.
+- Button text styles are now extracted from the Figma `Text` child and merged into `style.text`.
+- This makes button styling behavior explicit and predictable.
+
+## Documentation
+- Added documentation for widget name parsing (base names vs modifiers).
+- Documented that modifiers are stripped before `normalize_id()`.
+- Documented slider range stripping behavior.
+- Rewrote button architecture docs to reflect two-target styling:
+  - box styles → button container
+  - text styles → internal label
+- Added full event suffix mapping tables with generated struct fields and callback examples.
+- Updated code generation docs with new button initialization flow.
+- Updated runtime styling docs to clarify that text styling applies to `LABEL` only.
+- Updated Figma guide with new button behavior, callback naming, and event examples.
+- Documented why `LV_EVENT_ALL` is intentionally not used.
+- Updated tests and regenerated golden UI outputs.
 
 ---
 
