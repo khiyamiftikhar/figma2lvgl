@@ -109,13 +109,15 @@ Reads each `has_*` flag and calls the corresponding LVGL API if set. All calls u
 | `has_border_width` | `lv_obj_set_style_border_width(..., LV_PART_MAIN)` |
 | `has_radius` | `lv_obj_set_style_radius(..., LV_PART_MAIN)` |
 
-**Text styles (LABEL and BUTTON only):**
+**Text styles (LABEL only — not BUTTON):**
 
 | Guard | LVGL call |
 |-------|----------|
 | `has_color` | `lv_obj_set_style_text_color(..., LV_PART_MAIN)` |
 | `has_size` | `lv_obj_set_style_text_font(obj, ui_get_font(size), LV_PART_MAIN)` |
 | `has_align` | `lv_obj_set_style_text_align(..., LV_PART_MAIN)` |
+
+**Why not BUTTON:** A button's text styles are stored in `style.text` but applied directly to the internal `lv_label` child in `_init()`, not to the button container. This avoids relying on LVGL's style inheritance, which is brittle when a button contains mixed children (e.g. icon + label). The init code calls `ui_apply_style(lbl, UI_CHILD_LABEL, &btn.style)` on the label object directly.
 
 **Indicator color (BAR and SLIDER):** Fill color is also applied to `LV_PART_INDICATOR` so the Figma fill color controls the filled/animated portion, not just the track.
 

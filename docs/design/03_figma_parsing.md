@@ -101,11 +101,44 @@ text_content = sanitize_c_string(raw_text, UI_MAX_STRING_LENGTH)
 
 ---
 
-## Button Label Extraction
+## Widget Name Parsing — Base Name vs Modifiers
 
-`_find_button_label(button_xml)` looks one level inside a button's `<children>` for the first `<Text>` node. If found, its `characters` attribute becomes the button's `label_text`. Falls back to deriving the label from the button's own name (strips `btn_`/`button_` prefix, capitalizes: `btn_ok` → `"Ok"`).
+Figma widget names encode two distinct things that the parser separates immediately, before any ID is formed:
 
-This is the **only** place the parser looks inside a node's children as an implementation detail — it does not create a separate `ParsedNode` for the button's label. The label is internal to the LVGL button object.
+1. **Identity** — becomes the C struct field name and all API function names
+2. **Behavioral modifiers** — consumed by the generator to produce code variations (event registrations, value ranges)
+
+The rule: **modifiers are stripped before `normalize_id()` is called**. They never appear in C struct names or API function names.
+
+`parse_widget_name(raw_name)` in `figma_helpers.py` handles this split:
+
+```python
+# btn_ok_lp  → base "btn_ok",          modifiers ["lp"]
+# btn_ok     → base "btn_ok",          modifiers []
+# btn_ok_lpr → base "btn_ok",          modifiers ["lpr"]
+```
+
+The `event_modifiers` list is stored on `ParsedNode` and read by the init and setter emitters to generate the correct `lv_obj_add_event_cb` registrations and weak callback functions.
+
+**Slider range numbers are also stripped from the struct ID** — separately from event modifiers, in `_parse_children()`:
+
+```python
+# brightness_slider_0_255 → struct field "brightness_slider"
+#                           range (0, 255) stored in node.slider_min/max
+```
+
+---
+
+## Button Label Style Extraction
+
+`_find_button_label(button_xml)` reads the label text from the first `<Text>` child inside a button frame. A companion operation (in `_parse_children()`) also reads the Text child's fill color and font size and merges them into the button's `ParsedStyle.text` fields:
+
+```python
+# Text child fill color  → style.text.color
+# Text child fontSize    → style.text.size
+```
+
+The same `ui_style_t` struct field on the button carries both the button body appearance (`style.box`) and the label text appearance (`style.text`). They are applied to different LVGL objects during init — see `05_code_generation.md`.
 
 ---
 

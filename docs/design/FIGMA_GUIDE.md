@@ -134,20 +134,31 @@ internal structure and figures out they are image widgets.
 
 - Use a **Frame** (F) — not a rectangle
 - Name it `btn_something`: `btn_ok`, `btn_back`, `btn_confirm`
-- Set fill color, corner radius, border on the frame — these style the button
+- Set fill color, corner radius, border on the frame — these style the button body
 - **Add a Text layer inside the frame** for the button label
-  - The text content becomes the button label in LVGL automatically
-  - Name the text layer anything (e.g. `label`)
-  - If no text layer: the tool derives label from the button name
-    (`btn_ok` → "Ok")
+  - Text content, text color, and font size are all extracted automatically
+  - If no text layer: label is derived from the button name (`btn_ok` → "Ok")
 - The button generates an event callback you override in firmware
 
 ```
 Figma:   Frame "btn_ok" (120×44, blue fill, radius 8)
-           └── Text "label" "Ok" (white, centered)
-LVGL:    lv_button_create() + lv_label_create("Ok") inside
-Firmware: void ui_home_on_btn_ok(lv_event_t *e) { /* your code */ }
+           └── Text "label" "Ok" (white, 14pt, centered)
+LVGL:    lv_button_create() — blue body, radius 8
+         lv_label_create() inside — white 14pt text
+Firmware: void ui_home_on_btn_ok_clicked(lv_event_t *e) { /* your code */ }
 ```
+
+**Event suffixes — append to button name to register additional events:**
+
+| Figma name | Struct field | Callbacks generated |
+|-----------|-------------|---------------------|
+| `btn_ok` | `btn_ok` | `on_btn_ok_clicked` only |
+| `btn_ok_lp` | `btn_ok` | `on_btn_ok_clicked` + `on_btn_ok_long_pressed` |
+| `btn_ok_lpr` | `btn_ok` | `on_btn_ok_clicked` + `on_btn_ok_long_pressed_repeat` |
+| `btn_ok_press` | `btn_ok` | `on_btn_ok_clicked` + `on_btn_ok_pressed` |
+| `btn_ok_release` | `btn_ok` | `on_btn_ok_clicked` + `on_btn_ok_released` |
+
+The suffix is stripped before forming the struct field — `btn_ok_lp` and `btn_ok` both produce the `btn_ok` struct field. Only the explicitly requested events are registered. No `LV_EVENT_ALL` — no overhead from events you don't use.
 
 ### Slider
 

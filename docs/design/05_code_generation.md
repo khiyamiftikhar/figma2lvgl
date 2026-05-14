@@ -21,6 +21,20 @@ def generate_screen(screen: ParsedScreen):
 
 ---
 
+## Widget Name Parsing — Modifiers Stripped Before ID Formation
+
+Before any struct field name or API function name is formed, `parse_widget_name()` strips behavioral modifier suffixes from the raw Figma node name:
+
+```python
+"btn_ok_lp"              → base "btn_ok",          event_modifiers ["lp"]
+"brightness_slider_0_255"→ base "brightness_slider", range (0, 255)
+"btn_cancel"             → base "btn_cancel",       event_modifiers []
+```
+
+The base name goes to `normalize_id()` and becomes the C struct field. The modifiers drive code generation (event registrations, range values) but never appear in generated names. This separation is enforced in the parser — the generator only ever sees the clean base name.
+
+---
+
 ## Pass 1 — Struct Emitter (`core/node_emitter.py`)
 
 Produces the file-static C struct that mirrors the Figma hierarchy.
@@ -63,18 +77,31 @@ Queue entry format: `(node, struct_path, parent_lv_obj_expr)`
 - `struct_path` — e.g. `"s_home.panel_top.time"` — used to reference the node's fields
 - `parent_lv_obj_expr` — e.g. `"s_home.panel_top.lv_obj"` — passed to `lv_*_create()`
 
-Example output for a label inside a panel:
-```c
-/* panel_top (panel) */
-s_home.panel_top.lv_obj = lv_obj_create(s_home.lv_screen);
-lv_obj_set_pos(s_home.panel_top.lv_obj, 0, 0);
-...
+**Button init — two-target style application:**
 
-/* time (label) — parent: panel_top */
-s_home.panel_top.time.lv_obj = lv_label_create(s_home.panel_top.lv_obj);
-lv_label_set_text(s_home.panel_top.time.lv_obj, s_home.panel_top.time.text);
-...
+```c
+/* Button container: box styles only */
+s_home.btn_ok.lv_obj = lv_button_create(parent);
+lv_obj_set_pos(...);
+lv_obj_set_size(...);
+{
+    lv_obj_t *_lbl = lv_label_create(s_home.btn_ok.lv_obj);
+    lv_label_set_text(_lbl, s_home.btn_ok.label_text);
+    lv_obj_center(_lbl);
+    /* text color/font applied directly to label — not via inheritance */
+    ui_apply_style(_lbl, UI_CHILD_LABEL, &s_home.btn_ok.style);
+}
+lv_obj_add_event_cb(..., ui_home_on_btn_ok_clicked, LV_EVENT_CLICKED, NULL);
+/* btn_ok_lp also registers: */
+lv_obj_add_event_cb(..., ui_home_on_btn_ok_long_pressed, LV_EVENT_LONG_PRESSED, NULL);
+ui_apply_style(s_home.btn_ok.lv_obj, UI_CHILD_BUTTON, &s_home.btn_ok.style);
 ```
+
+The same `ui_style_t` struct is passed to both `ui_apply_style` calls.
+`UI_CHILD_BUTTON` applies only box styles (bg, radius, border).
+`UI_CHILD_LABEL` applies only text styles (color, font).
+This avoids relying on LVGL's style inheritance, which is brittle when a
+button has mixed children (icon + label).
 
 `_emit_node_init(node, path, parent_lv)` handles each widget type. At the end of each node's init block, `ui_apply_style()` is called.
 
@@ -94,14 +121,19 @@ lv_label_set_text(s_home.panel_top.time.lv_obj, s_home.panel_top.time.text);
 
 **No setter for:** PANEL (not addressable from firmware), STRUCTURAL (dropped).
 
-**Callbacks generated for:** BUTTON and SLIDER
+**Callbacks generated for:** BUTTON and SLIDER. One callback per registered event, named with the event type:
+
 ```c
-__attribute__((weak)) void ui_home_on_btn_ok(lv_event_t *e)
-{
-    (void)e;
-    /* override: navigate, update state, etc. */
-}
+/* btn_ok (no suffix) — one callback */
+__attribute__((weak)) void ui_home_on_btn_ok_clicked(lv_event_t *e) { (void)e; }
+
+/* btn_ok_lp — two callbacks */
+__attribute__((weak)) void ui_home_on_btn_ok_clicked(lv_event_t *e)      { (void)e; }
+__attribute__((weak)) void ui_home_on_btn_ok_long_pressed(lv_event_t *e) { (void)e; }
 ```
+
+Only the events explicitly requested via Figma name suffix are registered.
+Zero overhead for events that are not needed.
 
 Returns a dict: `setters`, `callbacks`, `prototypes`, `cb_declarations`, `bar_anim_needed`.
 

@@ -87,23 +87,52 @@ A `/* TODO: adjust range */` comment is emitted above `_init()` listing all bar 
 
 ```
 Figma:      Frame named btn_* or button_*
-            Optional: first Text child provides label text
+            Optional: first Text child provides label text and text style
 LVGL:       lv_button_create(parent)
             lv_label_create(button) ← internal, not a separate ParsedNode
-            lv_obj_add_event_cb(LV_EVENT_CLICKED)
+            lv_obj_add_event_cb() ← one registration per event type
 Struct:     const char *label_text  ← Flash (static)
-Setter:     ui_{screen}_{path}_{id}_set_label(const char *text)  (if needed)
-Callback:   ui_{screen}_on_{id}(lv_event_t *e)  __attribute__((weak))
+            ui_style_t style        ← .box = button body, .text = label text
+Setter:     ui_{screen}_{path}_{id}_set_label(const char *text)
+Callbacks:  ui_{screen}_on_{id}_clicked(lv_event_t *e)        always generated
+            ui_{screen}_on_{id}_long_pressed(lv_event_t *e)   if _lp suffix
+            ui_{screen}_on_{id}_released(lv_event_t *e)       if _release suffix
+            ... (one weak callback per registered event)
 ```
 
-The button's internal label is not a separate `ParsedNode` — it's an LVGL implementation detail created inside the button init case. The setter accesses it via `lv_obj_get_child(btn.lv_obj, 0)`.
+**Style application — two targets, not one:**
 
-Override the callback in application code:
+The button's `ui_style_t style` covers both the button body and the label text.
+They are applied to different LVGL objects to avoid relying on LVGL inheritance:
+
 ```c
-void ui_home_on_btn_ok(lv_event_t *e) {
-    ui_settings_load();   /* navigate to settings */
-}
+/* Button container → box styles only (bg, radius, border) */
+ui_apply_style(btn.lv_obj, UI_CHILD_BUTTON, &btn.style);
+
+/* Internal label → text styles only (color, font) */
+lv_obj_t *_lbl = lv_label_create(btn.lv_obj);
+lv_label_set_text(_lbl, btn.label_text);
+lv_obj_center(_lbl);
+ui_apply_style(_lbl, UI_CHILD_LABEL, &btn.style);  /* reuses same style */
 ```
+
+`ui_apply_style` with `UI_CHILD_BUTTON` applies only box styles (no text).
+`ui_apply_style` with `UI_CHILD_LABEL` applies only text styles (no box).
+The same `ui_style_t` struct is passed to both calls.
+
+**Event suffix system:**
+
+The default event is `LV_EVENT_CLICKED`. Additional events are encoded in the Figma button name as suffixes. Suffixes are stripped before the struct field name is formed — they are code-generation directives, not identity.
+
+| Figma name | Struct field | Events registered |
+|-----------|-------------|------------------|
+| `btn_ok` | `btn_ok` | `LV_EVENT_CLICKED` |
+| `btn_ok_lp` | `btn_ok` | `LV_EVENT_CLICKED` + `LV_EVENT_LONG_PRESSED` |
+| `btn_ok_lpr` | `btn_ok` | `LV_EVENT_CLICKED` + `LV_EVENT_LONG_PRESSED_REPEAT` |
+| `btn_ok_press` | `btn_ok` | `LV_EVENT_CLICKED` + `LV_EVENT_PRESSED` |
+| `btn_ok_release` | `btn_ok` | `LV_EVENT_CLICKED` + `LV_EVENT_RELEASED` |
+
+Each registered event gets its own `__attribute__((weak))` callback named `ui_{screen}_on_{id}_{event}`. Only the explicitly registered events fire the callback — no overhead from events that aren't needed.
 
 ---
 
