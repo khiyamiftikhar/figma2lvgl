@@ -1,6 +1,6 @@
 # figma2lvgl — Code Generation
 
-Code generation is handled entirely by `core/generator.py`. The public entry point is `generate_screen(screen)`, which takes a `ParsedScreen` and returns the full text of two files: the screen's `.c` file and its `.h` file.
+Code generation is a three-pass process orchestrated by `core/generator.py`. Each pass is handled by a dedicated module. The public entry point is `generate_screen(screen)`.
 
 ---
 
@@ -10,235 +10,178 @@ Code generation is handled entirely by `core/generator.py`. The public entry poi
 
 **Output:** `(c_filename, h_filename, h_text, c_text)` — four strings
 
-The function:
-1. Derives C identifiers from the screen name
-2. Builds the screen struct initialiser (the static `ui_screen_t`)
-3. Iterates children (per-instance) to generate setter functions
-4. Iterates unique widget types (ordered, deterministic) to generate callbacks and init cases
-5. Generates a per-screen bar range comment if any bar widgets are present
-6. Assembles everything into the file-level C and H layout templates
-
----
-
-## Identifier Derivation
-
-From `screen.snake` (computed by the parser via `to_snake_case(name)`):
-
-| Derived name | Pattern | Example |
-|-------------|---------|---------|
-| C variable | `{snake}` | `ili9486_home` |
-| `.c` filename | `ui_{snake}.c` | `ui_ili9486_home.c` |
-| `.h` filename | `ui_{snake}.h` | `ui_ili9486_home.h` |
-| Include guard | `UI_{SNAKE}_H` | `UI_ILI9486_HOME_H` |
-| Init function | `ui_{snake}_init` | `ui_ili9486_home_init` |
-| Load function | `ui_{snake}_load` | `ui_ili9486_home_load` |
-
----
-
-## Screen Struct Generation
-
-The static `ui_screen_t` initialiser is built by iterating `screen.children`:
-
-```c
-ui_screen_t ili9486_home = {
-    .name        = "ili9486_home",
-    .child_count = 4,
-    .children    = {
-        {
-            .type   = UI_CHILD_LABEL,
-            .id     = "time",
-            .lv_obj = NULL,
-            .x = 94, .y = 79, .w = 133, .h = 34,
-            .style = {
-                .text = {
-                    .has_color = true, .color = 0x000000,
-                    .has_size  = true, .size  = 12,
-                }
-            },
-            .data.label = { .text = "Time is \n15:00" }
-        },
-        ...
-    },
-    .lv_screen = NULL
-};
+```python
+def generate_screen(screen: ParsedScreen):
+    struct_block = emit_screen_struct_type(screen)    # Pass 1
+    init_body    = emit_init_body(screen)             # Pass 2
+    sc           = collect_setters_and_callbacks(screen)  # Pass 3
+    # assemble into C_LAYOUT / H_LAYOUT
+    return c_fname, h_fname, h_text, c_text
 ```
 
-Key points:
-- `child.type.c_enum_name()` produces the C enum literal (e.g. `UI_CHILD_LABEL`)
-- `child.text_content` is already sanitized by `sanitize_c_string()` — embedded newlines are `\n`, quotes are `\"`
-- `data.label.text` holds the **design-time default** from Figma. `_init()` applies it on first render. See [Label Text Lifecycle](#label-text-lifecycle) below.
-- `data.image.src` is always `NULL` in the struct; the image setter fills it at runtime
-- `data.bar.value` is always `0` in the struct
+---
 
-Each `data_block` is selected by `WidgetType` enum comparison — no string comparisons in the generator.
+## Pass 1 — Struct Emitter (`core/node_emitter.py`)
+
+Produces the file-static C struct that mirrors the Figma hierarchy.
+
+### Struct type definition
+
+`emit_struct_fields(node, indent)` — recursive. For each `ParsedNode`:
+1. Emits `lv_obj_t *lv_obj;` and `ui_style_t style;`
+2. Emits widget-specific data fields (e.g. `char text[30]` for LABEL)
+3. For PANEL: recurses into children, emitting nested `struct { ... } child_id;` blocks
+
+`emit_screen_struct_type(screen)` — wraps the above into `static struct { lv_obj_t *lv_screen; [child blocks] } s_{snake} = { [initializer] };`
+
+### Static initializer
+
+`emit_node_initializer(node, indent)` — recursive. Emits only fields with non-default values:
+- LABEL with text → `.text = "Hello",`
+- BUTTON → `.label_text = "Ok",`
+- SLIDER → `.value = 50, .min = 0, .max = 100,`
+- PANEL → recurses into children
+
+The result is a clean designated initializer. `lv_obj_t *` pointers are always `NULL` at compile time (they're not in the initializer; C zero-initializes them).
+
+### Style rendering
+
+`render_style_init(style, indent)` in `node_emitter.py` converts a `ParsedStyle` to a C struct initializer fragment. Empty styles emit `.style = {0}`. Non-empty styles emit only the sub-structs and fields that are set.
 
 ---
 
-## Style Block Rendering
+## Pass 2 — Init Emitter (`core/init_emitter.py`)
 
-`_render_style_block(style)` converts a `ParsedStyle` into a C struct initialiser fragment. Uses direct dict lookups (`_ALIGN_MAP`) — not `Template` substitution. Not affected by the `substitute()` migration.
+Produces the flat `_init()` function body.
 
-If `style.is_empty()`:
+`emit_init_body(screen)` runs a **BFS traversal** of the screen's children. For each node, it emits the LVGL creation and configuration calls.
+
+**BFS ordering ensures parents are always created before children.** The generated `_init()` is a flat sequence of calls — no C recursion, no stack depth from nesting.
+
+Queue entry format: `(node, struct_path, parent_lv_obj_expr)`
+
+- `struct_path` — e.g. `"s_home.panel_top.time"` — used to reference the node's fields
+- `parent_lv_obj_expr` — e.g. `"s_home.panel_top.lv_obj"` — passed to `lv_*_create()`
+
+Example output for a label inside a panel:
 ```c
-.style = { .box = { 0 }, .text = { 0 }, .effects = { 0 } },
+/* panel_top (panel) */
+s_home.panel_top.lv_obj = lv_obj_create(s_home.lv_screen);
+lv_obj_set_pos(s_home.panel_top.lv_obj, 0, 0);
+...
+
+/* time (label) — parent: panel_top */
+s_home.panel_top.time.lv_obj = lv_label_create(s_home.panel_top.lv_obj);
+lv_label_set_text(s_home.panel_top.time.lv_obj, s_home.panel_top.time.text);
+...
 ```
 
-Otherwise only sub-structs with at least one field set are emitted:
+`_emit_node_init(node, path, parent_lv)` handles each widget type. At the end of each node's init block, `ui_apply_style()` is called.
+
+---
+
+## Pass 3 — Setter/Callback Emitter (`core/setter_emitter.py`)
+
+`collect_setters_and_callbacks(screen)` does a BFS walk and for each addressable node emits:
+
+**Setters generated for:**
+- LABEL → `void ui_{screen}_{path}_set_text(const char *text)`
+- IMAGE → `void ui_{screen}_{path}_display(void)`
+- BAR → `void ui_{screen}_{path}_set_value(int value, uint32_t duration_ms)`
+- BUTTON → `void ui_{screen}_{path}_{id}_set_label(const char *text)`
+- SLIDER → `void ui_{screen}_{path}_{id}_set_value(int32_t value)`
+- DYNAMIC → `lv_obj_t *ui_{screen}_get_{id}(void)`
+
+**No setter for:** PANEL (not addressable from firmware), STRUCTURAL (dropped).
+
+**Callbacks generated for:** BUTTON and SLIDER
 ```c
-.style = {
-    .text = {
-        .has_color = true,
-        .color     = 0x000000,
-        .has_size  = true,
-        .size      = 12
-    }
-},
+__attribute__((weak)) void ui_home_on_btn_ok(lv_event_t *e)
+{
+    (void)e;
+    /* override: navigate, update state, etc. */
+}
 ```
 
-Text alignment mapping (`_ALIGN_MAP`):
+Returns a dict: `setters`, `callbacks`, `prototypes`, `cb_declarations`, `bar_anim_needed`.
 
-| Python | C |
-|--------|---|
-| `"LEFT"` | `LV_TEXT_ALIGN_LEFT` |
-| `"CENTER"` | `LV_TEXT_ALIGN_CENTER` |
-| `"RIGHT"` | `LV_TEXT_ALIGN_RIGHT` |
-
-Note: `ParsedStyleText.align` is currently always `None` since FigML does not export horizontal text alignment. This dict exists for future use.
+If `bar_anim_needed` is True, a `_bar_anim_exec_cb` helper is added to the C file.
 
 ---
 
-## Per-Child Loop — Setters
+## API Naming Convention
 
-For each child in `screen.children` (by index):
+Function names encode the path from screen to widget:
 
-1. Looks up `CHILDREN[child.type]` for the `ChildSpec`
-2. Derives `fn_name` via `spec.derive_setter_name(screen_snake, child.id)`
-3. Derives `cb_name` via `spec.derive_callback_name(screen_snake)`
-4. Loads the setter template via `load_template(spec.setter_template)`
-5. Substitutes variables using `string.Template.substitute()` — raises `KeyError` immediately on any missing variable
-6. Appends setter body to `setters` list
-7. Appends setter prototype to `setter_prototypes` list (for the `.h` file)
-
-**Naming (derived from ChildSpec patterns):**
-
-| Type | Pattern | Example |
-|------|---------|---------|
-| `LABEL` | `ui_{screen}_set_{child_id}` | `ui_ili9486_home_set_time` |
-| `IMAGE` | `ui_{screen}_display_{child_id}` | `ui_ili9486_home_display_icon_wifi` |
-| `BAR` | `ui_{screen}_set_{child_id}` | `ui_ili9486_home_set_bar` |
-
-There are no `if/elif` branches per widget type in this loop. `derive_setter_name()` and `derive_callback_name()` handle all naming via the pattern strings in `ChildSpec`.
-
----
-
-## Per-Type Loop — Callbacks and Init Cases
-
-Runs over `unique_types` — an **ordered list** of widget type enum values that appear in the screen's children. The list preserves first-appearance order, making generated C output deterministic across runs.
-
-For each unique type:
-1. Derives `cb_name` via `spec.derive_callback_name(screen_snake)`
-2. Loads and substitutes the callback template → appends to `job_callbacks` (only if non-empty)
-3. Loads and substitutes the init template → appends to `init_cases`
-
-This guarantees: one `case UI_CHILD_*:` block per type, one callback function per type (not per instance).
-
----
-
-## Bar Range Comment
-
-After the child loop, if any `WidgetType.BAR` children exist in the screen, a comment is generated that appears once above `_init()` in the C file:
-
-```c
-/* TODO: Bar range is hardcoded to 0-100 in ui_ili9486_home_init() below.
- * Adjust lv_bar_set_range() for: bar
- * If all bars share a range, consider making it a parameter. */
-void ui_ili9486_home_init(void) { ... }
+```
+ui_{screen}_{path}_set_text
+ui_{screen}_{path}_display
+ui_{screen}_{path}_set_value
+ui_{screen}_on_{widget_id}     ← callbacks use widget_id only (screen root)
+ui_{screen}_get_{widget_id}    ← dynamic container accessor
 ```
 
-This is actionable — it names the specific bar IDs to look at. Screens with no bar widgets produce no comment.
-
----
-
-## Template Substitution
-
-All template variable substitution uses `string.Template.substitute()` — not `safe_substitute()`. If a template references `${some_variable}` and it is not provided by the generator, a `KeyError` is raised immediately at generation time. This is intentional: a clear Python error at generation time is better than a `${some_variable}` literal appearing in the generated C file (which would fail at compile time with a confusing error).
+`_setter_fn_name(screen_snake, path_parts)` caps path at 3 segments to prevent name explosion. The last segment (widget ID) is never truncated.
 
 ---
 
 ## File Assembly
 
-### C file
-
-Built from `C_FILE_LAYOUT` in `core/emit/layouts.py` using `Template.substitute()`:
-
-| Variable | Content |
-|----------|---------|
-| `${header_filename}` | e.g. `"ui_ili9486_home.h"` |
-| `${screen_struct}` | Full `ui_screen_t` initialiser |
-| `${job_callbacks}` | Joined callback function bodies |
-| `${setters}` | Joined setter function bodies |
-| `${bars_comment}` | Bar range TODO comment, or empty string |
-| `${sc_fn_name}` | e.g. `ui_ili9486_home_load` |
-| `${init_fn}` | e.g. `ui_ili9486_home_init` |
-| `${screen_var}` | e.g. `ili9486_home` |
-| `${init_body}` | Joined switch case blocks |
-
-### H file
-
-Built from `H_FILE_LAYOUT`:
-
-| Variable | Content |
-|----------|---------|
-| `${guard}` | e.g. `UI_ILI9486_HOME_H` |
-| `${init_fn}` | e.g. `ui_ili9486_home_init` |
-| `${sc_fn_name}` | e.g. `ui_ili9486_home_load` |
-| `${setter_prototypes}` | Newline-joined prototype declarations |
-
----
-
-## Generated File Structure
-
-### `.c` file sections (in order)
+### C file sections (in order)
 
 1. `#include` — own header, `assets.h`, `ui_defs.h`, `ui_style.h`, `<stdio.h>`
-2. Screen struct (`ui_screen_t` static initialiser)
-3. Job callbacks (static animation exec callbacks, one per type that needs one)
-4. Setters (one per widget instance)
-5. `ui_{screen}_load()` — calls `lv_scr_load()`
-6. Bar range comment (if any bars present)
-7. `ui_{screen}_init()` — creates `lv_screen`, iterates children via `switch`, calls `ui_apply_style()`
+2. File-static screen struct + initializer
+3. Bar animation helper (if any bars)
+4. Weak event callbacks (if any buttons/sliders)
+5. Setter functions
+6. `ui_{screen}_load()` — calls `lv_scr_load()`
+7. `ui_{screen}_init()` — BFS flat sequence of LVGL create + configure calls
 
-### `.h` file sections (in order)
+### H file sections (in order)
 
 1. Include guard + `extern "C"`
-2. `#include <stdint.h>`
+2. `#include <stdint.h>`, `#include "lvgl.h"`
 3. `void ui_{screen}_init(void);`
 4. `void ui_{screen}_load(void);`
-5. Setter prototypes (one per widget instance)
-6. Close `extern "C"` + `#endif`
+5. Setter prototypes (one per addressable widget)
+6. Event callback declarations (one per interactive widget)
+7. Close `extern "C"` + `#endif`
 
 ---
 
 ## Label Text Lifecycle
 
-The generated code for labels has two distinct phases:
+| Phase | Mechanism | Who controls |
+|-------|-----------|-------------|
+| Initial render | `data.text` baked from Figma `characters` attr; `_init()` calls `lv_label_set_text()` | Designer (via Figma) |
+| Runtime update | Generated setter calls `lv_label_set_text()` on the live object | Firmware |
 
-| Phase | Mechanism | Who controls it |
-|-------|-----------|----------------|
-| Initial render | `data.label.text` baked from Figma `characters` at generation time; `_init()` applies it via `lv_label_set_text(c->lv_obj, c->data.label.text)` | Designer (via Figma) |
-| Runtime updates | Generated setter `ui_{screen}_set_{id}(const char *text)` calls `lv_label_set_text()` on the live object | Firmware developer |
-
-`data.label.text` holds the design-time default only. The setter does not update it — it writes directly to the LVGL object. If `_init()` is called again (e.g. on screen reload), the label reverts to the Figma value. This is intentional: the Figma value is the known-good initial state; the firmware has full control after that.
+`data.text` holds the design-time default only. On screen reload (`_init()` re-called), the label reverts to the Figma value. This is intentional — Figma value is the known-good initial state.
 
 ---
 
-## Style Application at Runtime
+## Generated File Example
 
-At the end of `ui_{screen}_init()`, for every child:
+For a screen named `home` with a `panel_top` container containing a `time` label and a `btn_ok` button:
 
-```c
-if (c->lv_obj)
-    ui_apply_style(c->lv_obj, c->type, &c->style);
+```
+ui_src/
+  src/     ui_home.c
+  include/ ui_home.h
 ```
 
-`ui_apply_style()` is in the static `ui_style.c`. See `08_static_runtime.md` for full details.
+Firmware usage:
+```c
+#include "ui_home.h"
+
+void app_start(void) {
+    ui_home_init();
+    ui_home_load();
+    ui_home_panel_top_time_set_text("17:45");
+}
+
+/* override in your .c — called when btn_ok is clicked */
+void ui_home_on_btn_ok(lv_event_t *e) {
+    ui_settings_load();
+}
+```

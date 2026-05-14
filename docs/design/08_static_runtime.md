@@ -1,6 +1,6 @@
 # figma2lvgl — Static Runtime
 
-The static runtime consists of three files in `static_src/` that are copied verbatim into `ui_src/priv_src/` and `ui_src/priv_include/` on every generation run. They are not generated — they are fixed support files that the generated screen code depends on at compile and run time.
+The static runtime consists of three files in `static_src/` that are copied verbatim into `ui_src/` on every generation run. They are not generated — they are fixed support files that all generated screen code depends on.
 
 ```
 static_src/
@@ -11,20 +11,13 @@ static_src/
 
 ---
 
-## `ui_defs.h` — Struct and Enum Definitions
+## `ui_defs.h` — Shared Type Definitions
 
-The single header all generated `.c` files include. Contains every type the generated code uses. All numeric constants come from `ui_config.h` (auto-generated), not from `ui_defs.h` directly.
+Contains the types shared across all generated screen files. Includes `ui_config.h` (auto-generated) for string/ID length constants.
 
-```c
-#pragma once
-#include "lvgl.h"
-#include "stdint.h"
-#include "ui_config.h"   /* UI_MAX_CHILDREN, UI_MAX_STRING_LENGTH, etc. */
-```
-
-> **Build system note:** `ui_style.c` (in `priv_src/`) also includes `ui_defs.h`. This means `priv_include/` must be on the include path for all source files in `ui_src/`, not just the generated screen files.
-> - ESP-IDF / Zephyr: handled automatically by component include directories
-> - Bare-metal Makefile: add `-Iui_src/priv_include` to the CFLAGS for `priv_src/` files
+> **Build system note:** `ui_style.c` (in `priv_src/`) includes `ui_defs.h`. Ensure `priv_include/` is on the include path for **all** `ui_src/` source files.
+> - ESP-IDF / Zephyr: handled automatically by component include dirs
+> - Bare-metal Makefile: add `-Iui_src/priv_include` to CFLAGS for `priv_src/` files
 
 ### `ui_child_type_t`
 
@@ -33,22 +26,24 @@ typedef enum {
     UI_CHILD_LABEL,
     UI_CHILD_BAR,
     UI_CHILD_IMAGE,
+    UI_CHILD_BUTTON,
+    UI_CHILD_SLIDER,
+    UI_CHILD_PANEL,
+    UI_CHILD_DYNAMIC,
 } ui_child_type_t;
 ```
 
-Used in `ui_child_t.type` and in the `switch` statement in `_init()`. There is no `UI_CHILD_ICON` — it was removed as dead code.
+Used by `ui_apply_style()` to apply type-specific style properties. The generated C structs do **not** contain a `ui_child_type_t` field — widget type is implicit in the struct field names and the init code.
 
-### Style Structs
-
-Three structs, nested inside `ui_style_t`. Each property has a boolean `has_*` guard so zero-initialised (`{0}`) safely means "no style applied".
+### Style structs
 
 ```c
 typedef struct {
-    bool        has_bg;            uint32_t    bg;
-    bool        has_bg_opa;        uint8_t     bg_opa;
-    bool        has_border_color;  uint32_t    border_color;
-    bool        has_border_width;  lv_coord_t  border_width;
-    bool        has_radius;        lv_coord_t  radius;
+    bool        has_bg;         uint32_t    bg;
+    bool        has_bg_opa;     uint8_t     bg_opa;
+    bool        has_border_color; uint32_t  border_color;
+    bool        has_border_width; lv_coord_t border_width;
+    bool        has_radius;     lv_coord_t  radius;
 } ui_style_box_t;
 
 typedef struct {
@@ -63,69 +58,28 @@ typedef struct {
 } ui_style_effects_t;
 
 typedef struct {
-    ui_style_box_t      box;
-    ui_style_text_t     text;
-    ui_style_effects_t  effects;
+    ui_style_box_t     box;
+    ui_style_text_t    text;
+    ui_style_effects_t effects;
 } ui_style_t;
 ```
 
-### `ui_child_t`
-
-```c
-typedef struct {
-    ui_child_type_t  type;
-    char             id[UI_MAX_ID_LENGTH];
-    lv_obj_t        *lv_obj;     /* NULL until _init() runs */
-    int              x, y, w, h;
-    ui_style_t       style;
-    union {
-        struct { char text[UI_MAX_STRING_LENGTH]; } label;
-        struct { int32_t value; }                  bar;
-        struct { const lv_image_dsc_t *src; }      image;
-    } data;
-} ui_child_t;
-```
-
-`lv_obj` is `NULL` in the static initialiser. `_init()` creates the LVGL objects and fills these pointers. All setter functions guard against `lv_obj == NULL` before calling LVGL.
-
-`data.label.text` holds the design-time default from Figma. `_init()` applies it via `lv_label_set_text()`. The setter writes directly to the live LVGL object and does not update this field.
-
-### `ui_screen_t`
-
-```c
-typedef struct {
-    const char  *name;
-    ui_child_t   children[UI_MAX_CHILDREN];
-    uint8_t      child_count;
-    lv_obj_t    *lv_screen;     /* NULL until _init() runs */
-} ui_screen_t;
-```
-
-`UI_MAX_CHILDREN` is defined in `ui_config.h` as the actual maximum child count across all parsed screens. The array is always exactly the right size — no wasted RAM, no overflow.
+Each property has a `has_*` boolean guard. Zero-initialised (`{0}`) safely means "no style applied."
 
 ---
 
-## `ui_config.h` — Generated Constants
+## `ui_config.h` — Auto-Generated Constants
 
-**Not a static file.** Written by `config_writer.py` on every generation run into `priv_include/`. Included by `ui_defs.h`.
+Written by `config_writer.py` into `priv_include/` on every run. Included by `ui_defs.h`.
 
 ```c
 /* Auto-generated by figma2lvgl — do not edit */
-/* Largest screen: ili9486_home (4 children) */
-#define UI_MAX_CHILDREN      4
 #define UI_MAX_STRING_LENGTH 30
 #define UI_MAX_ID_LENGTH     30
 #define UI_MAX_ICON_STATES   8
 ```
 
-Constants:
-
-| Constant | Value | Description |
-|----------|-------|-------------|
-| `UI_MAX_CHILDREN` | computed | Children in the largest screen in the XML |
-| `UI_MAX_STRING_LENGTH` | 30 | `data.label.text[]` array size (including null terminator) |
-| `UI_MAX_ID_LENGTH` | 30 | `id[]` array size |
-| `UI_MAX_ICON_STATES` | 8 | Future use |
+There is no `UI_MAX_CHILDREN` — the screen struct is always exactly the right size for the design.
 
 ---
 
@@ -135,7 +89,7 @@ Constants:
 void ui_apply_style(lv_obj_t *obj, ui_child_type_t type, const ui_style_t *s);
 ```
 
-Only public API in the static runtime. Called once per child at the end of each screen's `_init()`.
+The only public API in the static runtime. Called once per widget at the end of each screen's `_init()`.
 
 ---
 
@@ -149,71 +103,54 @@ Reads each `has_*` flag and calls the corresponding LVGL API if set. All calls u
 
 | Guard | LVGL call |
 |-------|----------|
-| `has_bg` | `lv_obj_set_style_bg_color(obj, lv_color_hex(s->box.bg), LV_PART_MAIN)` |
-| `has_bg_opa` | `lv_obj_set_style_bg_opa(obj, s->box.bg_opa, LV_PART_MAIN)` |
-| `has_border_color` | `lv_obj_set_style_border_color(obj, lv_color_hex(s->box.border_color), LV_PART_MAIN)` |
-| `has_border_width` | `lv_obj_set_style_border_width(obj, s->box.border_width, LV_PART_MAIN)` |
-| `has_radius` | `lv_obj_set_style_radius(obj, s->box.radius, LV_PART_MAIN)` |
+| `has_bg` | `lv_obj_set_style_bg_color(..., LV_PART_MAIN)` |
+| `has_bg_opa` | `lv_obj_set_style_bg_opa(..., LV_PART_MAIN)` |
+| `has_border_color` | `lv_obj_set_style_border_color(..., LV_PART_MAIN)` |
+| `has_border_width` | `lv_obj_set_style_border_width(..., LV_PART_MAIN)` |
+| `has_radius` | `lv_obj_set_style_radius(..., LV_PART_MAIN)` |
 
-**Text styles (labels only — guarded by `type == UI_CHILD_LABEL`):**
+**Text styles (LABEL and BUTTON only):**
 
 | Guard | LVGL call |
 |-------|----------|
-| `has_color` | `lv_obj_set_style_text_color(obj, lv_color_hex(s->text.color), LV_PART_MAIN)` |
-| `has_size` | `lv_obj_set_style_text_font(obj, ui_get_font(s->text.size), LV_PART_MAIN)` |
-| `has_align` | `lv_obj_set_style_text_align(obj, s->text.align, LV_PART_MAIN)` |
+| `has_color` | `lv_obj_set_style_text_color(..., LV_PART_MAIN)` |
+| `has_size` | `lv_obj_set_style_text_font(obj, ui_get_font(size), LV_PART_MAIN)` |
+| `has_align` | `lv_obj_set_style_text_align(..., LV_PART_MAIN)` |
+
+**Indicator color (BAR and SLIDER):** Fill color is also applied to `LV_PART_INDICATOR` so the Figma fill color controls the filled/animated portion, not just the track.
 
 **Effects (all widget types):**
 
 | Guard | LVGL call |
 |-------|----------|
-| `has_opacity` | `lv_obj_set_style_opa(obj, s->effects.opacity, LV_PART_MAIN)` |
-
-**Bar indicator special case:**
-
-When `type == UI_CHILD_BAR` and `has_bg` is set, the background color is also applied to `LV_PART_INDICATOR`:
-```c
-if (type == UI_CHILD_BAR && s->box.has_bg)
-    lv_obj_set_style_bg_color(obj, lv_color_hex(s->box.bg), LV_PART_INDICATOR);
-```
-This ensures the Figma fill color controls the filled portion of the bar (the animated indicator), not just the track background.
-
----
+| `has_opacity` | `lv_obj_set_style_opa(..., LV_PART_MAIN)` |
 
 ### `ui_get_font()`
 
-Maps a font size integer to an LVGL Montserrat font pointer. Each size is guarded by `#if LV_FONT_MONTSERRAT_N` so only fonts enabled in `lv_conf.h` compile in. Falls back to `LV_FONT_DEFAULT` for unmapped sizes.
+Maps a font size integer to an LVGL Montserrat font pointer, guarded by `#if LV_FONT_MONTSERRAT_N`.
 
 | Size | Font |
 |------|------|
-| 10 | `lv_font_montserrat_10` |
-| 12 | `lv_font_montserrat_12` |
-| 14 | `lv_font_montserrat_14` |
-| 16 | `lv_font_montserrat_16` |
-| 18 | `lv_font_montserrat_18` |
-| 20 | `lv_font_montserrat_20` |
-| 22 | `lv_font_montserrat_22` |
-| 24 | `lv_font_montserrat_24` |
+| 10–24 (even) | `lv_font_montserrat_{N}` |
 | any other | `LV_FONT_DEFAULT` |
 
-Enable only the sizes your design uses in `lv_conf.h` — each Montserrat variant adds significant flash usage on embedded targets.
+Only enable the sizes your design uses in `lv_conf.h` — each Montserrat variant adds significant flash usage.
 
 ---
 
 ## What Generated Code Depends On
 
-A generated screen `.c` file depends on:
-
 | Dependency | Source |
 |-----------|--------|
+| Own `.h` file | Generated |
 | `ui_defs.h` | Copied from `static_src/` |
 | `ui_config.h` | Generated by `config_writer.py` |
 | `ui_style.h` | Copied from `static_src/` |
 | `assets.h` | Generated by image pipeline |
 | `lvgl.h` | Must be provided by the target project |
-| Own `.h` file | Generated |
 
-Application firmware should:
-1. Call `ui_{screen}_init()` once at startup — creates LVGL objects, applies styles, shows initial label text
-2. Call `ui_{screen}_load()` to make the screen active
-3. Call setters to update individual widgets at runtime
+Application firmware calls:
+1. `ui_{screen}_init()` — creates all LVGL objects, applies styles, sets initial text
+2. `ui_{screen}_load()` — makes the screen active (`lv_scr_load`)
+3. Setters — update individual widgets at runtime
+4. Override weak callbacks — handle button clicks, slider changes

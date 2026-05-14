@@ -1,198 +1,159 @@
-# figma2lvgl — Figma Parsing Rules
+# figma2lvgl — Figma Parsing
 
-All parsing logic lives in `core/figma_parser.py` and `core/utils/figma_helpers.py`. The parser reads Figma XML exported by the **FigML** plugin and produces `ParsedScreen` / `ParsedChild` / `ParsedStyle` objects. It has no knowledge of C code or templates.
+All parsing logic lives in `core/figma_parser.py` and `core/utils/figma_helpers.py`. The parser reads Figma XML exported by the FigML plugin and produces a tree of `ParsedNode` objects. It has no knowledge of C code or templates.
 
 ---
 
-## XML Structure (Real FigML Format)
+## XML Structure
 
-FigML exports a `<page>` root, not `<root>`. Each `<Frame>` child becomes one screen. Real nodes include noise attributes (`id`, `maskType`, `type`, `blendMode`) that the parser reads through safely.
+The FigML plugin exports:
 
 ```xml
-<page id="0:1" name="Page_1" type="PAGE">
+<page name="Page_1" type="PAGE">
   <children>
-    <Frame id="6:3" name="ili9486_home" maskType="ALPHA"
-           x="-170" y="-287" width="320" height="480"
-           clipsContent="true" type="FRAME">
+    <Frame name="home" width="320" height="480" type="FRAME">
       <children>
-        <Text id="6:4" name="Time" maskType="ALPHA" strokeAlign="OUTSIDE"
-              x="94" y="79" width="133" height="34" fontSize="12"
-              fontWeight="400" characters="Time is 15:00" type="TEXT"
-              textAlignVertical="TOP">
-          <fills>
-            <fill blendMode="NORMAL" color="#000000" />
-          </fills>
-          <fontName family="Inter" style="Regular" />
-        </Text>
-        <Rectangle id="21:4" name="bar" maskType="ALPHA"
-                   x="33" y="311" width="241" height="35" type="RECTANGLE">
-          <fills>
-            <fill blendMode="NORMAL" color="#e56060" />
-          </fills>
-        </Rectangle>
-        <icon_wifi id="12:9" name="icon_wifi" maskType="ALPHA"
-                   x="129" y="143" width="48" height="48" type="INSTANCE">
-          <fills>
-            <fill visible="false" blendMode="NORMAL" color="#ffffff" />
-          </fills>
-        </icon_wifi>
+        <!-- widgets here -->
       </children>
     </Frame>
   </children>
 </page>
 ```
 
-Key observations from the real format:
-- Root tag is `page`, not `root`. `root.find("children")` still works.
-- Text content is in the `characters` **attribute** — not `node.text` (which is whitespace) and not a `<characters>` child element.
-- `textAlignHorizontal` is **absent** — FigML omits it when alignment is default (left).
-- Component instances (type `INSTANCE`) use their component name as the XML tag (e.g. `<icon_wifi>`, `<Wifi_off>`).
-- Nested children are **not** traversed — only direct children of the `<Frame>` are parsed.
+Each top-level `<Frame>` inside `<children>` becomes one `ParsedScreen`. The parser entry point is `parse_screen(frame_node)`.
 
 ---
 
-## Screen Parsing
+## Tree Walker
 
-`parse_screen(frame_node)` is called once per `<Frame>` node.
+The parser recurses into the full Figma node hierarchy — not just direct children of the Frame. The recursive function is `_parse_children(parent_xml, screen_name, depth, seen_ids)`.
 
-1. Reads `name` attribute → `ParsedScreen.name`
-2. Derives `ParsedScreen.snake` via `to_snake_case(name)`
-3. Iterates direct children of `<children>`
-4. For each child: type detection → geometry → ID normalization → style extraction → text content
-5. Emits warning and skips unrecognized nodes (rather than silently converting them to labels)
-6. Detects duplicate normalized IDs — raises `ValueError`
+**At each level, for each child node:**
+
+1. Call `detect_widget_type(node)` to determine the WidgetType
+2. If `STRUCTURAL` → drop the frame, recurse into its children at the current level (promotion)
+3. If `None` → skip with warning (includes screen name, node name, tag)
+4. If depth > `MAX_DEPTH_HARD` (7) → skip subtree, log error
+5. If depth > `MAX_DEPTH` (5) → continue but log warning
+6. Build a `ParsedNode`, then:
+   - `BUTTON` → one-level peek inside for label text, do NOT recurse further
+   - `DYNAMIC` → create node, stop recursion
+   - `PANEL` → create node, recurse into children
+   - All others → leaf node, no recursion
 
 ---
 
 ## Widget Type Detection
 
-`map_tag_to_child_type(node)` in `core/utils/figma_helpers.py` returns a `WidgetType` enum value or `None`.
+`detect_widget_type(node)` in `core/utils/figma_helpers.py`. Returns a `WidgetType` enum value or `None`. Rules applied in priority order:
 
 | Priority | Condition | Result |
 |----------|-----------|--------|
-| 1 | XML tag is `Text` | `WidgetType.LABEL` |
-| 2 | Node name contains `bar` (case-insensitive) | `WidgetType.BAR` |
-| 3 | Node name contains `icon` or `image` (case-insensitive) | `WidgetType.IMAGE` |
-| 4 | (no match) | `None` → skip with warning |
+| 1 | `node.tag == "Text"` | `LABEL` |
+| 2 | `name.lower().startswith(("btn_", "button_"))` | `BUTTON` |
+| 3 | `name.lower().startswith("slider_")` or `name.lower().endswith("_slider")` | `SLIDER` |
+| 4 | `name.lower().startswith(("list_", "grid_"))` | `DYNAMIC` |
+| 5 | `"bar" in name.lower()` | `BAR` |
+| 6 | `"icon" in name.lower()` or `"image" in name.lower()` | `IMAGE` |
+| 7 | `node.tag == "Vector"` | `None` (SVG path data — skip) |
+| 8 | `type == "INSTANCE"` and contains Vector children | `IMAGE` (icon component) |
+| 8 | `type == "INSTANCE"` and no Vector children | `None` (skip with warning) |
+| 9 | Has children + has fill/border/radius OR has meaningful name | `PANEL` |
+| 10 | Has children + no visual properties + auto-named ("Frame 12") | `STRUCTURAL` (drop+promote) |
+| — | Leaf with no match | `None` (skip with warning) |
 
-**On `None`:** `parse_screen()` emits a `WARNING` log with the parent screen name and the node name/tag/type, then skips the node. The warning message tells the user exactly how to rename the node in Figma to get it recognized.
+### Rule 8 — Icon component content detection
 
-Example: `<Wifi_off name="Wifi_off" type="INSTANCE">` matches none of the rules. The warning says:
+Figma icon components are always internally structured as a Frame or Instance wrapping one or more `Vector` paths. Example: a component named `Wifi_off` containing a `<Vector name="Icon">` child.
+
+The heuristic: if a component `INSTANCE` contains `Vector` children (checked one-to-two levels deep), it is an icon component. The tool treats the whole instance as `IMAGE` and expects `<normalized_id>.png`.
+
 ```
-In screen 'ili9486_home': skipping node 'Wifi_off' (tag='Wifi_off', type='INSTANCE').
-To generate a widget from this node, rename it in Figma to include one of:
-'icon' or 'image' (-> lv_image), 'bar' (-> lv_bar).
-Example: rename 'Wifi_off' -> 'icon_wifi_off'.
+Wifi_off (INSTANCE)          → detect: has Vector child "Icon" → IMAGE
+  └── Vector "Icon"          → never reached as separate node
 ```
 
----
+This means the designer does not need to rename design system icon components.
 
-## ID Normalization
+### Auto-named frame detection
 
-`normalize_id(name)` converts a Figma node name to a valid C snake_case identifier:
-
-1. Split camelCase/PascalCase boundaries (e.g. `Battery` | `Bar`)
-2. Split before consecutive uppercase sequences (e.g. `HTTP` | `Status`)
-3. Lowercase
-4. Replace spaces and hyphens with `_`
-5. Replace remaining non-alnum with `_`
-6. Collapse multiple underscores
-7. Strip leading/trailing underscores
-
-| Figma name | Normalized ID |
-|-----------|--------------|
-| `time_label` | `time_label` |
-| `Progress Bar` | `progress_bar` |
-| `icon-wifi` | `icon_wifi` |
-| `BatteryBar` | `battery_bar` |
-| `HTTPStatus` | `http_status` |
-| `Time (Label)` | `time_label` |
-
-The normalized ID is used as:
-- The `id[]` string in `ui_child_t`
-- The suffix in generated setter/callback function names
-
----
-
-## Geometry Extraction
-
-`int_attr(node, key)` reads an XML attribute as `int`. Returns `0` if absent or malformed.
-
-Fields read: `x`, `y`, `width`, `height`.
+`_is_auto_named(name)` returns `True` for Figma's auto-generated frame names (regex: `^(Frame|Group|Rectangle|Ellipse|...) \d+$`). These are structural grouping frames with no semantic meaning → `STRUCTURAL` → promoted children, frame itself discarded.
 
 ---
 
 ## Text Content Extraction
 
-For `Text` nodes, text content is read from the `characters` attribute:
+**Confirmed from real FigML exports:** Text content is in the `characters` **attribute** of `<Text>` nodes, not in `node.text` or a child element.
 
+```xml
+<Text name="time" characters="16:30" fontSize="14" ...>
+```
+
+Extraction:
 ```python
-raw_text = child.attrib.get("characters", "")
+raw_text     = child_xml.attrib.get("characters", "")
 text_content = sanitize_c_string(raw_text, UI_MAX_STRING_LENGTH)
 ```
 
-`sanitize_c_string()` escapes characters that would produce invalid C string literals:
+`sanitize_c_string()` escapes: `\` → `\\`, `"` → `\"`, `\n` → `\n`, `\r` → `\r`, `\t` → `\t`, U+2028 → `\n`, U+2029 → `\n`. FigML sometimes embeds U+2028 (Unicode LINE SEPARATOR) in `characters` attributes instead of a standard newline.
 
-| Character | Escaped as |
-|-----------|-----------|
-| `\` | `\\` |
-| `"` | `\"` |
-| `\n` (0x0A) | `\n` |
-| `\r` (0x0D) | `\r` |
-| `\t` (0x09) | `\t` |
-| U+2028 (LINE SEPARATOR) | `\n` — FigML sometimes uses this instead of `\n` |
-| U+2029 (PARAGRAPH SEPARATOR) | `\n` |
+**Text alignment note:** FigML does not export `textAlignHorizontal`. The attribute is absent from all Text nodes. LVGL default (left) is used; `has_align` is never set to `true`.
 
-The result is truncated to `UI_MAX_STRING_LENGTH - 1` characters (leaving room for the null terminator). Silent truncation — no warning is emitted.
+---
+
+## Button Label Extraction
+
+`_find_button_label(button_xml)` looks one level inside a button's `<children>` for the first `<Text>` node. If found, its `characters` attribute becomes the button's `label_text`. Falls back to deriving the label from the button's own name (strips `btn_`/`button_` prefix, capitalizes: `btn_ok` → `"Ok"`).
+
+This is the **only** place the parser looks inside a node's children as an implementation detail — it does not create a separate `ParsedNode` for the button's label. The label is internal to the LVGL button object.
 
 ---
 
 ## Style Extraction
 
-`parse_style(node, child_type)` is called for every child node. `child_type` is a `WidgetType` enum value.
+`parse_style(node, widget_type)` is called for every node. Returns a `ParsedStyle` with only the fields that were found in the XML populated.
 
-### Fill Color and Opacity
+**Fill color routing:**
+- `node.tag == "Text"` OR `widget_type == WidgetType.LABEL` → fill color goes to `ParsedStyleText.color` (text color)
+- All other widgets → fill color goes to `ParsedStyleBox.bg_color`
 
-1. Finds the first `<fill>` under `<fills>` where `visible != "false"`
-2. Reads `color` attribute — hex string → integer
-3. **Routing:** if `node.attrib["type"] == "TEXT"` or `child_type == WidgetType.LABEL`, fill color routes to `ParsedStyleText.color` (text color). Otherwise it routes to `ParsedStyleBox.bg_color`. This comparison uses the `WidgetType` enum — comparing against the string `"UI_CHILD_LABEL"` would always be `False` and silently route every label's fill to bg_color.
-4. `opacity` attribute on the fill element → `ParsedStyleBox.bg_opa` (non-text only)
+This is the critical distinction: a Text node's fill is its foreground (text) color in Figma, not a background color.
 
-### Border / Stroke
+**Fill visibility:** Fills with `visible="false"` are skipped.
 
-1. First `<stroke>` under `<strokes>` → `ParsedStyleBox.border_color`
-2. `strokeWeight` attribute on the node → `ParsedStyleBox.border_width`
-3. If color set but no width: defaults to `1`
-
-### Corner Radius
-
-`cornerRadius` attribute → `ParsedStyleBox.radius`
-
-### Text Properties
-
-For text nodes (`node_type == "TEXT"` or `child_type == WidgetType.LABEL`):
-
-- `fontSize` attribute → `ParsedStyleText.size`
-- Horizontal text alignment: **not extracted** — the `textAlignHorizontal` attribute does not exist in FigML exports. LVGL's default (left) matches FigML's default. `ParsedStyleText.align` is always `None`.
-
-### Whole-Widget Opacity
-
-`opacity` attribute on the node → `ParsedStyleEffects.opacity`
+**Border default width:** If a border color is found but no `strokeWeight` attribute is present, `border_width` defaults to `1`.
 
 ---
 
-## Empty Style Handling
+## Slider Range
 
-`ParsedStyle.is_empty()` is `True` when all fields across all three sub-structs are `None`. The generator emits `{ .box = { 0 }, .text = { 0 }, .effects = { 0 } }` rather than an explicit initialiser.
+`_parse_slider_range(name)` extracts (min, max) from the node name:
+- `brightness_slider_0_255` → (0, 255)
+- `temp_slider_n20_50` → (-20, 50) — prefix `n` = negative
+- No range in name → default (0, 100)
 
 ---
 
-## Naming Conventions Summary
+## ID Normalization
 
-| Figma element | Requirement | Maps to |
-|--------------|-------------|---------|
-| Frame | Any name | Screen (`to_snake_case` → C identifier base) |
-| `Text` node | XML tag must be `Text` | `WidgetType.LABEL` |
-| Any node | Name must contain `bar` | `WidgetType.BAR` |
-| Any node | Name must contain `icon` or `image` | `WidgetType.IMAGE` |
-| Everything else | — | Skipped with warning |
+`normalize_id(name)` converts Figma node names to valid C identifiers:
+1. Insert underscores at camelCase/PascalCase boundaries (`BatteryBar` → `Battery_Bar`)
+2. Same for acronyms (`HTTPStatus` → `HTTP_Status`)
+3. Lowercase
+4. Replace spaces and hyphens with underscores
+5. Replace remaining non-alphanumeric with underscores
+6. Collapse multiple underscores
+7. Strip leading/trailing underscores
+
+Examples: `BatteryBar` → `battery_bar`, `Progress Bar` → `progress_bar`, `icon-wifi` → `icon_wifi`.
+
+Duplicate IDs within the same level raise a warning and are disambiguated by appending the depth.
+
+---
+
+## Nesting Limits
+
+| Threshold | Action |
+|-----------|--------|
+| depth > 5 | `[UI GEN WARN]` log warning with screen name and node name |
+| depth > 7 | Log error, skip subtree entirely |

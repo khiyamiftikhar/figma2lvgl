@@ -99,17 +99,36 @@ Firmware: ui_home_battery_bar_set_value(75, 300); /* animated */
 
 ### Image / Icon
 
+**Option A — naming convention (simplest):**
 - Use any frame or component instance
 - Name it with `icon` or `image`: `icon_wifi`, `image_logo`
 - Place a matching PNG in your images folder: `icon_wifi.png`
-- The PNG filename must match the Figma layer name exactly
 
 ```
-Figma:   Frame "icon_wifi" (48×48)
-PNG:     icon_wifi.png in your images folder
-LVGL:    lv_image_create()
+Figma:    Frame "icon_wifi" (48×48)
+PNG:      icon_wifi.png in your images folder
+LVGL:     lv_image_create()
 Firmware: ui_home_panel_top_display_icon_wifi();
 ```
+
+**Option B — automatic detection from component structure:**
+
+If you use icon components from your design system that are not named with
+`icon_*` (e.g. `Wifi_off`, `BatteryIcon`, `ChevronRight`), the tool detects
+them automatically. Any component instance (`INSTANCE` type in Figma) that
+contains `Vector` children is recognised as an icon — because Figma icon
+components are always structured as a Frame/Instance wrapping Vector paths.
+
+```
+Figma:    Component instance "Wifi_off" (contains a Vector child "Icon")
+Detected: automatically as IMAGE — no renaming needed
+PNG:      wifi_off.png  (normalized from instance name)
+LVGL:     lv_image_create()
+Firmware: ui_home_display_wifi_off();
+```
+
+You do not need to rename your design system icons. The tool reads their
+internal structure and figures out they are image widgets.
 
 ### Button
 
