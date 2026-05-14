@@ -51,10 +51,9 @@ static void _bar_anim_exec_cb(void *obj, int32_t v)
 // EVENT CALLBACKS
 // (override in your application .c)
 // ------------------------------
-__attribute__((weak)) void ui_testscreen_on_btn_ok(lv_event_t *e)
+__attribute__((weak)) void ui_testscreen_on_btn_ok_clicked(lv_event_t *e)
 {
     (void)e;
-    /* override: navigate, update state, etc. */
 }
 
 // ------------------------------
@@ -120,8 +119,10 @@ void ui_testscreen_init(void)
         lv_obj_t *_lbl = lv_label_create(s_testscreen.btn_ok.lv_obj);
         lv_label_set_text(_lbl, s_testscreen.btn_ok.label_text);
         lv_obj_center(_lbl);
+        /* text color/font applied to the label directly, not the container */
+        ui_apply_style(_lbl, UI_CHILD_LABEL, &s_testscreen.btn_ok.style);
     }
-    lv_obj_add_event_cb(s_testscreen.btn_ok.lv_obj, ui_testscreen_on_btn_ok,
+    lv_obj_add_event_cb(s_testscreen.btn_ok.lv_obj, ui_testscreen_on_btn_ok_clicked,
                         LV_EVENT_CLICKED, NULL);
     ui_apply_style(s_testscreen.btn_ok.lv_obj, UI_CHILD_BUTTON, &s_testscreen.btn_ok.style);
 

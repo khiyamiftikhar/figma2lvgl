@@ -126,7 +126,7 @@ class TestStructure:
         assert "ui_testscreen_battery_bar_set_value(int value, uint32_t duration_ms)" in self.h
 
     def test_callback_declared_in_header(self):
-        assert "void ui_testscreen_on_btn_ok(lv_event_t *e);" in self.h
+        assert "void ui_testscreen_on_btn_ok_clicked(lv_event_t *e);" in self.h
 
     def test_include_guard(self):
         assert "#ifndef UI_TESTSCREEN_H" in self.h

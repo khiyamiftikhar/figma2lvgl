@@ -12,7 +12,9 @@ from figma2lvgl.core.utils.utils import (
     normalize_id, to_snake_case, sanitize_c_string,
     UI_MAX_STRING_LENGTH, int_attr,
 )
-from figma2lvgl.core.utils.figma_helpers import detect_widget_type
+from figma2lvgl.core.utils.figma_helpers import (
+    detect_widget_type, parse_widget_name,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -163,27 +165,29 @@ class ParsedNode:
     """
     def __init__(
         self,
-        widget_type:  WidgetType,
-        id:           str,
-        raw_name:     str,
+        widget_type:    WidgetType,
+        id:             str,
+        raw_name:       str,
         x: int, y: int, w: int, h: int,
-        style:        ParsedStyle,
-        text_content: str = "",
-        slider_min:   int = 0,
-        slider_max:   int = 100,
-        depth:        int = 0,
-        children:     list = None,
+        style:          ParsedStyle,
+        text_content:   str  = "",
+        slider_min:     int  = 0,
+        slider_max:     int  = 100,
+        depth:          int  = 0,
+        children:       list = None,
+        event_modifiers: list = None,   # e.g. ["lp"] → long press registered
     ):
-        self.widget_type  = widget_type
-        self.id           = id
-        self.raw_name     = raw_name
+        self.widget_type     = widget_type
+        self.id              = id
+        self.raw_name        = raw_name
         self.x = x; self.y = y; self.w = w; self.h = h
-        self.style        = style
-        self.text_content = text_content
-        self.slider_min   = slider_min
-        self.slider_max   = slider_max
-        self.depth        = depth
-        self.children     = children if children is not None else []
+        self.style           = style
+        self.text_content    = text_content
+        self.slider_min      = slider_min
+        self.slider_max      = slider_max
+        self.depth           = depth
+        self.children        = children if children is not None else []
+        self.event_modifiers = event_modifiers if event_modifiers is not None else []
 
     @property
     def is_dynamic_text(self) -> bool:
@@ -264,9 +268,19 @@ def _parse_children(parent_xml, screen_name: str, depth: int, seen_ids: set):
                 screen_name, depth, name, MAX_DEPTH,
             )
 
-        # Normalize ID
-        raw_id  = name or f"node_{len(result)}"
-        node_id = normalize_id(raw_id)
+        # Normalize ID — strip behavioral modifiers BEFORE forming the struct field name.
+        # Modifiers (event suffixes, range numbers) are consumed by the generator
+        # and must never leak into C struct names or API function names.
+        raw_name_for_id = name or f"node_{len(result)}"
+        base_name, event_mods = parse_widget_name(raw_name_for_id)
+
+        # Slider range numbers: also strip from base name for a clean ID.
+        # "_0_255" is configuration data, not identity.
+        if wtype == WidgetType.SLIDER:
+            import re as _re
+            base_name = _re.sub(r'_(n?\d+)_(n?\d+)$', '', base_name)
+
+        node_id = normalize_id(base_name)
         if node_id in seen_ids:
             node_id = f"{node_id}_{depth}"
             logger.warning("Duplicate id — renamed to '%s'", node_id)
@@ -300,16 +314,17 @@ def _parse_children(parent_xml, screen_name: str, depth: int, seen_ids: set):
             children = _parse_children(child_xml, screen_name, depth + 1, seen_ids)
 
         result.append(ParsedNode(
-            widget_type  = wtype,
-            id           = node_id,
-            raw_name     = name,
+            widget_type     = wtype,
+            id              = node_id,
+            raw_name        = name,
             x=x, y=y, w=w, h=h,
-            style        = style,
-            text_content = text_content,
-            slider_min   = slider_min,
-            slider_max   = slider_max,
-            depth        = depth,
-            children     = children,
+            style           = style,
+            text_content    = text_content,
+            slider_min      = slider_min,
+            slider_max      = slider_max,
+            depth           = depth,
+            children        = children,
+            event_modifiers = event_mods,
         ))
 
     return result

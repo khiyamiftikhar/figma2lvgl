@@ -173,15 +173,30 @@ def collect_setters_and_callbacks(screen: ParsedScreen) -> dict:
             bar_anim_needed = True
 
         elif wt == WidgetType.BUTTON:
-            # setter (optional — only if button label needs runtime change)
+            from figma2lvgl.core.utils.figma_helpers import EVENT_SUFFIX_MAP, BUTTON_DEFAULT_EVENT
             body, proto = _emit_button_setter(fn_base, path)
             setters.append(body)
             prototypes.append(proto)
-            # callback
-            cb_name = _on_fn_name(screen.snake, node.id)
-            cb_body, cb_decl = _emit_callback(cb_name, wt)
-            callbacks.append(cb_body)
-            cb_declarations.append(cb_decl)
+
+            # Always generate clicked callback
+            events = [("LV_EVENT_CLICKED", "clicked")]
+            for mod in node.event_modifiers:
+                lvgl_event = EVENT_SUFFIX_MAP.get(mod)
+                if lvgl_event and lvgl_event != BUTTON_DEFAULT_EVENT:
+                    cb_suffix = lvgl_event.replace("LV_EVENT_", "").lower()
+                    events.append((lvgl_event, cb_suffix))
+
+            for _, cb_suffix in events:
+                cb_name  = f"ui_{screen.snake}_on_{node.id}_{cb_suffix}"
+                cb_body  = (
+                    f"__attribute__((weak)) void {cb_name}(lv_event_t *e)\n"
+                    f"{{\n"
+                    f"    (void)e;\n"
+                    f"}}"
+                )
+                cb_decl  = f"void {cb_name}(lv_event_t *e);"
+                callbacks.append(cb_body)
+                cb_declarations.append(cb_decl)
 
         elif wt == WidgetType.SLIDER:
             body, proto = _emit_slider_setter(fn_base, path)

@@ -58,7 +58,12 @@ void ui_apply_style(lv_obj_t *obj, ui_child_type_t type, const ui_style_t *s)
         lv_obj_set_style_radius(obj, s->box.radius, LV_PART_MAIN);
 
     // ── Text styles ───────────────────────────────────────────────────────
-    if (type == UI_CHILD_LABEL || type == UI_CHILD_BUTTON)
+    // Applied to LABEL objects only.
+    // For BUTTON: text styles are applied directly to the internal lv_label
+    // child in _init() — NOT to the button container — to avoid relying on
+    // LVGL's style inheritance, which is brittle when a button has mixed
+    // children (e.g. icon + label).
+    if (type == UI_CHILD_LABEL)
     {
         if (s->text.has_color)
             lv_obj_set_style_text_color(obj, lv_color_hex(s->text.color), LV_PART_MAIN);

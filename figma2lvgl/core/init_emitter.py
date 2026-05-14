@@ -56,7 +56,17 @@ def _emit_node_init(node: ParsedNode, path: str, parent_lv: str) -> str:
 
     # ── BUTTON ────────────────────────────────────────────────────────────────
     elif wt == WidgetType.BUTTON:
-        cb_name = _callback_name_for(path)
+        from figma2lvgl.core.utils.figma_helpers import EVENT_SUFFIX_MAP, BUTTON_DEFAULT_EVENT
+        # Build list of (event_constant, callback_suffix) pairs.
+        # LV_EVENT_CLICKED is always registered.
+        events = [("LV_EVENT_CLICKED", "clicked")]
+        for mod in node.event_modifiers:
+            lvgl_event = EVENT_SUFFIX_MAP.get(mod)
+            if lvgl_event and lvgl_event != BUTTON_DEFAULT_EVENT:
+                cb_suffix = lvgl_event.replace("LV_EVENT_", "").lower()
+                events.append((lvgl_event, cb_suffix))
+
+        screen_snake = path.split(".")[0].lstrip("s_")
         lines += [
             f"    /* {node.id} (button) */",
             f"    {path}.lv_obj = lv_button_create({parent_lv});",
@@ -66,11 +76,19 @@ def _emit_node_init(node: ParsedNode, path: str, parent_lv: str) -> str:
             f"        lv_obj_t *_lbl = lv_label_create({path}.lv_obj);",
             f"        lv_label_set_text(_lbl, {path}.label_text);",
             f"        lv_obj_center(_lbl);",
+            f"        /* text color/font applied to the label directly, not the container */",
+            f"        ui_apply_style(_lbl, UI_CHILD_LABEL, &{path}.style);",
             f"    }}",
-            f"    lv_obj_add_event_cb({path}.lv_obj, {cb_name},",
-            f"                        LV_EVENT_CLICKED, NULL);",
-            f"    ui_apply_style({path}.lv_obj, UI_CHILD_BUTTON, &{path}.style);",
         ]
+        for lvgl_event, cb_suffix in events:
+            cb_name = f"ui_{screen_snake}_on_{node.id}_{cb_suffix}"
+            lines += [
+                f"    lv_obj_add_event_cb({path}.lv_obj, {cb_name},",
+                f"                        {lvgl_event}, NULL);",
+            ]
+        lines.append(
+            f"    ui_apply_style({path}.lv_obj, UI_CHILD_BUTTON, &{path}.style);"
+        )
 
     # ── SLIDER ────────────────────────────────────────────────────────────────
     elif wt == WidgetType.SLIDER:

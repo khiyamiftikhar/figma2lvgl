@@ -23,7 +23,7 @@ void ui_testscreen_panel_top_time_set_text(const char *text);
 // ------------------------------
 // EVENT CALLBACKS
 // ------------------------------
-void ui_testscreen_on_btn_ok(lv_event_t *e);
+void ui_testscreen_on_btn_ok_clicked(lv_event_t *e);
 
 #ifdef __cplusplus
 }

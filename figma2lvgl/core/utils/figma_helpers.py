@@ -1,5 +1,59 @@
+
 import re
 from figma2lvgl.core.widget_type import WidgetType
+
+
+# ── Behavioral modifier parsing ───────────────────────────────────────────────
+#
+# Figma widget names encode two things that must be separated:
+#   1. Identity   — becomes the C struct field name and API prefix
+#   2. Modifiers  — consumed by the generator to produce code variations
+#
+# Rule: strip modifiers BEFORE forming the struct ID.
+# Modifiers drive lv_obj_add_event_cb calls and range values, never names.
+#
+# Examples:
+#   "btn_ok_lp"              → base "btn_ok",          mods ["lp"]
+#   "btn_ok"                 → base "btn_ok",          mods []   (default: click)
+#   "brightness_slider_0_255"→ base "brightness_slider", range (0,255)
+
+EVENT_SUFFIX_MAP = {
+    # key (suffix without leading _) → LVGL event constant
+    "lpr":     "LV_EVENT_LONG_PRESSED_REPEAT",
+    "lp":      "LV_EVENT_LONG_PRESSED",
+    "release": "LV_EVENT_RELEASED",
+    "press":   "LV_EVENT_PRESSED",
+    "click":   "LV_EVENT_CLICKED",   # explicit; also the default
+}
+
+# Default event for buttons (always registered even with no suffix)
+BUTTON_DEFAULT_EVENT = "LV_EVENT_CLICKED"
+
+
+def parse_widget_name(raw_name: str) -> tuple[str, list[str]]:
+    """
+    Split a Figma widget name into (base_name, event_modifier_keys).
+
+    base_name  — used for normalize_id() → struct field, API function names
+    modifiers  — list of keys from EVENT_SUFFIX_MAP → drive lv_obj_add_event_cb
+
+    Only one event modifier suffix is expected per widget.
+    Suffixes are evaluated longest-first to avoid partial matches (_lp vs _lpr).
+
+    Does NOT strip slider range numbers (_0_255) — those are stripped separately
+    in _parse_children() for WidgetType.SLIDER nodes.
+    """
+    base = raw_name.lower()
+    modifiers = []
+
+    for key in sorted(EVENT_SUFFIX_MAP.keys(), key=len, reverse=True):
+        suffix = f"_{key}"
+        if base.endswith(suffix):
+            modifiers.append(key)
+            base = base[:-len(suffix)]
+            break   # one event modifier per widget
+
+    return base, modifiers
 
 
 def _is_auto_named(name: str) -> bool:
