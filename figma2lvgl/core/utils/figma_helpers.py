@@ -1,4 +1,3 @@
-
 import re
 from figma2lvgl.core.widget_type import WidgetType
 
@@ -33,6 +32,28 @@ def _has_border(node) -> bool:
 
 def _has_radius(node) -> bool:
     return node.attrib.get("cornerRadius") is not None
+
+
+def _instance_has_vector_children(node) -> bool:
+    """
+    Returns True if a Figma component INSTANCE contains at least one Vector
+    child. Figma icon components are always a Frame/Instance wrapping one or
+    more Vector paths. This heuristic identifies them without requiring a
+    specific naming convention.
+    """
+    children_el = node.find("children")
+    if children_el is None:
+        return False
+    for child in children_el:
+        if child.tag == "Vector":
+            return True
+        # Also check one level deeper (some icon components wrap in a Group)
+        sub = child.find("children")
+        if sub is not None:
+            for grandchild in sub:
+                if grandchild.tag == "Vector":
+                    return True
+    return False
 
 
 def detect_widget_type(node) -> WidgetType | None:
@@ -78,7 +99,21 @@ def detect_widget_type(node) -> WidgetType | None:
     if "icon" in name_lower or "image" in name_lower:
         return WidgetType.IMAGE
 
-    # 7 & 8. Frame/container analysis
+    # 7. Vector nodes are Figma SVG path data — never a widget themselves
+    if tag == "Vector":
+        return None
+
+    # 8. Component instances:
+    #    - If the instance contains Vector children it IS an icon component
+    #      (Figma icon components are always a Frame/Instance wrapping Vector paths).
+    #      Treat the whole instance as IMAGE → expects <normalized_name>.png
+    #    - Otherwise unknown component structure → skip with warning.
+    if node.attrib.get("type", "") == "INSTANCE":
+        if _instance_has_vector_children(node):
+            return WidgetType.IMAGE
+        return None
+
+    # 9 & 10. Frame/container analysis
     children_el = node.find("children")
     has_children = children_el is not None and len(list(children_el)) > 0
 
