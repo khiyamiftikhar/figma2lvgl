@@ -1,109 +1,92 @@
-
 #include "ui_testscreen.h"
 #include "assets.h"
 #include "ui_defs.h"
 #include "ui_style.h"
 #include <stdio.h>
-// ------------------------------
-// UI SCREEN STRUCTURE
-// ------------------------------
 
-    ui_screen_t testscreen = {
-        .name = "TestScreen",
-        .child_count = 2,
-        .children = {
-            
-            {
-                .type = UI_CHILD_LABEL,
-                .id = "greeting",
-                .lv_obj = NULL,
-                .x = 10,
-                .y = 20,
-                .w = 100,
-                .h = 30,
-                .style = {
-                .text = {
-                    .has_color = true,
-                    .color = 0xFFFFFF,
-                    .has_size = true,
-                    .size = 16
-                }
-            },
-        
-                .data.label = {
-                    .text = "Hello"
-                }
-    
-            },
-        
-            {
-                .type = UI_CHILD_BAR,
-                .id = "battery_bar",
-                .lv_obj = NULL,
-                .x = 10,
-                .y = 100,
-                .w = 200,
-                .h = 20,
-                .style = {
-                .box = {
-                    .has_bg = true,
-                    .bg = 0x4CAF50
-                }
-            },
-        
-                .data.bar = {
-                    .value = 0
-                }
-    
-            },
-        
+// ------------------------------
+// SCREEN STRUCT (file-static)
+// ------------------------------
+static struct {
+    lv_obj_t *lv_screen;
+    struct {
+        lv_obj_t   *lv_obj;
+        ui_style_t  style;
+        struct {
+            lv_obj_t   *lv_obj;
+            ui_style_t  style;
+            char        text[UI_MAX_STRING_LENGTH];
+        } time;
+    } panel_top;
+    struct {
+        lv_obj_t   *lv_obj;
+        ui_style_t  style;
+        const char *label_text;
+    } btn_ok;
+    struct {
+        lv_obj_t   *lv_obj;
+        ui_style_t  style;
+        int32_t value;
+    } battery_bar;
+} s_testscreen = {
+    .panel_top = {
+        .time = {
+            .text = "16:30",
         },
-        .lv_screen = NULL
-    };
-    
-// ------------------------------
-// UI JOB DATA STRUCTS
-// ------------------------------
-//{job_structs}
-// ------------------------------
-// UI JOB CALLBACKS
-// ------------------------------
+    },
+    .btn_ok = {
+        .label_text = "Ok",
+    },
+};
 
-static void ui_testscreen_bar_job_cb_exec_cb(void *obj, int32_t v)
+// ------------------------------
+// BAR ANIMATION HELPER
+// ------------------------------
+static void _bar_anim_exec_cb(void *obj, int32_t v)
 {
-    lv_bar_set_value(obj, v, LV_ANIM_OFF);
+    lv_bar_set_value((lv_obj_t *)obj, v, LV_ANIM_OFF);
 }
 
 // ------------------------------
-// UI SETTERS
+// EVENT CALLBACKS
+// (override in your application .c)
 // ------------------------------
-
-void ui_testscreen_set_greeting(const char *text)
+__attribute__((weak)) void ui_testscreen_on_btn_ok(lv_event_t *e)
 {
-    ui_child_t *c = &testscreen.children[0];
-    if (c->lv_obj) {
-        lv_label_set_text(c->lv_obj, text);
-    }
+    (void)e;
+    /* override: navigate, update state, etc. */
 }
 
-
-void ui_testscreen_set_battery_bar(int value, uint32_t duration_ms)
+// ------------------------------
+// SETTERS
+// ------------------------------
+void ui_testscreen_btn_ok_set_label(const char *text)
 {
-    ui_child_t *c = &testscreen.children[1];
-    if (!c->lv_obj || c->type != UI_CHILD_BAR)
-        return;
-    if (duration_ms == 0)
-    {
-        lv_bar_set_value(c->lv_obj, value, LV_ANIM_OFF);
+    if (!s_testscreen.btn_ok.lv_obj) return;
+    lv_obj_t *_lbl = lv_obj_get_child(s_testscreen.btn_ok.lv_obj, 0);
+    if (_lbl) lv_label_set_text(_lbl, text);
+}
+
+void ui_testscreen_battery_bar_set_value(int value, uint32_t duration_ms)
+{
+    if (!s_testscreen.battery_bar.lv_obj) return;
+    if (duration_ms == 0) {
+        lv_bar_set_value(s_testscreen.battery_bar.lv_obj, value, LV_ANIM_OFF);
         return;
     }
-    lv_anim_t a;
-    lv_anim_init(&a);
-    lv_anim_set_var(&a, c->lv_obj);
-    lv_anim_set_exec_cb(&a, ui_testscreen_bar_job_cb_exec_cb);
-    lv_anim_set_values(&a, lv_bar_get_value(c->lv_obj), value);
-    lv_anim_set_time(&a, duration_ms);
-    lv_anim_start(&a);
+    lv_anim_t _a;
+    lv_anim_init(&_a);
+    lv_anim_set_var(&_a, s_testscreen.battery_bar.lv_obj);
+    lv_anim_set_exec_cb(&_a, _bar_anim_exec_cb);
+    lv_anim_set_values(&_a, lv_bar_get_value(s_testscreen.battery_bar.lv_obj), value);
+    lv_anim_set_time(&_a, duration_ms);
+    lv_anim_start(&_a);
+}
+
+void ui_testscreen_panel_top_time_set_text(const char *text)
+{
+    if (s_testscreen.panel_top.time.lv_obj)
+        lv_label_set_text(s_testscreen.panel_top.time.lv_obj, text);
 }
 
 // ------------------------------
@@ -111,46 +94,50 @@ void ui_testscreen_set_battery_bar(int value, uint32_t duration_ms)
 // ------------------------------
 void ui_testscreen_load(void)
 {
-    lv_scr_load(testscreen.lv_screen);
+    lv_scr_load(s_testscreen.lv_screen);
 }
+
 // ------------------------------
 // SCREEN INIT
 // ------------------------------
-/* TODO: Bar range is hardcoded to 0-100 in ui_testscreen_init() below.
- * Adjust lv_bar_set_range() for: battery_bar
- * If all bars share a range, consider making it a parameter. */
 void ui_testscreen_init(void)
 {
-    testscreen.lv_screen = lv_obj_create(NULL);
-    for (int i = 0; i < testscreen.child_count; i++)
+    s_testscreen.lv_screen = lv_obj_create(NULL);
+
+    /* panel_top (panel) */
+    s_testscreen.panel_top.lv_obj = lv_obj_create(s_testscreen.lv_screen);
+    lv_obj_set_pos(s_testscreen.panel_top.lv_obj, 0, 0);
+    lv_obj_set_size(s_testscreen.panel_top.lv_obj, 320, 80);
+    lv_obj_clear_flag(s_testscreen.panel_top.lv_obj, LV_OBJ_FLAG_CLICKABLE);
+    lv_obj_set_scrollbar_mode(s_testscreen.panel_top.lv_obj, LV_SCROLLBAR_MODE_OFF);
+    ui_apply_style(s_testscreen.panel_top.lv_obj, UI_CHILD_PANEL, &s_testscreen.panel_top.style);
+
+    /* btn_ok (button) */
+    s_testscreen.btn_ok.lv_obj = lv_button_create(s_testscreen.lv_screen);
+    lv_obj_set_pos(s_testscreen.btn_ok.lv_obj, 100, 380);
+    lv_obj_set_size(s_testscreen.btn_ok.lv_obj, 120, 44);
     {
-        ui_child_t *c = &testscreen.children[i];
-        switch (c->type)
-        {
-            
-    case UI_CHILD_LABEL:
-        c->lv_obj = lv_label_create(testscreen.lv_screen);
-        lv_obj_set_pos(c->lv_obj, c->x, c->y);
-        lv_obj_set_width(c->lv_obj, c->w);
-        lv_label_set_long_mode(c->lv_obj, LV_LABEL_LONG_CLIP);
-        lv_label_set_text(c->lv_obj, c->data.label.text);
-        break;
-
-
-    case UI_CHILD_BAR:
-        c->lv_obj = lv_bar_create(testscreen.lv_screen);
-        lv_obj_set_pos(c->lv_obj, c->x, c->y);
-        lv_obj_set_size(c->lv_obj, c->w, c->h);
-        lv_bar_set_range(c->lv_obj, 0, 100);
-        lv_bar_set_value(c->lv_obj, c->data.bar.value, LV_ANIM_OFF);
-        break;
-
-            default:
-                break;
-        }
-
-        /* apply styles — same call for every widget */
-        if (c->lv_obj)
-            ui_apply_style(c->lv_obj, c->type, &c->style);
+        lv_obj_t *_lbl = lv_label_create(s_testscreen.btn_ok.lv_obj);
+        lv_label_set_text(_lbl, s_testscreen.btn_ok.label_text);
+        lv_obj_center(_lbl);
     }
+    lv_obj_add_event_cb(s_testscreen.btn_ok.lv_obj, ui_testscreen_on_btn_ok,
+                        LV_EVENT_CLICKED, NULL);
+    ui_apply_style(s_testscreen.btn_ok.lv_obj, UI_CHILD_BUTTON, &s_testscreen.btn_ok.style);
+
+    /* battery_bar (bar) */
+    s_testscreen.battery_bar.lv_obj = lv_bar_create(s_testscreen.lv_screen);
+    lv_obj_set_pos(s_testscreen.battery_bar.lv_obj, 10, 300);
+    lv_obj_set_size(s_testscreen.battery_bar.lv_obj, 200, 20);
+    lv_bar_set_range(s_testscreen.battery_bar.lv_obj, 0, 100); /* TODO: adjust range if needed */
+    lv_bar_set_value(s_testscreen.battery_bar.lv_obj, s_testscreen.battery_bar.value, LV_ANIM_OFF);
+    ui_apply_style(s_testscreen.battery_bar.lv_obj, UI_CHILD_BAR, &s_testscreen.battery_bar.style);
+
+    /* time (label) */
+    s_testscreen.panel_top.time.lv_obj = lv_label_create(s_testscreen.panel_top.lv_obj);
+    lv_obj_set_pos(s_testscreen.panel_top.time.lv_obj, 10, 20);
+    lv_obj_set_width(s_testscreen.panel_top.time.lv_obj, 100);
+    lv_label_set_long_mode(s_testscreen.panel_top.time.lv_obj, LV_LABEL_LONG_CLIP);
+    lv_label_set_text(s_testscreen.panel_top.time.lv_obj, s_testscreen.panel_top.time.text);
+    ui_apply_style(s_testscreen.panel_top.time.lv_obj, UI_CHILD_LABEL, &s_testscreen.panel_top.time.style);
 }
