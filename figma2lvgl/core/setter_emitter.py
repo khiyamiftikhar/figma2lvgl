@@ -115,21 +115,13 @@ def _emit_dynamic_accessor(screen_snake: str, path: str, widget_id: str) -> tupl
 
 
 def _emit_callback(cb_name: str, wt: WidgetType) -> tuple[str, str]:
-    """Returns (callback_definition, declaration)."""
-    if wt == WidgetType.BUTTON:
-        hint = "/* override: navigate, update state, etc. */"
-    else:
-        hint = "/* tip: int32_t val = lv_slider_get_value(lv_event_get_target(e)); */"
-
-    body = (
-        f"__attribute__((weak)) void {cb_name}(lv_event_t *e)\n"
-        f"{{\n"
-        f"    (void)e;\n"
-        f"    {hint}\n"
-        f"}}"
-    )
+    """
+    Returns (callback_declaration, declaration).
+    No definition is emitted — implement this function in your application .c file.
+    If not implemented, the linker will report an undefined reference.
+    """
     decl = f"void {cb_name}(lv_event_t *e);"
-    return body, decl
+    return "", decl
 
 
 def collect_setters_and_callbacks(screen: ParsedScreen) -> dict:
@@ -188,14 +180,7 @@ def collect_setters_and_callbacks(screen: ParsedScreen) -> dict:
 
             for _, cb_suffix in events:
                 cb_name  = f"ui_{screen.snake}_on_{node.id}_{cb_suffix}"
-                cb_body  = (
-                    f"__attribute__((weak)) void {cb_name}(lv_event_t *e)\n"
-                    f"{{\n"
-                    f"    (void)e;\n"
-                    f"}}"
-                )
                 cb_decl  = f"void {cb_name}(lv_event_t *e);"
-                callbacks.append(cb_body)
                 cb_declarations.append(cb_decl)
 
         elif wt == WidgetType.SLIDER:

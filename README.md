@@ -12,13 +12,13 @@ A **code-generation tool** that converts **Figma UI layouts** into
 ## ✨ Key Features
 
 - 📐 Figma XML → Deterministic, reproducible C code
-- 🎨 Figma styles (color, font, radius, border) → LVGL style calls
+- 🎨 Figma styles (color, font, radius, border) → LVGL style calls, baked into the generated struct
 - 🔤 Figma label text → baked into generated struct as design-time default
-- 🧱 Static metadata-driven UI (`ui_screen_t`, `ui_child_t`)
+- 🧱 Per-screen typed C struct — firmware accesses `home.panel_top.time`, not `children[2]`
 - 📦 Generates self-contained `ui_src/` folder
-- 🧩 Extensible widget type system via template registration
+- 🧩 Buttons, sliders, bars, images, labels, panels, dynamic containers
 - 🎯 Zero dynamic layout parsing at runtime
-- 🔁 Auto-sized child array — `UI_MAX_CHILDREN` computed from your design
+- 🔁 Named event callbacks — implement `ui_home_on_btn_ok_clicked()` and it just works
 
 ---
 
@@ -28,23 +28,19 @@ A **code-generation tool** that converts **Figma UI layouts** into
 pip install figma2lvgl
 ```
 
-### Prerequisite — LVGLImage.py
+### Prerequisites
 
-Image conversion requires `LVGLImage.py` from the official LVGL repository (MIT licensed).
-
-**Interactive (first run):** figma2lvgl will ask to download and cache it automatically.
-
-**CI / air-gapped builds:** provide it directly with `--lvgl-tool`:
-```bash
-figma2lvgl -x layout.xml --yes --lvgl-tool ./tools/LVGLImage.py
-```
+- **Figma** with the **FigML — Figma XML Exporter** plugin installed
+- **Python 3.9+**
+- **LVGLImage.py** — LVGL's official image converter. Auto-downloaded and cached
+  on first use, or supply with `--lvgl-tool` for CI / air-gapped builds.
 
 ---
 
 ## 📖 Usage
 
 ```bash
-figma2lvgl -x diagram.xml
+figma2lvgl -x layout.xml
 ```
 
 ### All Arguments
@@ -68,7 +64,7 @@ figma2lvgl -x diagram.xml
 
 ```bash
 # Minimal — everything next to the XML
-figma2lvgl -x /home/user/project/layout.xml
+figma2lvgl -x layout.xml
 
 # Full control
 figma2lvgl -x layout.xml -i assets/images -d build/output
@@ -76,15 +72,13 @@ figma2lvgl -x layout.xml -i assets/images -d build/output
 # CI pipeline (no prompts, pinned tool, 32-bit display)
 figma2lvgl -x layout.xml --yes --lvgl-tool ./tools/LVGLImage.py -f ARGB8888
 
-# Windows
-figma2lvgl -x E:\project\layout.xml -i E:\project\images -d E:\project\output
+# ESP-IDF
+figma2lvgl -x layout.xml --patch-esp-includes
 ```
 
 ---
 
 ## 📁 Output Layout
-
-Running the tool produces a `ui_src/` folder at the destination:
 
 ```
 ui_src/
@@ -97,23 +91,28 @@ ui_src/
 Drop `ui_src/` into your project and add the source files to your build system.
 
 > **Build system note:** ensure `priv_include/` is on the include path for
-> **all** source files in `ui_src/`, including those in `priv_src/`.
-> ESP-IDF and Zephyr handle this automatically. For bare-metal Makefiles,
-> add `-Iui_src/priv_include` to your CFLAGS.
+> **all** source files in `ui_src/`. ESP-IDF and Zephyr handle this automatically.
+> For bare-metal Makefiles, add `-Iui_src/priv_include` to your CFLAGS.
 
 ### Using a generated screen
 
 ```c
-#include "ui_home_screen.h"
+#include "ui_home.h"
+
+// Implement event callbacks in your application .c
+// (linker error if missing — see Event Callbacks section below)
+void ui_home_on_btn_ok_clicked(lv_event_t *e)    { /* navigate, update state */ }
+void ui_home_on_btn_ok_long_pressed(lv_event_t *e) { /* hold action */ }
 
 // In your app init:
-ui_home_screen_init();   // creates LVGL objects, applies styles, shows Figma text
-ui_home_screen_load();   // makes this screen active
+ui_home_init();   // creates LVGL objects, applies styles, shows Figma text
+ui_home_load();   // makes this screen active
 
 // At runtime — update widgets:
-ui_home_screen_set_time("16:30");          // label setter
-ui_home_screen_set_battery_bar(85, 300);   // bar setter — animated over 300ms
-ui_home_screen_display_icon_wifi();        // image setter
+ui_home_time_set_text("16:30");
+ui_home_battery_bar_set_value(85, 300);   // animated over 300 ms
+ui_home_icon_wifi_display();
+ui_home_btn_ok_set_label("Confirm");
 ```
 
 ---
@@ -132,8 +131,6 @@ figma2lvgl reads XML exported via the **FigML — Figma XML Exporter Plugin**.
 3. Export and save the `.xml` file
 4. Pass it to figma2lvgl with `-x`
 
-![Figma XML Export](https://raw.githubusercontent.com/khiyamiftikhar/figma2lvgl/main/docs/figma-export.png)
-
 ---
 
 ### Supported Widgets
@@ -141,100 +138,190 @@ figma2lvgl reads XML exported via the **FigML — Figma XML Exporter Plugin**.
 #### Text / Label
 
 Any `Text` node is automatically mapped to an LVGL label. The text content
-you typed in Figma is baked into the generated struct as the initial display value.
-Your firmware can update it at runtime via the generated setter.
+typed in Figma is baked into the generated struct as the initial display value.
 
 ```
-Figma node type: Text
+Figma node type: Text (automatic)
 Figma name:      anything (e.g. "time", "welcome_label", "status")
 Maps to:         lv_label_create()
-Initial text:    taken from Figma text content automatically
 ```
 
-#### Image
+#### Button
 
-Any node whose name contains `icon` or `image` maps to an LVGL image.
-The node name must match the PNG filename in your images folder.
+A Frame named with the `btn_` or `button_` prefix maps to an LVGL button.
+The button's text is read from its first `Text` child node in Figma.
+
+```
+Figma node type: FRAME with fill/border/radius
+Figma name:      must start with "btn_" or "button_" (e.g. "btn_ok", "button_cancel")
+Maps to:         lv_button_create()
+```
+
+**Event suffixes** — append to the name to register additional events.
+`LV_EVENT_CLICKED` is always registered regardless of suffix:
+
+| Figma name | Extra event registered |
+|-----------|----------------------|
+| `btn_ok` | click only (default) |
+| `btn_ok_lp` | + `LV_EVENT_LONG_PRESSED` |
+| `btn_ok_lpr` | + `LV_EVENT_LONG_PRESSED_REPEAT` |
+| `btn_ok_press` | + `LV_EVENT_PRESSED` |
+| `btn_ok_release` | + `LV_EVENT_RELEASED` |
+
+The suffix is stripped before forming the struct field name — `btn_ok_lp`
+and `btn_ok` both produce the same `btn_ok` struct field.
+
+#### Image / Icon
+
+Any node whose name contains `icon` or `image` maps to an LVGL image widget.
+The node name (normalized) must match the PNG filename in your images folder.
 
 ```
 Figma node type: INSTANCE or FRAME
 Figma name:      must contain "icon" or "image" (e.g. "icon_wifi", "image_logo")
 Maps to:         lv_image_create()
-Asset required:  icon_wifi.png / image_logo.png in your images folder
+Asset required:  icon_wifi.png in your images folder
 ```
 
 #### Bar
 
 Any node whose name contains `bar` maps to an LVGL bar widget.
-The generated setter supports instant updates and animated transitions.
+Encode the value range directly in the name — no code changes needed:
 
 ```
-Figma node type: RECTANGLE
-Figma name:      must contain "bar" (e.g. "battery_bar", "progress_bar")
+Figma name:      battery_bar          → range 0–100 (default)
+                 battery_bar_0_100    → range 0–100
+                 temp_bar_n20_50      → range −20–50  (prefix n = negative)
 Maps to:         lv_bar_create()
-Range:           0–100 by default (adjust lv_bar_set_range in generated _init)
+```
+
+#### Slider
+
+```
+Figma name:      must start with "slider_" or end with "_slider"
+                 brightness_slider_0_255  → range 0–255
+Maps to:         lv_slider_create()
+```
+
+#### Panel (Container)
+
+Any Frame with a fill, border, or meaningful name that doesn't match other
+widget types is treated as a panel container. Its children are parsed
+recursively and appear as nested struct fields.
+
+```
+Figma node type: FRAME with visible style or semantic name
+Maps to:         lv_obj_create()
+```
+
+#### Dynamic Container
+
+Containers named with `list_` or `grid_` prefix are created as scrollable
+containers. Their children are not parsed — firmware fills them at runtime.
+
+```
+Figma name:      must start with "list_" or "grid_"
+Maps to:         lv_obj_create() with LV_SCROLLBAR_MODE_AUTO
+Accessor:        ui_home_get_list_devices() → returns lv_obj_t*
 ```
 
 ### Naming Rules Summary
 
-| Widget | Figma Node Type | Name Requirement |
-|--------|----------------|-----------------|
-| Label  | Text           | any name |
-| Image  | any            | must contain `icon` or `image` |
-| Bar    | Rectangle      | must contain `bar` |
+| Widget | Name Requirement |
+|--------|----------------|
+| Label | Any `Text` node — name doesn't matter |
+| Button | Starts with `btn_` or `button_` |
+| Image | Contains `icon` or `image` |
+| Bar | Contains `bar` |
+| Slider | Starts with `slider_` or ends with `_slider` |
+| Panel | Frame with fill/border/radius or meaningful name |
+| Dynamic | Starts with `list_` or `grid_` |
 
-> **Names are case-insensitive.** `Bar`, `BAR`, and `bar` all work.
+> **Names are case-insensitive** — `Bar`, `BAR`, and `bar` all work.
 
-> **Unknown nodes are skipped with a warning.** If a node doesn't match any
-> rule, figma2lvgl logs a warning naming the screen and the node, and tells
-> you exactly how to rename it to generate a widget from it. Nothing is
-> silently generated for unrecognized nodes.
+> **Unknown nodes are skipped with a warning.** figma2lvgl logs the screen
+> name and node name and tells you exactly how to rename it.
 
-> **The Figma frame name becomes the screen name.** `Home Screen` →
-> `home_screen` → `ui_home_screen_init()`, `ui_home_screen_load()`.
+> **Nesting depth limits** — depth > 5 emits a warning; depth > 7 skips
+> the subtree with an error. Aim for 2–3 levels in practice.
+
+> **Structural frames** — invisible grouping frames (no fill, no border,
+> auto-generated Figma name like `Frame 12`) are silently dropped and
+> their children promoted to the parent level.
 
 ---
 
 ### Supported Styles
 
-Styles applied in Figma are automatically extracted and translated to LVGL
-style calls at runtime. No manual style code needed.
+Styles applied in Figma are extracted and baked into the generated C struct.
+`ui_apply_style()` is called at init time — no manual style code needed.
 
 | Figma Property | Applies To | LVGL Call |
 |---|---|---|
 | Fill color | All widgets | `lv_obj_set_style_bg_color` |
 | Fill opacity | All widgets | `lv_obj_set_style_bg_opa` |
-| Text color | Labels | `lv_obj_set_style_text_color` |
-| Font size | Labels | `lv_obj_set_style_text_font` |
+| Text color | Labels, button labels | `lv_obj_set_style_text_color` |
+| Font size | Labels, button labels | `lv_obj_set_style_text_font` |
 | Corner radius | All widgets | `lv_obj_set_style_radius` |
 | Stroke color | All widgets | `lv_obj_set_style_border_color` |
 | Stroke weight | All widgets | `lv_obj_set_style_border_width` |
 | Opacity | All widgets | `lv_obj_set_style_opa` |
 
+> **Button text styles** are applied to the internal label child, not the
+> button container — avoids relying on LVGL's style inheritance.
+
 > **Text alignment** is not extracted — FigML does not export horizontal
-> text alignment in its XML output. LVGL's default (left) is used.
+> text alignment. LVGL's default (left) applies.
+
+> **Multiple fills** — only the first visible fill is used. If you layer
+> fills in Figma, set a single solid fill for the widget color.
 
 #### Font Sizes
 
-figma2lvgl maps Figma font sizes to LVGL Montserrat fonts.
-Supported sizes: `10, 12, 14, 16, 18, 20, 22, 24`.
-Any other size falls back to `LV_FONT_DEFAULT`.
+Figma font sizes are mapped to LVGL Montserrat fonts.
+Supported: `10, 12, 14, 16, 18, 20, 22, 24`. Any other size falls back to `LV_FONT_DEFAULT`.
 
-Enable only the sizes your design uses in `lv_conf.h`:
+Enable only what your design uses in `lv_conf.h`:
 ```c
 #define LV_FONT_MONTSERRAT_12  1
 #define LV_FONT_MONTSERRAT_14  1
 ```
-> Each font size adds flash usage — only enable what you need.
 
 ---
 
-### Example Figma Files
+## 🔔 Event Callbacks
 
-| Display | Link |
-|---|---|
-| ILI9486 320×480 | [Open in Figma](https://www.figma.com/design/JU5Og9SLLkJiLlspSwfRCb/ili9486?node-id=0-1&t=0rfYzdqqKZITkTkW-1) |
-| 128×32 OLED | [Open in Figma](https://www.figma.com/design/uBkcRNjG82tD8hR1sb4wjW/Home-Lock-Gate-Node?node-id=0-1&t=cxgoN9O1GflqxDJP-1) |
+Every button and slider gets named event callback functions declared in its `.h`:
+
+```c
+// Declared in ui_home.h — you must implement these
+void ui_home_on_btn_ok_clicked(lv_event_t *e);
+void ui_home_on_btn_ok_long_pressed(lv_event_t *e);   // only if btn_ok_lp in Figma
+void ui_home_on_brightness_slider(lv_event_t *e);
+```
+
+The generated `_init()` registers them with `lv_obj_add_event_cb()` automatically.
+**You just implement the functions — no registration needed.**
+
+```c
+void ui_home_on_btn_ok_clicked(lv_event_t *e)
+{
+    lv_obj_t *btn = lv_event_get_target(e);
+    ui_home_welcome_set_text("Button clicked!");
+}
+```
+
+> **Linker error if not implemented.** If a callback is declared but you
+> haven't defined it, the linker will report an undefined reference. This
+> is intentional — it makes missing handlers explicit rather than silently
+> doing nothing. Implement a no-op body if you don't need the callback yet:
+> ```c
+> void ui_home_on_btn_ok_clicked(lv_event_t *e) { (void)e; }
+> ```
+
+> **MSVC / Visual Studio:** `__attribute__((weak))` is not supported on MSVC.
+> figma2lvgl does not use weak linking — callbacks are plain `extern` declarations,
+> so the same linker-error model applies on all compilers including MSVC.
 
 ---
 
@@ -244,24 +331,32 @@ Enable only the sizes your design uses in `lv_conf.h`:
 Figma XML + PNG assets
         │
         ▼
-    Parser          reads characters attr, styles, geometry
+    figma_parser.py     reads XML → ParsedScreen / ParsedNode tree
         │
         ▼
-    Model           ParsedScreen / ParsedChild / ParsedStyle
+    node_emitter.py     emits per-screen typed C struct + initializer
+    init_emitter.py     emits flat BFS _init() body
+    setter_emitter.py   emits setters + callback declarations
         │
         ▼
-    Generator       WidgetType enum + ChildSpec templates
+    generator.py        assembles .c and .h per screen
         │
         ▼
-  Generated Code  (ui_src/)
-    ├── src/            ← screen .c files
-    ├── include/        ← screen .h files  
-    ├── priv_src/       ← image .c files + ui_style.c
-    └── priv_include/   ← assets.h, ui_config.h, ui_defs.h, ui_style.h
+  ui_src/
+    src/            ← ui_home.c, ui_settings.c, ...
+    include/        ← ui_home.h, ui_settings.h, ...
+    priv_src/       ← image .c files + ui_style.c
+    priv_include/   ← assets.h, ui_config.h, ui_defs.h, ui_style.h
 ```
 
-`ui_config.h` is auto-generated on every run and sets `UI_MAX_CHILDREN`
-to exactly the number your design requires.
+The generated struct mirrors the Figma hierarchy exactly:
+
+```c
+// Firmware accesses named fields — not generic arrays
+s_home.panel_top.time.lv_obj
+s_home.panel_top.icon_wifi.lv_obj
+s_home.btn_ok.lv_obj
+```
 
 ---
 
@@ -285,6 +380,6 @@ More platform examples (STM32, Zephyr, bare-metal) coming soon.
 |-----------|--------------|
 | **Figma = layout + style** | All geometry, colors, fonts come from Figma — nothing hardcoded in C |
 | **Naming = semantics** | Node name determines widget type; rename in Figma to change the generated widget |
-| **Generator = metadata builder** | Emits static C structs; no dynamic parsing at runtime |
+| **Struct mirrors hierarchy** | Generated struct matches Figma's layer tree exactly — named fields, no generic arrays |
 | **Output = portable C** | No dependencies beyond LVGL v9 |
 | **Initial state = Figma** | Generated structs carry Figma text and styles as the design-time default; firmware updates from there |

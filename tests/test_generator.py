@@ -94,9 +94,11 @@ class TestStructure:
         assert "${" not in self.c
         assert "${" not in self.h
 
-    def test_weak_callback(self):
-        assert "__attribute__((weak))" in self.c
-        assert "ui_testscreen_on_btn_ok" in self.c
+    def test_callback_declared_not_defined(self):
+        # Callbacks are declared in .h but NOT defined in .c — linker error if not implemented
+        assert "__attribute__((weak))" not in self.c
+        assert "ui_testscreen_on_btn_ok_clicked" in self.c   # registered in lv_obj_add_event_cb
+        assert "ui_testscreen_on_btn_ok_clicked" in self.h   # declared in header
 
     def test_bar_anim_helper(self):
         assert "_bar_anim_exec_cb" in self.c

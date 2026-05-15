@@ -90,7 +90,8 @@ _C_LAYOUT = """\
 
 // ------------------------------
 // EVENT CALLBACKS
-// (override in your application .c)
+// Implement these in your application .c file.
+// Linker will report undefined reference if not implemented.
 // ------------------------------
 {callbacks}
 

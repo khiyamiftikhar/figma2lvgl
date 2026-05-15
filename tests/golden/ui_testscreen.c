@@ -32,14 +32,26 @@ static struct {
     } battery_bar;
 } s_testscreen = {
     .panel_top = {
+        .style = {
+            .box = { .has_bg = true, .bg = 0x222222 }
+        },
         .time = {
+            .style = {
+                .text = { .has_color = true, .color = 0xFFFFFF, .has_size = true, .size = 14 }
+            },
             .text = "16:30",
         },
     },
     .btn_ok = {
+        .style = {
+            .box = { .has_bg = true, .bg = 0x2196F3, .has_radius = true, .radius = 8 }
+        },
         .label_text = "Ok",
     },
     .battery_bar = {
+        .style = {
+            .box = { .has_bg = true, .bg = 0x4CAF50 }
+        },
         .value = 0,
         .min   = 0,
         .max   = 100,
@@ -56,12 +68,10 @@ static void _bar_anim_exec_cb(void *obj, int32_t v)
 
 // ------------------------------
 // EVENT CALLBACKS
-// (override in your application .c)
+// Implement these in your application .c file.
+// Linker will report undefined reference if not implemented.
 // ------------------------------
-__attribute__((weak)) void ui_testscreen_on_btn_ok_clicked(lv_event_t *e)
-{
-    (void)e;
-}
+
 
 // ------------------------------
 // SETTERS

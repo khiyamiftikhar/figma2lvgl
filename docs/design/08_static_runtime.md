@@ -155,4 +155,4 @@ Application firmware calls:
 1. `ui_{screen}_init()` — creates all LVGL objects, applies styles, sets initial text
 2. `ui_{screen}_load()` — makes the screen active (`lv_scr_load`)
 3. Setters — update individual widgets at runtime
-4. Override weak callbacks — handle button clicks, slider changes
+4. Implement declared callbacks — handle button clicks, slider changes (linker error if declared but not implemented)

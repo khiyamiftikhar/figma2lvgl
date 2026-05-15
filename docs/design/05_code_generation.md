@@ -121,19 +121,32 @@ button has mixed children (icon + label).
 
 **No setter for:** PANEL (not addressable from firmware), STRUCTURAL (dropped).
 
-**Callbacks generated for:** BUTTON and SLIDER. One callback per registered event, named with the event type:
+**Callbacks generated for:** BUTTON and SLIDER. One callback declaration per registered event, named with the event type:
 
 ```c
-/* btn_ok (no suffix) — one callback */
-__attribute__((weak)) void ui_home_on_btn_ok_clicked(lv_event_t *e) { (void)e; }
-
-/* btn_ok_lp — two callbacks */
-__attribute__((weak)) void ui_home_on_btn_ok_clicked(lv_event_t *e)      { (void)e; }
-__attribute__((weak)) void ui_home_on_btn_ok_long_pressed(lv_event_t *e) { (void)e; }
+/* Declared in .h — you must implement these in your application .c */
+void ui_home_on_btn_ok_clicked(lv_event_t *e);
+void ui_home_on_btn_ok_long_pressed(lv_event_t *e);   /* only if btn_ok_lp in Figma */
 ```
 
-Only the events explicitly requested via Figma name suffix are registered.
-Zero overhead for events that are not needed.
+The generator registers them with `lv_obj_add_event_cb()` in `_init()` but emits **no stub definition**. If the application does not implement a declared callback, the linker reports an undefined reference. This is intentional — missing handlers are compile-time errors, not silent no-ops.
+
+Only the events explicitly requested via Figma name suffix are registered. Zero overhead for events that are not needed.
+
+> **Design decision record — why not `__attribute__((weak))`:**
+> Weak stub definitions were used in v0.4.2 and earlier. The pattern is clean
+> on GCC/Clang (user defines the same name, linker picks their version), but
+> `__attribute__((weak))` is not supported on MSVC. The Visual Studio LVGL
+> simulator is the primary development/testing environment, so MSVC
+> compatibility is a hard requirement. A `#if defined(__GNUC__) || defined(__clang__)`
+> guard compiles cleanly on MSVC but loses the override semantics entirely —
+> the stub body is compiled in on GCC/Clang where it's overridable, but on
+> MSVC the symbol is simply undefined, which gives a linker error anyway.
+> The linker-error model is consistent across all compilers and makes the
+> contract explicit: every declared callback must be implemented.
+> If a future revision adds a portable no-op mechanism (e.g. a generated
+> `ui_home_callbacks.c` stub file the user edits), that would restore the
+> "silent no-op until implemented" behaviour without compiler-specific attributes.
 
 Returns a dict: `setters`, `callbacks`, `prototypes`, `cb_declarations`, `bar_anim_needed`.
 
@@ -164,10 +177,9 @@ ui_{screen}_get_{widget_id}    ← dynamic container accessor
 1. `#include` — own header, `assets.h`, `ui_defs.h`, `ui_style.h`, `<stdio.h>`
 2. File-static screen struct + initializer
 3. Bar animation helper (if any bars)
-4. Weak event callbacks (if any buttons/sliders)
-5. Setter functions
-6. `ui_{screen}_load()` — calls `lv_scr_load()`
-7. `ui_{screen}_init()` — BFS flat sequence of LVGL create + configure calls
+4. Setter functions
+5. `ui_{screen}_load()` — calls `lv_scr_load()`
+6. `ui_{screen}_init()` — BFS flat sequence of LVGL create + configure calls + `lv_obj_add_event_cb()` registrations
 
 ### H file sections (in order)
 
@@ -206,14 +218,15 @@ Firmware usage:
 ```c
 #include "ui_home.h"
 
+/* Implement declared callbacks in your application .c.
+   Linker error if missing — implement a no-op if not needed yet. */
+void ui_home_on_btn_ok_clicked(lv_event_t *e) {
+    ui_settings_load();
+}
+
 void app_start(void) {
     ui_home_init();
     ui_home_load();
     ui_home_panel_top_time_set_text("17:45");
-}
-
-/* override in your .c — called when btn_ok is clicked */
-void ui_home_on_btn_ok(lv_event_t *e) {
-    ui_settings_load();
 }
 ```
