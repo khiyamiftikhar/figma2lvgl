@@ -27,7 +27,7 @@
           <letterSpacing value="0" unit="PERCENT" />
           <lineHeight unit="AUTO" />
         </Text>
-        <icon_wifi id="12:9" name="icon_wifi" expanded="true" maskType="ALPHA" x="19" y="283" width="48" height="48" clipsContent="true" variantProperties="" type="INSTANCE">
+        <icon_wifi id="12:9" name="icon_wifi" maskType="ALPHA" x="19" y="283" width="48" height="48" clipsContent="true" variantProperties="" type="INSTANCE">
           <children>
             <Vector id="I12:9;7758:12602" name="Icon" maskType="ALPHA" strokeWeight="4" strokeJoin="ROUND" strokeAlign="CENTER" strokeCap="ROUND" x="2.8399999141693115" y="10.00529956817627" width="42.31999969482422" height="29.994701385498047" type="VECTOR">
               <strokes>
@@ -55,7 +55,7 @@
           </fills>
           <constraints horizontal="MIN" vertical="MIN" />
         </Rectangle>
-        <Wifi_off id="36:5" name="Wifi_off" expanded="true" maskType="ALPHA" x="237" y="286" width="48" height="48" clipsContent="true" variantProperties="" type="INSTANCE">
+        <Wifi_off id="36:5" name="Wifi_off" maskType="ALPHA" x="237" y="286" width="48" height="48" clipsContent="true" variantProperties="" type="INSTANCE">
           <children>
             <Vector id="I36:5;7758:12594" name="Icon" maskType="ALPHA" strokeWeight="3" strokeJoin="ROUND" strokeAlign="CENTER" strokeCap="ROUND" x="1.9999992847442627" y="1.9999992847442627" width="44" height="44" type="VECTOR">
               <strokes>
@@ -78,14 +78,13 @@
             </override>
           </overrides>
         </Wifi_off>
-        <Frame id="103:4" name="btn_test_lp" cornerRadius="20" maskType="ALPHA" x="66" y="98" width="44" height="37" clipsContent="true" type="FRAME">
+        <Frame id="103:4" name="btn_test_lp" expanded="true" cornerRadius="20" maskType="ALPHA" x="66" y="98" width="44" height="37" clipsContent="true" type="FRAME">
           <children>
             <Text id="103:5" name="Test" maskType="ALPHA" strokeAlign="OUTSIDE" x="9" y="10" width="25" height="15" fontSize="12" fontWeight="400" hyperlink="" characters="Test" type="TEXT" textAlignVertical="TOP" textAutoResize="WIDTH_AND_HEIGHT">
               <strokes>
                 <stroke blendMode="NORMAL" color="#d77272" />
               </strokes>
               <fills>
-                <fill blendMode="NORMAL" color="#ffffff" />
                 <fill opacity="0.9300000071525574" blendMode="NORMAL" color="#fdfd0b" />
               </fills>
               <constraints horizontal="MIN" vertical="MIN" />
