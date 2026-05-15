@@ -1,5 +1,30 @@
 # Changelog
 
+## [0.4.3] — 2026-05-15
+
+### Fixed
+- **Styles never applied at runtime** — `emit_node_initializer()` never
+  called `render_style_init()`, leaving every `.style` field
+  zero-initialized. Since `ui_apply_style()` gates every property on
+  `has_*` flags, all styles silently did nothing at runtime despite
+  `ui_apply_style()` being called correctly in `_init()`.
+
+  Fix: `.style` is now always the first field emitted in every node's
+  initializer block — empty style → `.style = {0}`, non-empty →
+  populated sub-structs with `has_*` flags set.
+
+- **PANEL children with only a style block were silently dropped** from
+  the initializer — the `if body.strip()` guard in
+  `emit_screen_initializer()` treated a style-only body as empty.
+  Guard removed; every node always has at least `.style = {0}`.
+
+### Docs
+- `05_code_generation.md`: corrected `emit_node_initializer` description
+  from "emits only fields with non-default values" to "always emits
+  `.style` first, then widget-specific fields"
+
+---
+
 ## [0.4.2] — 2026-05-15
 
 ### Fixed
