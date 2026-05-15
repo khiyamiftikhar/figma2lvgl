@@ -27,6 +27,8 @@ static struct {
         lv_obj_t   *lv_obj;
         ui_style_t  style;
         int32_t value;
+        int32_t min;
+        int32_t max;
     } battery_bar;
 } s_testscreen = {
     .panel_top = {
@@ -36,6 +38,11 @@ static struct {
     },
     .btn_ok = {
         .label_text = "Ok",
+    },
+    .battery_bar = {
+        .value = 0,
+        .min   = 0,
+        .max   = 100,
     },
 };
 
@@ -130,7 +137,7 @@ void ui_testscreen_init(void)
     s_testscreen.battery_bar.lv_obj = lv_bar_create(s_testscreen.lv_screen);
     lv_obj_set_pos(s_testscreen.battery_bar.lv_obj, 10, 300);
     lv_obj_set_size(s_testscreen.battery_bar.lv_obj, 200, 20);
-    lv_bar_set_range(s_testscreen.battery_bar.lv_obj, 0, 100); /* TODO: adjust range if needed */
+    lv_bar_set_range(s_testscreen.battery_bar.lv_obj, s_testscreen.battery_bar.min, s_testscreen.battery_bar.max);
     lv_bar_set_value(s_testscreen.battery_bar.lv_obj, s_testscreen.battery_bar.value, LV_ANIM_OFF);
     ui_apply_style(s_testscreen.battery_bar.lv_obj, UI_CHILD_BAR, &s_testscreen.battery_bar.style);
 

@@ -148,10 +148,10 @@ Only runs when `--patch-esp-includes` is passed. Off by default. For ESP-IDF use
 ### Step 12 — Generate `ui_config.h`
 
 ```python
-max_ch, largest = write_ui_config(screens, priv_inc)
+write_ui_config(screens, priv_inc)
 ```
 
-Computes `UI_MAX_CHILDREN` = max children count across all parsed screens. Writes `priv_include/ui_config.h`. Logs the value and which screen is the largest.
+Writes `priv_include/ui_config.h` with `UI_MAX_STRING_LENGTH`, `UI_MAX_ID_LENGTH`, and `UI_MAX_ICON_STATES`. There is no `UI_MAX_CHILDREN` — the per-screen struct is always exactly the right size for the design, with no generic array involved.
 
 ### Step 13 — Generate screen files
 
@@ -164,7 +164,7 @@ write_file(str(src_dir     / c_fname), c_text)
 
 ### Step 14 — Summary
 
-UX banner with file counts per subfolder and `UI_MAX_CHILDREN` value.
+UX banner with file counts per subfolder and total screens generated.
 
 ---
 

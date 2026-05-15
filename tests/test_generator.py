@@ -80,6 +80,10 @@ class TestStructure:
     def test_bar_value_field(self):
         assert "int32_t value;" in self.c
 
+    def test_bar_range_fields(self):
+        assert "int32_t min;" in self.c
+        assert "int32_t max;" in self.c
+
     def test_initializer_label_text(self):
         assert '.text = "16:30"' in self.c
 
@@ -102,6 +106,9 @@ class TestStructure:
 
     def test_load_fn_present(self):
         assert "void ui_testscreen_load(void)" in self.c
+
+    def test_bar_init_uses_struct_range(self):
+        assert "lv_bar_set_range(s_testscreen.battery_bar.lv_obj, s_testscreen.battery_bar.min, s_testscreen.battery_bar.max)" in self.c
 
     def test_panel_init_creates_obj(self):
         assert "s_testscreen.panel_top.lv_obj = lv_obj_create(s_testscreen.lv_screen);" in self.c

@@ -7,67 +7,65 @@ Usage:
 
 When to run:
     - After intentionally changing the output format of generator.py
-    - After changing a template in core/templates/
-    - After changing emit/layouts.py
+    - After changing any emitter (node_emitter, init_emitter, setter_emitter)
 
 After running, inspect the diff (git diff tests/golden/) to confirm
 the changes are what you intended, then commit both the code and golden files.
 """
 
 import sys
+import xml.etree.ElementTree as ET
 from pathlib import Path
 
-# Ensure repo root is on path
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from figma2lvgl.core.figma_parser import ParsedScreen, ParsedChild, ParsedStyle
+from figma2lvgl.core.figma_parser import parse_screen
 from figma2lvgl.core.generator import generate_screen
-from figma2lvgl.core.widget_type import WidgetType
 
 GOLDEN_DIR = Path(__file__).parent / "golden"
 
-
-def make_test_screen() -> ParsedScreen:
-    screen = ParsedScreen("TestScreen")
-
-    label_style = ParsedStyle()
-    label_style.text.color = 0xFFFFFF
-    label_style.text.size  = 16
-    screen.children.append(ParsedChild(
-        type=WidgetType.LABEL,
-        id="greeting",
-        x=10, y=20, w=100, h=30,
-        style=label_style,
-        text_content="Hello",
-    ))
-
-    bar_style = ParsedStyle()
-    bar_style.box.bg_color = 0x4CAF50
-    screen.children.append(ParsedChild(
-        type=WidgetType.BAR,
-        id="battery_bar",
-        x=10, y=100, w=200, h=20,
-        style=bar_style,
-    ))
-
-    return screen
+# Must stay in sync with TEST_XML in test_generator.py
+TEST_XML = """
+<Frame name="TestScreen" width="320" height="480">
+  <children>
+    <Frame name="panel_top" x="0" y="0" width="320" height="80">
+      <fills><fill blendMode="NORMAL" color="#222222" /></fills>
+      <children>
+        <Text name="time" x="10" y="20" width="100" height="30"
+              fontSize="14" characters="16:30">
+          <fills><fill blendMode="NORMAL" color="#ffffff" /></fills>
+        </Text>
+      </children>
+    </Frame>
+    <Frame name="btn_ok" x="100" y="380" width="120" height="44"
+           cornerRadius="8" type="FRAME">
+      <fills><fill blendMode="NORMAL" color="#2196F3" /></fills>
+      <children>
+        <Text name="label" x="0" y="0" width="120" height="44"
+              characters="Ok" type="TEXT">
+          <fills><fill blendMode="NORMAL" color="#ffffff" /></fills>
+        </Text>
+      </children>
+    </Frame>
+    <Rectangle name="battery_bar" x="10" y="300" width="200" height="20">
+      <fills><fill blendMode="NORMAL" color="#4caf50" /></fills>
+    </Rectangle>
+  </children>
+</Frame>
+"""
 
 
 def main():
-    screen = make_test_screen()
+    screen = parse_screen(ET.fromstring(TEST_XML))
     c_fname, h_fname, h_text, c_text = generate_screen(screen)
 
     GOLDEN_DIR.mkdir(exist_ok=True)
+    (GOLDEN_DIR / c_fname).write_text(c_text)
+    (GOLDEN_DIR / h_fname).write_text(h_text)
 
-    c_path = GOLDEN_DIR / c_fname
-    h_path = GOLDEN_DIR / h_fname
-
-    c_path.write_text(c_text)
-    h_path.write_text(h_text)
-
-    print(f"Regenerated golden files:")
-    print(f"  {c_path}")
-    print(f"  {h_path}")
+    print("Regenerated golden files:")
+    print(f"  {GOLDEN_DIR / c_fname}")
+    print(f"  {GOLDEN_DIR / h_fname}")
     print()
     print("Review the diff before committing:")
     print("  git diff tests/golden/")

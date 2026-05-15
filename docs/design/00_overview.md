@@ -33,7 +33,7 @@ The tool is transparent to both sides:
 - Dynamic container escape hatch (`list_*`, `grid_*`) for runtime-filled lists
 - Automatic icon detection — Figma icon components recognised from internal Vector structure without requiring naming convention
 - Generates self-contained `ui_src/` folder
-- Extensible widget system — add a new widget type in one file, zero generator changes
+- Extensible widget system — add a new widget type with changes localized to detection, emission, and style files; no changes to parser core or orchestration
 
 ---
 
@@ -63,7 +63,8 @@ LVGL **v9** only.
 |---------------|-----------|
 | Fill color | `lv_obj_set_style_bg_color` |
 | Fill opacity | `lv_obj_set_style_bg_opa` |
-| Text color (labels, buttons) | `lv_obj_set_style_text_color` |
+| Text color (labels) | `lv_obj_set_style_text_color` on the label object |
+| Text color (buttons) | `lv_obj_set_style_text_color` on the internal label child, not the button container |
 | Font size | `lv_obj_set_style_text_font` (Montserrat 10–24pt) |
 | Corner radius | `lv_obj_set_style_radius` |
 | Stroke color | `lv_obj_set_style_border_color` |
@@ -86,6 +87,41 @@ ui_src/
 
 ---
 
+## Prerequisites
+
+- **Figma** with the **FigML — Figma XML Exporter** plugin installed (required to export Figma designs as XML)
+- **Python 3.x**
+- **LVGLImage.py** — LVGL's official image converter. Auto-downloaded and cached on first use, or specify with `--lvgl-tool` for CI / air-gapped builds.
+
+---
+
+## Notable Behaviors
+
+**Button event suffixes** — append to the button name to register additional LVGL events beyond the default `LV_EVENT_CLICKED`. Suffixes are stripped before forming the C struct field name:
+
+| Figma name | Struct field | Extra event |
+|-----------|-------------|------------|
+| `btn_ok_lp` | `btn_ok` | `LV_EVENT_LONG_PRESSED` |
+| `btn_ok_lpr` | `btn_ok` | `LV_EVENT_LONG_PRESSED_REPEAT` |
+| `btn_ok_press` | `btn_ok` | `LV_EVENT_PRESSED` |
+| `btn_ok_release` | `btn_ok` | `LV_EVENT_RELEASED` |
+
+**Bar and slider value ranges** — encode min/max in the Figma layer name. Prefix `n` means negative:
+
+```
+battery_bar_0_100        → range 0..100
+temp_bar_n20_50          → range -20..50
+brightness_slider_0_255  → range 0..255
+```
+
+**Nesting depth limits** — depth > 5 emits a `[UI GEN WARN]` warning; depth > 7 skips the subtree with an error. Aim for 2–3 levels in practice.
+
+**Text alignment** — FigML does not export `textAlignHorizontal`. All labels default to LVGL left-alignment regardless of what is set in Figma.
+
+**Structural frames** — invisible grouping frames (no fill, no border, auto-generated name like `Frame 12`) are dropped from the output and their children promoted to the parent level.
+
+---
+
 ## Installation
 
 ```bash
@@ -93,6 +129,8 @@ pip install figma2lvgl
 
 figma2lvgl -x layout.xml
 figma2lvgl -x layout.xml -i assets/images -d build/output
+figma2lvgl -x layout.xml -f ARGB8888                          # 32-bit display
+figma2lvgl -x layout.xml --patch-esp-includes                 # ESP-IDF (prefer cmake flag instead)
 figma2lvgl -x layout.xml --yes --lvgl-tool ./tools/LVGLImage.py   # CI
 ```
 

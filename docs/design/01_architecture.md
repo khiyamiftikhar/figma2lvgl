@@ -73,11 +73,7 @@ Pass 3 of generation. Walks the tree and emits setter functions and `__attribute
 
 ### `core/generator.py` — Orchestrates the Three Passes
 
-Calls the three emitters, assembles the results into C and H layout strings, returns `(c_filename, h_filename, h_text, c_text)`.
-
-### `core/emit/layouts.py` — C/H File Templates
-
-`_C_LAYOUT` and `_H_LAYOUT` — Python format strings for the full `.c` and `.h` file structure. Per-widget code blocks are substituted in by the generator.
+Calls the three emitters, assembles the results into C and H layout strings, returns `(c_filename, h_filename, h_text, c_text)`. Also defines `_C_LAYOUT` and `_H_LAYOUT` — the Python format strings for the full `.c` and `.h` file structure. Per-widget code blocks are substituted in by `generate_screen()`.
 
 ### `core/config_writer.py` — ui_config.h Generator
 

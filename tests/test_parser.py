@@ -163,6 +163,25 @@ class TestNestedScreen:
         assert slider.slider_min == 0
         assert slider.slider_max == 100
 
+    def test_bar_range_from_name(self):
+        # battery_bar has no range in name → defaults 0/100
+        # (panel_top[0] is a label, children[1] is btn_ok, [2] is slider, [3] is list)
+        # Use a dedicated XML for this
+        xml = """
+<Frame name="S" width="320" height="480">
+  <children>
+    <Rectangle name="temp_bar_n20_50" x="0" y="0" width="200" height="20">
+      <fills><fill blendMode="NORMAL" color="#ff0000" /></fills>
+    </Rectangle>
+  </children>
+</Frame>"""
+        import xml.etree.ElementTree as ET2
+        screen = parse_screen(ET2.fromstring(xml))
+        bar = screen.children[0]
+        assert bar.widget_type == WidgetType.BAR
+        assert bar.bar_min == -20
+        assert bar.bar_max == 50
+
     def test_dynamic_container(self):
         lst = self._screen().children[3]
         assert lst.widget_type == WidgetType.DYNAMIC
