@@ -1,5 +1,25 @@
 # Changelog
 
+## [0.4.4] — 2026-05-15
+
+### Changed
+- **Callback model: weak linking removed, linker-error model adopted** —
+  `__attribute__((weak))` stub definitions are no longer emitted in generated
+  `.c` files. Callbacks are declared in `.h` and registered in `_init()` but
+  have no default body. If not implemented, the linker reports an undefined
+  reference. This works correctly on all compilers including MSVC (Visual
+  Studio simulator). Implement a no-op body if you don't need the callback:
+  `void ui_home_on_btn_ok_clicked(lv_event_t *e) { (void)e; }`
+
+### Docs
+- **README**: full rewrite to reflect v0.4.x architecture — typed per-screen
+  struct, named event callbacks, bar/slider range encoding, button event
+  suffixes, all widget types documented, linker-error callback model explained.
+  Removed all v0.3.0 references (`ui_child_t`, `UI_MAX_CHILDREN`, `ChildSpec`,
+  `ParsedChild`, generic array access).
+
+---
+
 ## [0.4.3] — 2026-05-15
 
 ### Fixed
