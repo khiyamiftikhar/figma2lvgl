@@ -1,5 +1,47 @@
 # Changelog
 
+## [0.4.2] — 2026-05-15
+
+### Fixed
+- **Callback name corruption for screens starting with 's'** — `_callback_name_for()`
+  used `lstrip("s_")` which strips individual characters, not the prefix string.
+  Screen names like `settings` or `splash` produced broken callback names
+  (`ettings`, `plash`). Changed to `removeprefix("s_")`.
+
+- **`UI_MAX_CHILDREN` phantom macro** — `config_writer.py` computed a max-children
+  value and `main.py` logged and printed it as `UI_MAX_CHILDREN`, but this macro
+  was never written to `ui_config.h`. Removed the dead computation and all
+  references to the non-existent macro.
+
+### Implemented
+- **BAR range from Figma name** — bar widgets now support the same range encoding
+  as sliders: `battery_bar_0_100` → range 0–100, `temp_bar_n20_50` → range −20–50.
+  Adds `bar_min`/`bar_max` to `ParsedNode`, `int32_t min/max` to the generated BAR
+  struct, and `lv_bar_set_range` now uses struct fields instead of the previous
+  hardcoded `0, 100` with a `/* TODO */` comment.
+
+### Removed
+- **8 dead v0.3.0 files** that were never imported by the v0.4.0 pipeline:
+  `core/generic_child.py`, `core/child_registry.py`, `core/utils/template_loader.py`,
+  `core/templates/label_templates.py`, `core/templates/image_templates.py`,
+  `core/templates/bar_templates.py`, `core/templates/screen_template.py`,
+  `core/emit/layouts.py`. These contained the old `ui_child_t *c = &children[index]`
+  pattern that contradicted the v0.4.0 architecture in docs and confused anyone
+  reading the source tree.
+
+### Tests
+- `regen_golden.py` rewritten to use the current `parse_screen()` API
+  (previously referenced deleted `ParsedChild` class and would not run)
+- Added `test_bar_range_fields` and `test_bar_init_uses_struct_range` to
+  `test_generator.py`
+- Added `test_bar_range_from_name` to `test_parser.py`
+- Golden files regenerated to reflect bar struct changes
+- All 67 tests pass
+
+### Docs
+- `01_architecture.md`: corrected module map — `_C_LAYOUT`/`_H_LAYOUT` are defined
+  in `core/generator.py`, not `core/emit/layouts.py` (which no longer exists)
+
 ## 0.4.1 — 2026-05-15
 
 ## Changed
