@@ -128,16 +128,20 @@ def emit_screen_struct_type(screen) -> str:
 def emit_node_initializer(node: ParsedNode, indent: str = "    ") -> str:
     """
     Emit the designated initializer block for one node.
-    Only emits fields that have non-default values.
+    Always emits .style (either {0} or the populated sub-structs).
+    Then emits widget-specific fields.
     """
     lines = []
     wt = node.widget_type
 
+    # Always emit style — empty → {0}, non-empty → populated sub-structs
+    if node.style.is_empty():
+        lines.append(f"{indent}.style = {{0}},")
+    else:
+        lines.append(render_style_init(node.style, indent))
+
     if wt == WidgetType.LABEL and node.text_content:
-        if node.is_dynamic_text:
-            lines.append(f'{indent}.text = "{node.text_content}",')
-        else:
-            lines.append(f'{indent}.text = "{node.text_content}",')
+        lines.append(f'{indent}.text = "{node.text_content}",')
 
     elif wt == WidgetType.BUTTON and node.text_content:
         lines.append(f'{indent}.label_text = "{node.text_content}",')
@@ -152,14 +156,13 @@ def emit_node_initializer(node: ParsedNode, indent: str = "    ") -> str:
         lines.append(f"{indent}.min   = {node.bar_min},")
         lines.append(f"{indent}.max   = {node.bar_max},")
 
-    # Recurse for children
+    # Recurse for children (PANEL)
     child_ind = indent + "    "
     for child in node.children:
         child_body = emit_node_initializer(child, child_ind)
-        if child_body.strip():
-            lines.append(f"{indent}.{child.id} = {{")
-            lines.append(child_body)
-            lines.append(f"{indent}}},")
+        lines.append(f"{indent}.{child.id} = {{")
+        lines.append(child_body)
+        lines.append(f"{indent}}},")
 
     return "\n".join(lines)
 
@@ -171,8 +174,7 @@ def emit_screen_initializer(screen) -> str:
     lines = []
     for node in screen.children:
         body = emit_node_initializer(node, ind2)
-        if body.strip():
-            lines.append(f"{ind}.{node.id} = {{")
-            lines.append(body)
-            lines.append(f"{ind}}},")
+        lines.append(f"{ind}.{node.id} = {{")
+        lines.append(body)
+        lines.append(f"{ind}}},")
     return "\n".join(lines)

@@ -50,7 +50,7 @@ Produces the file-static C struct that mirrors the Figma hierarchy.
 
 ### Static initializer
 
-`emit_node_initializer(node, indent)` — recursive. Emits only fields with non-default values:
+`emit_node_initializer(node, indent)` — recursive. Always emits `.style` first, then widget-specific fields:
 - LABEL with text → `.text = "Hello",`
 - BUTTON → `.label_text = "Ok",`
 - SLIDER → `.value = 50, .min = 0, .max = 100,`
