@@ -131,6 +131,7 @@ figma2lvgl reads XML exported via the **FigML — Figma XML Exporter Plugin**.
 3. Export and save the `.xml` file
 4. Pass it to figma2lvgl with `-x`
 
+https://raw.githubusercontent.com/khiyamiftikhar/figma2lvgl/main/docs/figma-export.png
 ---
 
 ### Supported Widgets
