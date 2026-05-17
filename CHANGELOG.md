@@ -1,5 +1,29 @@
 # Changelog
 
+## [0.4.5] — 2026-05-17
+
+### Fixed
+- **Style zero-initializer fails in C++ mode** — `.style = {0}` is valid C99
+  aggregate initialization but some ESP-IDF project configurations compile
+  generated `.c` files as C++, where `{0}` on a nested struct is rejected.
+  Changed to `.style = { .text = {0}, .box = {0} }` — explicit per-member
+  zero-init, unambiguous on all compilers and language modes.
+
+- **LVGLImage.py include block fails on ESP-IDF without user intervention** —
+  LVGLImage.py emits a chain of `#if defined(LV_LVGL_H_INCLUDE_SIMPLE) / ...`
+  guards whose `#else` fallback uses `#include "lvgl/lvgl.h"`, which fails on
+  ESP-IDF. Previously required `--patch-esp-includes` flag or a CMake define.
+  `image_converter.py` now patches this block automatically after every
+  conversion, adding `|| defined(ESP_PLATFORM)` to the first condition so
+  ESP-IDF projects work out of the box.
+
+### Deprecated
+- **`--patch-esp-includes`** — now a no-op. ESP-IDF include patching is
+  applied automatically. Flag retained for backward compatibility; passing
+  it logs a deprecation warning.
+
+---
+
 ## [0.4.4] — 2026-05-15
 
 ### Changed

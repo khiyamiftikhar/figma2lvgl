@@ -53,7 +53,7 @@ figma2lvgl -x layout.xml
 | `-y` / `--yes` | Skip all prompts; auto-download LVGLImage.py if not cached | off |
 | `--lvgl-tool PATH` | Path to LVGLImage.py — bypasses cache and download (for CI) | auto |
 | `-f` / `--color-format` | PNG pixel encoding: `RGB565`, `RGB888`, `ARGB8888`, `L8` | `RGB565` |
-| `--patch-esp-includes` | Patch LVGL include guards in image files for ESP-IDF¹ | off |
+| `--patch-esp-includes` | **Deprecated** — ESP-IDF include patching is now applied automatically to all generated image files. Flag kept for backward compatibility, has no effect. | — |
 | `-v` / `--verbose` | Enable debug-level logging | off |
 | `--verify-compile` | Syntax-check generated C files with `gcc` after generation | off |
 
@@ -72,8 +72,8 @@ figma2lvgl -x layout.xml -i assets/images -d build/output
 # CI pipeline (no prompts, pinned tool, 32-bit display)
 figma2lvgl -x layout.xml --yes --lvgl-tool ./tools/LVGLImage.py -f ARGB8888
 
-# ESP-IDF
-figma2lvgl -x layout.xml --patch-esp-includes
+# ESP-IDF — no special flags needed, include patching is automatic
+figma2lvgl -x layout.xml
 ```
 
 ---

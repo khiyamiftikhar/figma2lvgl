@@ -60,7 +60,7 @@ The result is a clean designated initializer. `lv_obj_t *` pointers are always `
 
 ### Style rendering
 
-`render_style_init(style, indent)` in `node_emitter.py` converts a `ParsedStyle` to a C struct initializer fragment. Empty styles emit `.style = {0}`. Non-empty styles emit only the sub-structs and fields that are set.
+`render_style_init(style, indent)` in `node_emitter.py` converts a `ParsedStyle` to a C struct initializer fragment. Empty styles emit `.style = { .text = {0}, .box = {0} }`. Non-empty styles emit only the sub-structs and fields that are set.
 
 ---
 
