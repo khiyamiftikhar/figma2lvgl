@@ -15,6 +15,7 @@ static const char *TAG = "main";
 void ui_home_on_btn_test_clicked(lv_event_t* e)
 {
     (void)e;
+
     ui_home_welcome_set_text("Button clicked!");
 }
 
@@ -59,6 +60,9 @@ void app_main(void)
     uint8_t state   = 0;
     bool    settled = false;
 
+
+
+    
     while (1) {
         switch (state) {
 
