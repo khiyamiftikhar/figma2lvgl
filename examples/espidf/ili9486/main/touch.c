@@ -44,7 +44,7 @@ esp_err_t touch_init(lv_display_t *disp)
         .flags = {
             .swap_xy  = 0,
             .mirror_x = 0,
-            .mirror_y = 0,
+            .mirror_y = 1,
         },
     };
 
