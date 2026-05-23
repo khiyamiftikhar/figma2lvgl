@@ -51,7 +51,7 @@
         </icon_wifi>
         <Rectangle id="21:4" name="bar" maskType="ALPHA" x="42" y="77" width="241" height="35" type="RECTANGLE">
           <fills>
-            <fill blendMode="NORMAL" color="#e56060" />
+            <fill blendMode="NORMAL" color="#7aff3c" />
           </fills>
           <constraints horizontal="MIN" vertical="MIN" />
         </Rectangle>
@@ -78,14 +78,14 @@
             </override>
           </overrides>
         </Wifi_off>
-        <Frame id="103:4" name="btn_test_lp" cornerRadius="20" maskType="ALPHA" x="127" y="429" width="44" height="37" clipsContent="true" type="FRAME">
+        <Frame id="103:4" name="btn_test_lp" expanded="true" cornerRadius="20" maskType="ALPHA" x="127" y="429" width="44" height="37" clipsContent="true" type="FRAME">
           <children>
             <Text id="103:5" name="Test" maskType="ALPHA" strokeAlign="OUTSIDE" x="9" y="10" width="25" height="15" fontSize="12" fontWeight="400" hyperlink="" characters="Test" type="TEXT" textAlignVertical="TOP" textAutoResize="WIDTH_AND_HEIGHT">
               <strokes>
                 <stroke blendMode="NORMAL" color="#d77272" />
               </strokes>
               <fills>
-                <fill opacity="0.9300000071525574" blendMode="NORMAL" color="#fdfd0b" />
+                <fill blendMode="NORMAL" color="#3c1414" />
               </fills>
               <constraints horizontal="MIN" vertical="MIN" />
               <fontName family="Inter" style="Regular" />
@@ -94,7 +94,7 @@
             </Text>
           </children>
           <fills>
-            <fill blendMode="NORMAL" color="#d957cc" />
+            <fill blendMode="NORMAL" color="#ff686b" />
           </fills>
           <constraints horizontal="MIN" vertical="MIN" />
         </Frame>
