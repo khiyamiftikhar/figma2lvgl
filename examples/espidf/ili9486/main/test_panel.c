@@ -270,42 +270,19 @@ void color_intercept_test_run(lv_display_t *disp)
 
     /* ── 4. Create a full-screen object with the test colour ── */
     if (lvgl_port_lock(0)) {
-        lv_obj_t *scr = lv_display_get_screen_active(disp);
+    lv_obj_t *scr = lv_display_get_screen_active(disp);
 
-        lv_obj_t *fill = lv_obj_create(scr);
-        lv_obj_set_size(fill, lv_pct(100), lv_pct(100));
-        lv_obj_set_pos(fill, 0, 0);
-        lv_obj_set_style_bg_color(fill,
-                                  lv_color_hex(TEST_HEX),
-                                  LV_PART_MAIN);
-        lv_obj_set_style_bg_opa(fill, LV_OPA_COVER, LV_PART_MAIN);
-        lv_obj_set_style_border_width(fill, 0, LV_PART_MAIN);
-        lv_obj_set_style_pad_all(fill, 0, LV_PART_MAIN);
-        lv_obj_set_style_radius(fill, 0, LV_PART_MAIN);
+    // Paint the screen itself — no child object needed
+    lv_obj_set_style_bg_color(scr, lv_color_hex(TEST_HEX), LV_PART_MAIN);
+    lv_obj_set_style_bg_opa(scr, LV_OPA_COVER, LV_PART_MAIN);
 
+    lv_color_t c = lv_color_hex(TEST_HEX);
+    ESP_LOGI(TAG, "lv_color_hex(#%06lX) → 0x%04X",
+             (unsigned long)TEST_HEX, lv_color_to_u32(c) & 0xFFFF);
 
-          // ── ADD HERE ──────────────────────────────────────────────
-        lv_color_t c = lv_color_hex(TEST_HEX);
-        uint16_t raw = lv_color_to_u32(c) & 0xFFFF;
-        ESP_LOGI(TAG, "lv_color_hex(#%06lX) → raw=0x%04X", (unsigned long)TEST_HEX, raw);
-
-        lv_color_t actual = lv_obj_get_style_bg_color(fill, LV_PART_MAIN);
-        uint16_t actual_raw = lv_color_to_u32(actual) & 0xFFFF;
-        ESP_LOGI(TAG, "Object bg_color     → raw=0x%04X", actual_raw);
-
-        ESP_LOGI(TAG, "Expected RGB565     → 0x%04X", 
-                (uint16_t)(((((TEST_HEX>>16)&0xFF)&0xF8)<<8)|
-                            ((((TEST_HEX>>8)&0xFF)&0xFC)<<3)|
-                            (((TEST_HEX)&0xFF)>>3)));
-
-        /* Small label so you can see if text colours are sane too */
-        lv_obj_t *lbl = lv_label_create(scr);
-        lv_label_set_text_fmt(lbl, "#%06lX", (unsigned long)TEST_HEX);
-        lv_obj_center(lbl);
-
-        lv_refr_now(disp);   /* force immediate render */
-        lvgl_port_unlock();
-    }
+    lv_refr_now(disp);
+    lvgl_port_unlock();
+}
 
     /* ── 5. Give LVGL time to flush, then print interpretation guide ── */
     vTaskDelay(pdMS_TO_TICKS(1500));
