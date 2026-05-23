@@ -1,5 +1,9 @@
 dependencies:
-  khiyamiftikhar/esp-lcd-ili9486: ^1.0.2
+  #khiyamiftikhar/esp-lcd-ili9486: ^1.0.2
+  esp-lcd-ili9486:
+    git: https://github.com/khiyamiftikhar/esp-lcd-ili9486
+    version: fix/color-swap
+
   atanisoft/esp_lcd_touch_xpt2046: ^1.0.6
   espressif/esp_lvgl_port: "^2.6.3"
   lvgl/lvgl: "^9.0.0"  
