@@ -13,6 +13,7 @@ extern "C" {
 
 esp_err_t ili9486_display_init(lv_display_t** handle);
 
+esp_lcd_panel_io_handle_t ili9486_display_get_panel_io(void);
 
 
 esp_lcd_panel_handle_t ili9486_display_get_panel(void);
