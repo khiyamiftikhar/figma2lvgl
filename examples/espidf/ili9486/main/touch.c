@@ -56,6 +56,7 @@ esp_err_t touch_init(lv_display_t *disp)
 
     // inside touch_init(), after esp_lcd_touch_new_spi_xpt2046 succeeds
     // and BEFORE lvgl_port_add_touch()
+    /*
     ESP_LOGI(TAG, "Raw read test — press screen");
     for (int i = 0; i < 30; i++) {
         esp_lcd_touch_read_data(s_tp);
@@ -70,6 +71,7 @@ esp_err_t touch_init(lv_display_t *disp)
         }
         vTaskDelay(pdMS_TO_TICKS(100));
     }
+        */
 // then lvgl_port_add_touch() after
     // 3. Register with LVGL port
     const lvgl_port_touch_cfg_t touch_cfg = {
