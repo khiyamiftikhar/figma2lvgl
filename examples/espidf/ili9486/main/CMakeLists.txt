@@ -1,7 +1,7 @@
 set(UI_COMPONENT_DIR "../../../../ui_src")
 
 idf_component_register(
-    SRCS main.c touch.c ili9486.c
+    SRCS main.c touch.c ili9486.c test_panel.c la_color.c
      	 "${UI_COMPONENT_DIR}/src/ui_home.c"
 		 "${UI_COMPONENT_DIR}/priv_src/icon_wifi.c"
          "${UI_COMPONENT_DIR}/priv_src/wifi_off.c"
