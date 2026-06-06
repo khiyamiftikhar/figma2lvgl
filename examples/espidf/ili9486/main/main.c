@@ -7,8 +7,7 @@
 #include "freertos/task.h"
 #include "esp_lvgl_port.h"
 #include "esp_log.h"
-#include "test_panel.h"
-#include "la_color.h"
+
 
 static const char *TAG = "main";
 
@@ -38,24 +37,13 @@ void app_main(void)
         return;
     }
 
-    // --------------------------------------------------------
-    // 2. Touch — shares SPI bus, registers LVGL indev
-    //    display_get_lvgl_handle() must be exposed by display.h
-    // --------------------------------------------------------
     
-    /*
     if (touch_init(disp) != ESP_OK) {
         ESP_LOGE(TAG, "Touch init failed");
         return;
     }
-*/
+
     
-
-
-    //color_intercept_test_run(disp);   // ← add this
-
-    //la_color_test_run(ili9486_display_get_panel(), ili9486_display_get_panel_io());
-    //la_color_test_run(ili9486_display_get_panel());
 
     // --------------------------------------------------------
     // 3. UI — init and load home screen
