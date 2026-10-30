@@ -246,6 +246,17 @@ def _parse_children(parent_xml, screen_name: str, depth: int, seen_ids: set):
             result.extend(_parse_children(child_xml, screen_name, depth, seen_ids))
             continue
 
+        # Natively coerce any custom component instances, PascalCase tags, or unknown 
+        # container tags into Panels so their child hierarchy is strictly respected.
+        if wtype is None:
+            if (
+                child_xml.attrib.get("type") in ("INSTANCE", "FRAME", "GROUP", "COMPONENT") or
+                child_xml.tag[0].isupper() or  # Catches PascalCase tags like ChannelA, ChannelB, Group
+                child_xml.tag.lower() in ("frame", "group", "rectangle", "channela", "channelb")
+            ):
+                wtype = WidgetType.PANEL
+
+
         # Unrecognized nodes: skip with warning
         if wtype is None:
             logger.warning(
@@ -380,6 +391,9 @@ class ParsedScreen:
 # ── Entry point ───────────────────────────────────────────────────────────────
 
 def parse_screen(frame_node) -> ParsedScreen:
+    # Normalize tag case if someone passes a lowercase frame root
+    if frame_node.tag.lower() == "frame":
+        frame_node.tag = "frame"
     frame_name = frame_node.attrib.get("name", "unnamed")
     screen     = ParsedScreen(frame_name)
     seen_ids: set[str] = set()

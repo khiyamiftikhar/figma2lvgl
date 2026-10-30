@@ -378,14 +378,23 @@ def main():
         logger.error("Failed to parse XML: %s", e)
         sys.exit(1)
 
-    page_children = root.find("children")
-    if page_children is None:
-        logger.error("No <children> element found in XML.")
-        sys.exit(1)
+    # Check if root itself is a frame, or find frames inside children
+    if root.tag.lower() == "frame":
+        frames = [root]
+    else:
+        page_children = root.find("children")
+        if page_children is not None:
+            frames = page_children.findall("frame")
+            if not frames:
+                frames = [c for c in page_children if c.tag.lower() == "frame"]
+        else:
+            frames = []
 
-    frames = page_children.findall("Frame")
+    if not frames and root.tag.lower() == "frame":
+        frames = [root]
+
     if not frames:
-        logger.error("No <Frame> nodes found in XML.")
+        logger.error("No <frame> nodes found in XML.")
         sys.exit(1)
 
     screens = [parse_screen(frame) for frame in frames]
