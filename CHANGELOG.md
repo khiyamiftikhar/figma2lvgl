@@ -1,5 +1,17 @@
 # Changelog
 
+## [Unreleased]
+
+### Changed
+- Repository: removed the stale copy of the v0.4.0 tree under
+  `docs/figma2lvgl_v040_fixed/` and its zip. Package code is unchanged.
+- ESP-IDF example: the ILI9486 driver now comes from the ESP Component
+  Registry (`khiyamiftikhar/esp-lcd-ili9486 ^1.1.0`) instead of a git
+  branch, with the init code updated for that driver version.
+
+### Added
+- `RELEASING.md`: version rules, tagging rules and the release checklist.
+
 ## [0.4.5] — 2026-05-17
 
 ### Fixed

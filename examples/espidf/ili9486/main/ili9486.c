@@ -112,8 +112,8 @@ esp_err_t ili9486_display_init(lv_display_t** handle)
     ESP_ERROR_CHECK(esp_lcd_panel_init(s_panel));
 
     // Force BGR bit in MADCTL (bit 3)
-    esp_lcd_panel_io_tx_param(s_io_handle, 0x36,
-        (uint8_t[]){ 0x48 }, 1);   // MX=1, BGR=1 → portrait + correct colours
+    //esp_lcd_panel_io_tx_param(s_io_handle, 0x36,
+      //  (uint8_t[]){ 0x48 }, 1);   // MX=1, BGR=1 → portrait + correct colours
 
 
     //ESP_ERROR_CHECK(esp_lcd_panel_mirror(s_panel, true, false));  // mirror X only
@@ -145,7 +145,7 @@ esp_err_t ili9486_display_init(lv_display_t** handle)
         },
         .flags = {
 #if LVGL_VERSION_MAJOR >= 9
-            .swap_bytes = false,   // ILI9486 is big-endian; LVGL is little-endian
+            .swap_bytes = true,   // ILI9486 is big-endian; LVGL is little-endian
 #endif
             .sw_rotate  = false,
         }
