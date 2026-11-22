@@ -1,10 +1,8 @@
 dependencies:
   khiyamiftikhar/esp-lcd-ili9486: ^1.1.0
-  
-
   atanisoft/esp_lcd_touch_xpt2046: ^1.0.6
   espressif/esp_lvgl_port: "^2.6.3"
-  lvgl/lvgl: "^9.0.0"  
-
-
-  
+  # Pinned to the LVGL line figma2lvgl's CI compiles against. The exact
+  # resolved versions are in ../dependencies.lock, which is committed.
+  # Updating LVGL is a deliberate lockfile change.
+  lvgl/lvgl: "~9.3.0"

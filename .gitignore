@@ -3,11 +3,16 @@ generated/
 backup/
 build/
 dependencies.lock
+# The example's lockfile is committed: it pins the exact LVGL and driver
+# versions the example and CI build against.
+!examples/espidf/ili9486/dependencies.lock
 sdkconfig
 managed_components/
 .vscode/
 dump_repo.py
-*.txt
+# Text dumps at the repo root only. A repo-wide *.txt would also hide new
+# CMakeLists.txt and requirements.txt files.
+/*.txt
   3.0
 dist/
 figma2lvgl.egg-info/
