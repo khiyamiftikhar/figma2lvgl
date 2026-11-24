@@ -1,0 +1,15 @@
+menu "figma2lvgl example"
+
+    config EXAMPLE_TOUCH_PIN_CS
+        int "XPT2046 touch chip-select GPIO"
+        range 0 48
+        default 1 if IDF_TARGET_ESP32C3
+        default 25
+        help
+            GPIO for the XPT2046 touch controller's chip-select. Touch shares
+            the display's SPI bus (host, clock, MOSI and MISO from the
+            ILI9486 driver settings), so only its chip-select is set here.
+            On ESP32-C3 boards avoid GPIO8 (onboard LED and strapping pin),
+            GPIO9 (BOOT strapping pin) and GPIO2 (strapping pin).
+
+endmenu

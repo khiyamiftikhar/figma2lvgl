@@ -8,8 +8,11 @@
 
 static const char *TAG = "touch";
 
-#define TOUCH_SPI_HOST  SPI2_HOST
-#define TOUCH_PIN_CS    GPIO_NUM_25
+/* Touch shares the display's SPI bus, so it uses the same host. */
+#define TOUCH_SPI_HOST  CONFIG_ILI9486_SPI_HOST
+/* Chip-select GPIO: "figma2lvgl example" menu (main/Kconfig.projbuild),
+ * set per target in sdkconfig.defaults.<target>. */
+#define TOUCH_PIN_CS    CONFIG_EXAMPLE_TOUCH_PIN_CS
 #define TOUCH_H_RES     CONFIG_ILI9486_H_RES
 #define TOUCH_V_RES     CONFIG_ILI9486_V_RES
 
@@ -19,7 +22,8 @@ esp_lcd_touch_handle_t touch_get_handle(void) { return s_tp; }
 
 esp_err_t touch_init(lv_display_t *disp)
 {
-    ESP_LOGI(TAG, "Initializing XPT2046 on SPI2, CS=GPIO%d", TOUCH_PIN_CS);
+    ESP_LOGI(TAG, "Initializing XPT2046 on SPI host %d, CS=GPIO%d",
+             (int)TOUCH_SPI_HOST, TOUCH_PIN_CS);
 
     // 1. SPI IO handle for touch
     esp_lcd_panel_io_handle_t tp_io = NULL;

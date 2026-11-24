@@ -1,0 +1,22 @@
+# ILI9486 + XPT2046 on ESP32-C3, SPI2 (FSPI).
+# MOSI, CLK and CS are on the FSPI IO_MUX pins; MISO goes through the GPIO
+# matrix, which is fine at this clock. GPIO20 is UART0 RX, free here because
+# the console runs over USB-Serial-JTAG (below).
+CONFIG_ILI9486_SPI_HOST=1
+CONFIG_ILI9486_PIN_MOSI=7
+CONFIG_ILI9486_PIN_MISO=20
+CONFIG_ILI9486_PIN_CLK=6
+CONFIG_ILI9486_PIN_CS=10
+CONFIG_ILI9486_PIN_DC=5
+CONFIG_ILI9486_PIN_RST=4
+CONFIG_ILI9486_PIN_BL=3
+CONFIG_ILI9486_PIXEL_CLK_HZ=5000000
+
+# Touch chip-select. Not GPIO8: on most C3 boards it drives the blue LED,
+# which then flickers at the touch polling rate.
+CONFIG_EXAMPLE_TOUCH_PIN_CS=1
+
+# Keep ESP_LOGx / printf output on the native USB-Serial-JTAG port. This is
+# ESP-IDF's default for esp32c3; pinned so it doesn't depend on another
+# defaults file. It also keeps UART0 (GPIO20/21) free for MISO.
+CONFIG_ESP_CONSOLE_USB_SERIAL_JTAG=y

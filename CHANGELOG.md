@@ -14,6 +14,10 @@
   inputs moved to `examples/espidf/ili9486/design/`, the example builds
   every generated file from its own `ui_src/` (or `FIGMA2LVGL_UI_SRC`),
   and the generated `sdkconfig.old` was removed.
+- ESP-IDF example: ESP32-C3 support (`sdkconfig.defaults.esp32c3`). Pins
+  are split into per-target defaults files. Touch CS is a setting
+  (`CONFIG_EXAMPLE_TOUCH_PIN_CS`) instead of a hardcoded GPIO, and touch uses
+  the display's SPI host and MISO settings instead of fixed values.
 - `.gitignore`: `*.txt` now applies to the repo root only, so new
   `CMakeLists.txt` files are no longer ignored.
 
