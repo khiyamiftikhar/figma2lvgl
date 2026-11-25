@@ -9,8 +9,8 @@
   Registry (`khiyamiftikhar/esp-lcd-ili9486 ^1.1.0`) instead of a git
   branch, with the init code updated for that driver version.
 
-- ESP-IDF example: LVGL pinned to `~9.3.0`, with `dependencies.lock`
-  committed so builds resolve the same component versions. The design
+- ESP-IDF example: LVGL held to the 9.3 line (`~9.3.0`) instead of any 9.x.
+  `dependencies.lock` is not committed (it records the target). The design
   inputs moved to `examples/espidf/ili9486/design/`, the example builds
   every generated file from its own `ui_src/` (or `FIGMA2LVGL_UI_SRC`),
   and the generated `sdkconfig.old` was removed.
