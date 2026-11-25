@@ -1,0 +1,21 @@
+<!-- Probe for B1: a screen whose name starts with "s" and holds a button.
+     v0.4.5 strips the leading "s" from the button callback name
+     (ui_ettings_on_btn_ok_clicked), so the C does not compile.
+     Every node has a fill, so no empty style (B2) is generated. -->
+<page name="Page_1" type="PAGE">
+  <children>
+    <Frame name="settings" width="320" height="480">
+      <fills><fill blendMode="NORMAL" color="#000000" /></fills>
+      <children>
+        <Frame name="btn_ok" x="100" y="380" width="120" height="44" cornerRadius="8">
+          <fills><fill blendMode="NORMAL" color="#2196F3" /></fills>
+          <children>
+            <Text name="label" x="0" y="0" width="120" height="44" characters="Ok">
+              <fills><fill blendMode="NORMAL" color="#ffffff" /></fills>
+            </Text>
+          </children>
+        </Frame>
+      </children>
+    </Frame>
+  </children>
+</page>

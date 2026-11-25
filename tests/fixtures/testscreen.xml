@@ -1,0 +1,32 @@
+<!-- The golden test screen (TEST_XML in tests/test_generator.py),
+     wrapped as a FigML export. -->
+<page name="Page_1" type="PAGE">
+  <children>
+    <Frame name="TestScreen" width="320" height="480">
+      <children>
+        <Frame name="panel_top" x="0" y="0" width="320" height="80">
+          <fills><fill blendMode="NORMAL" color="#222222" /></fills>
+          <children>
+            <Text name="time" x="10" y="20" width="100" height="30"
+                  fontSize="14" characters="16:30">
+              <fills><fill blendMode="NORMAL" color="#ffffff" /></fills>
+            </Text>
+          </children>
+        </Frame>
+        <Frame name="btn_ok" x="100" y="380" width="120" height="44"
+               cornerRadius="8" type="FRAME">
+          <fills><fill blendMode="NORMAL" color="#2196F3" /></fills>
+          <children>
+            <Text name="label" x="0" y="0" width="120" height="44"
+                  characters="Ok" type="TEXT">
+              <fills><fill blendMode="NORMAL" color="#ffffff" /></fills>
+            </Text>
+          </children>
+        </Frame>
+        <Rectangle name="battery_bar" x="10" y="300" width="200" height="20">
+          <fills><fill blendMode="NORMAL" color="#4caf50" /></fills>
+        </Rectangle>
+      </children>
+    </Frame>
+  </children>
+</page>
