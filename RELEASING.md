@@ -40,10 +40,16 @@ commit is what sets it.
 | 9 | Confirm | The SHA-256 on PyPI is compared with stage 7. A mismatch or a missing version fails the release |
 | 10 | Record | GitHub release notes from the changelog. The release plan's Results section is filled in |
 
-Stages 6–9 are automated by the release workflow from v0.4.6 on. Until that
-workflow exists, `.github/workflows/publish.yml` builds and publishes on
-every `v*` tag without running tests, so stages 2–4 must be checked by hand
-before tagging, and stage 9 by looking the version up on PyPI.
+Stages 6–9 are automated by `.github/workflows/publish.yml`, which runs on a
+release tag. It refuses to publish if the tagged commit isn't on `main` or
+has no green test run there, calls `test.yml` for the full suite, builds once,
+tests that wheel, publishes the same files and compares their SHA-256 with
+PyPI. The workflow keeps the name `publish.yml` because PyPI's trusted
+publisher is registered for that file name.
+
+Stage 4 (the push run on `main`) is the "Tests" workflow run for the merge
+commit. The "CI result" job is the single check to require in branch
+protection.
 
 ## Where the old tags are
 
@@ -62,9 +68,8 @@ published versions are 0.1.0–0.1.3, 0.2.0 and 0.4.5.
 
 ## Tag names
 
-Release tags are exactly `vMAJOR.MINOR.PATCH`, for example `v0.4.6`. Any
-other tag must not start with `v`. The current publish workflow fires on
-every `v*` tag, so a tag such as the existing `v1-espidf` or `v1.1-espidf`
-would start a publish if it were pushed again. Use a different prefix for
-milestone tags (for example `example/espidf-1`). The release workflow
-introduced in v0.4.6 matches only `v<digits>.<digits>.<digits>`.
+Release tags are exactly `vMAJOR.MINOR.PATCH`, for example `v0.4.6`. The
+publish workflow matches only `v<digits>.<digits>.<digits>`, so tags such as
+the existing `v1-espidf` and `v1.1-espidf` don't publish. Still, use a
+different prefix for milestone tags (for example `example/espidf-1`), so a
+tag name never looks like a release.

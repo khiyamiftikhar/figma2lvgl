@@ -24,8 +24,19 @@
   example requires `esp_driver_spi` / `esp_driver_gpio` explicitly.
 - `.gitignore`: `*.txt` now applies to the repo root only, so new
   `CMakeLists.txt` files are no longer ignored.
+- `selection.xml` moved to `tests/fixtures/real/` (compile test fixture).
 
 ### Added
+- CI (`.github/workflows/test.yml`): pytest on Python 3.10–3.13 (Ubuntu) and
+  3.13 (Windows); generated output compiled as C and C++ with gcc/g++ and
+  MSVC against LVGL 9.3.0 (`tests/compile`); the wheel installed offline and
+  run with no network (`tests/wheel`); the ESP-IDF example built for
+  ESP32-C3 with ESP-IDF 5.5.2 and 6.0.3. A single "CI result" check.
+- `publish.yml` now publishes only from a `vX.Y.Z` tag on `main` with green
+  tests, reruns the full suite, builds once, tests and publishes that same
+  build, and checks the SHA-256 on PyPI. It no longer fires on other `v*` tags.
+- `noxfile.py`: local sessions that mirror CI.
+- `.gitattributes`: LF line endings for all text files.
 - `RELEASING.md`: version rules, tagging rules and the release checklist.
 - ESP-IDF example README: build steps, wiring and the verified configuration.
 
