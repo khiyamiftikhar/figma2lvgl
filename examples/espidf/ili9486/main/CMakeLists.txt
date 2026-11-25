@@ -23,5 +23,6 @@ idf_component_register(
     SRCS main.c touch.c ili9486.c ${UI_SRCS}
     INCLUDE_DIRS "." "${UI_SRC_DIR}/include"
     PRIV_INCLUDE_DIRS "${UI_SRC_DIR}/priv_include"
-    PRIV_REQUIRES esp-lcd-ili9486 esp_lcd_touch_xpt2046
+    REQUIRES esp_lcd esp_driver_spi esp_driver_gpio
+    PRIV_REQUIRES esp-lcd-ili9486 esp_lcd_touch_xpt2046 lvgl esp_lvgl_port
 )

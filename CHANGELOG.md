@@ -18,6 +18,10 @@
   are split into per-target defaults files. Touch CS is a setting
   (`CONFIG_EXAMPLE_TOUCH_PIN_CS`) instead of a hardcoded GPIO, and touch uses
   the display's SPI host and MISO settings instead of fixed values.
+- ESP-IDF example: `esp-lcd-ili9486` 2.0.0 (ESP-IDF 5.5.2 and 6.x). The
+  horizontal-mirror workaround is removed (the driver fixed the cause),
+  `rgb_endian` is replaced by `rgb_ele_order` (removed in IDF 6), and the
+  example requires `esp_driver_spi` / `esp_driver_gpio` explicitly.
 - `.gitignore`: `*.txt` now applies to the repo root only, so new
   `CMakeLists.txt` files are no longer ignored.
 

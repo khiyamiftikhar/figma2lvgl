@@ -30,6 +30,12 @@ regenerated `ui_src/` builds without editing it. Set the
 `FIGMA2LVGL_UI_SRC` environment variable to build against generated output
 in another folder (CI does this).
 
+## Requirements
+
+ESP-IDF 5.5.2 or later, including 6.x (`esp-lcd-ili9486` 2.0.0 supports
+both). Driver 2.0.0 fixed the cause of the mirrored image that 1.x had, so
+this example sets no mirror; with a 1.x driver the image would be flipped.
+
 ## Build
 
 From the repository root, in an ESP-IDF terminal:

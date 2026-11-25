@@ -1,5 +1,5 @@
 dependencies:
-  khiyamiftikhar/esp-lcd-ili9486: ^1.1.0
+  khiyamiftikhar/esp-lcd-ili9486: ^2.0.0
   atanisoft/esp_lcd_touch_xpt2046: ^1.0.6
   espressif/esp_lvgl_port: "^2.6.3"
   # Pinned to the LVGL line figma2lvgl's CI compiles against. The exact

@@ -102,7 +102,7 @@ esp_err_t ili9486_display_init(lv_display_t** handle)
     esp_lcd_panel_dev_config_t panel_config = {
         .reset_gpio_num  = PIN_NUM_RST,
         .bits_per_pixel  = 16,
-        .rgb_endian = LCD_RGB_ENDIAN_RGB,
+        .rgb_ele_order   = LCD_RGB_ELEMENT_ORDER_RGB,
     };
     ESP_RETURN_ON_ERROR(
         esp_lcd_new_panel_ili9486(s_io_handle, &panel_config, &s_panel),
@@ -111,12 +111,8 @@ esp_err_t ili9486_display_init(lv_display_t** handle)
     ESP_ERROR_CHECK(esp_lcd_panel_reset(s_panel));
     ESP_ERROR_CHECK(esp_lcd_panel_init(s_panel));
 
-    // Force BGR bit in MADCTL (bit 3)
-    //esp_lcd_panel_io_tx_param(s_io_handle, 0x36,
-      //  (uint8_t[]){ 0x48 }, 1);   // MX=1, BGR=1 → portrait + correct colours
-
-
-    //ESP_ERROR_CHECK(esp_lcd_panel_mirror(s_panel, true, false));  // mirror X only
+    /* No mirror call: esp-lcd-ili9486 2.0.0 sends Display Function Control
+     * correctly, so the image is the right way round. 1.x needed a mirror. */
     ESP_ERROR_CHECK(esp_lcd_panel_disp_on_off(s_panel, true));
 
     /* Backlight ON */
@@ -140,7 +136,7 @@ esp_err_t ili9486_display_init(lv_display_t** handle)
 #endif
         .rotation = {
             .swap_xy  = false,
-            .mirror_x = true,
+            .mirror_x = false,   /* 2.0.0: no mirror workaround */
             .mirror_y = false,
         },
         .flags = {
