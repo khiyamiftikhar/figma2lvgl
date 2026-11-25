@@ -1,4 +1,25 @@
 #!/usr/bin/env python3
+# --- figma2lvgl: bundled third-party file -----------------------------------
+# LVGL's image converter, copied unmodified from the LVGL project:
+#   source:  https://github.com/lvgl/lvgl/blob/v9.3.0/scripts/LVGLImage.py
+#   tag:     v9.3.0
+#   commit:  c033a98afddd65aaafeebea625382a94020fe4a7
+#   sha256:  2b5adba1c94e50047af6407edbc0aa0d4fee9f996aeec6537fc738a135fd54fc  (of the upstream file, i.e. this file without this header)
+# figma2lvgl inserts only this header block. To update, copy the new upstream
+# file, put this header back with the new tag, commit and sha256, and run
+# tests/test_bundled_lvglimage.py.
+#
+# LVGL licence (LICENCE.txt in the LVGL repository at that tag):
+#
+# MIT licence
+# Copyright (c) 2025 LVGL Kft
+#
+# Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the “Software”), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
+#
+# The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
+#
+# THE SOFTWARE IS PROVIDED “AS IS”, WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+# --- end of figma2lvgl header -------------------------------------------------
 import os
 import logging
 import argparse
@@ -117,7 +138,6 @@ class ColorFormat(Enum):
     A2 = 0x0C
     A4 = 0x0D
     A8 = 0x0E
-    AL88 = 0x15
     ARGB8888 = 0x10
     XRGB8888 = 0x11
     RGB565 = 0x12
@@ -142,7 +162,6 @@ class ColorFormat(Enum):
             ColorFormat.A2: 2,
             ColorFormat.A4: 4,
             ColorFormat.A8: 8,
-            ColorFormat.AL88: 16,
             ColorFormat.ARGB8888: 32,
             ColorFormat.XRGB8888: 32,
             ColorFormat.RGB565: 16,
@@ -184,7 +203,6 @@ class ColorFormat(Enum):
     @property
     def has_alpha(self) -> bool:
         return self.is_alpha_only or self.is_indexed or self in (
-            ColorFormat.AL88,
             ColorFormat.ARGB8888,
             ColorFormat.XRGB8888,  # const alpha: 0xff
             ColorFormat.ARGB8565,
@@ -279,14 +297,7 @@ def unpack_colors(data: bytes, cf: ColorFormat, w) -> List:
                 ret.append(bit_extend((p >> 11) & 0x1f, 5))  # R
                 ret.append(bit_extend((p >> 5) & 0x3f, 6))  # G
                 ret.append(bit_extend((p >> 0) & 0x1f, 5))  # B
-        elif cf == ColorFormat.AL88:
-            # AL88: low 8bit = Luminance, high 8bit = Alpha
-            L = data[0::2]  # low byte: luminance
-            A = data[1::2]  # high byte: alpha
-            for luma, alpha in zip(L, A):
-                ret.append(luma)  # L
-                ret.append(alpha)  # A
-
+        
     elif bpp == 24:
         if cf == ColorFormat.RGB888:
             B = data[0::3]
@@ -364,7 +375,7 @@ def write_c_array_file(
 #elif defined(LV_BUILD_TEST)
 #include "../lvgl.h"
 #else
-#include "lvgl.h"
+#include "lvgl/lvgl.h"
 #endif
 
 #ifndef LV_ATTRIBUTE_MEM_ALIGN
@@ -625,9 +636,7 @@ class LVGLImage:
 
         if self.cf.is_indexed:
 
-            def multiply(b, g, r, a):
-                # The precision is reduced, the correct way would be to divide by 255,
-                # but this is consistent with the premultiply function in the code.
+            def multiply(r, g, b, a):
                 r, g, b = (r * a) >> 8, (g * a) >> 8, (b * a) >> 8
                 return uint8_t(b) + uint8_t(g) + uint8_t(r) + uint8_t(a)
 
@@ -864,14 +873,6 @@ class LVGLImage:
                                  greyscale=True,
                                  alpha=False)
             data = self.data
-        elif self.cf == ColorFormat.AL88:
-            # to grayscale with alpha
-            encoder = png.Writer(self.w,
-                                 self.h,
-                                 bitdepth=8,
-                                 greyscale=True,
-                                 alpha=True)
-            data = unpack_colors(self.data, self.cf, self.w)
         elif self.cf.is_colormap:
             encoder = png.Writer(self.w,
                                  self.h,
@@ -915,8 +916,6 @@ class LVGLImage:
             self._png_to_indexed(cf, filename)
         elif cf.is_alpha_only:
             self._png_to_alpha_only(cf, filename)
-        elif cf == ColorFormat.AL88:
-            self._png_to_al88(cf, filename)
         elif cf.is_luma_only:
             self._png_to_luma_only(cf, filename)
         elif cf.is_colormap:
@@ -1012,31 +1011,6 @@ class LVGLImage:
         if y <= 0.0031308:
             return 12.92 * y
         return 1.055 * pow(y, 1 / 2.4) - 0.055
-
-    def _png_to_al88(self, cf: ColorFormat, filename: str):
-        reader = png.Reader(str(filename))
-        w, h, rows, info = reader.asRGBA8()
-        if not info['alpha']:
-            raise FormatError(f"{filename} has no alpha channel")
-
-        rawdata = bytearray()
-        for row in rows:
-            R = row[0::4]
-            G = row[1::4]
-            B = row[2::4]
-            A = row[3::4]
-            for r, g, b, a in zip(R, G, B, A):
-                # Calculate luminance using ITU-R BT.709 coefficients
-                r_linear = self.sRGB_to_linear(r / 255.0)
-                g_linear = self.sRGB_to_linear(g / 255.0)
-                b_linear = self.sRGB_to_linear(b / 255.0)
-                luma = 0.2126 * r_linear + 0.7152 * g_linear + 0.0722 * b_linear
-                luma_byte = int(self.linear_to_sRGB(luma) * 255)
-                # AL88: low byte = luminance, high byte = alpha
-                rawdata += uint8_t(luma_byte)  # L
-                rawdata += uint8_t(a)          # A
-
-        self.set_data(ColorFormat.AL88, w, h, rawdata)
 
     def _png_to_luma_only(self, cf: ColorFormat, filename: str):
         reader = png.Reader(str(filename))
@@ -1134,11 +1108,11 @@ class LVGLImage:
                     self.rgb565_dither and
                     cf in (ColorFormat.RGB565, ColorFormat.RGB565_SWAPPED, ColorFormat.RGB565A8, ColorFormat.ARGB8565)
                 ):
-                    threshold_id = ((y & 7) << 3) + (x & 7)
+                    treshold_id = ((y & 7) << 3) + (x & 7)
 
-                    r = min(r + red_thresh[threshold_id], 0xFF) & 0xF8
-                    g = min(g + green_thresh[threshold_id], 0xFF) & 0xFC
-                    b = min(b + blue_thresh[threshold_id], 0xFF) & 0xF8
+                    r = min(r + red_thresh[treshold_id], 0xFF) & 0xF8
+                    g = min(g + green_thresh[treshold_id], 0xFF) & 0xFC
+                    b = min(b + blue_thresh[treshold_id], 0xFF) & 0xF8
 
                 rawdata += pack(r, g, b, a)
 
@@ -1434,7 +1408,7 @@ def main():
               "choose from I1/2/4/8"),
         default="I8",
         choices=[
-            "L8", "I1", "I2", "I4", "I8", "A1", "A2", "A4", "A8", "AL88", "ARGB8888",
+            "L8", "I1", "I2", "I4", "I8", "A1", "A2", "A4", "A8", "ARGB8888",
             "XRGB8888", "RGB565", "RGB565_SWAPPED", "RGB565A8", "ARGB8565", "RGB888", "AUTO",
             "RAW", "RAW_ALPHA", "ARGB8888_PREMULTIPLIED"
         ])
