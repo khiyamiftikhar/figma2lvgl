@@ -14,9 +14,11 @@ Steps:
      (sitecustomize.py on PYTHONPATH), inside a network namespace too when
      `unshare -rn` is available.
 
-KNOWN_BUGS: v0.4.5's image conversion needs pypng and lz4, which the
-package doesn't declare (B5). While B5 is listed, the check passes only if
-the run fails with that exact cause. v0.4.6 PR 4 fixes B5 and empties it.
+KNOWN_BUGS: a bug listed there must make the run fail with its exact cause.
+Empty since v0.4.6, when B5 (pypng and lz4 not declared) was fixed.
+
+The CLI runs without --lvgl-tool, so it uses the bundled LVGLImage.py from
+the installed package (fix B6), with no download.
 """
 
 import argparse
@@ -31,10 +33,10 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[2]
 DESIGN = ROOT / "examples" / "espidf" / "ili9486" / "design"
 
-# bug -> text that must appear in the CLI output while the bug exists
-KNOWN_BUGS = {
-    "B5": "No module named 'png'",
-}
+# bug -> text that must appear in the CLI output while the bug exists.
+# Empty since v0.4.6: B5 is fixed (pypng and lz4 are dependencies), so the
+# installed CLI must generate everything offline.
+KNOWN_BUGS = {}
 
 EXPECTED_FILES = [
     "include/ui_home.h",
@@ -131,7 +133,7 @@ def main():
         out = work / "out"
         result = run(prefix + [py, "-m", "figma2lvgl.main",
                                "-x", DESIGN / "ili9486.xml", "-i", DESIGN,
-                               "-d", out, "-y", "--lvgl-tool", tool],
+                               "-d", out, "-y"],
                      env=env, cwd=work)
         output = result.stdout + result.stderr
 
