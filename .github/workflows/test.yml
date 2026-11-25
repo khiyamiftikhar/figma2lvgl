@@ -1,0 +1,274 @@
+# Test suite. Which jobs run on which trigger is defined in the design repo,
+# docs/planning/02_test_strategy.md ("When jobs run"):
+#   push to a feature branch   cheap checks, path-filtered
+#   PR to main                 full suite
+#   push to main               full suite on the commit that landed (a tag
+#                              may only go on a commit whose run is green)
+#   nightly, manual, or called by publish.yml   full suite
+name: Tests
+
+on:
+  push:
+    branches: ["**"]
+  pull_request:
+    branches: [main]
+  schedule:
+    - cron: "17 21 * * *"   # nightly, 02:17 Pakistan time
+  workflow_dispatch:
+  workflow_call:
+    inputs:
+      full:
+        description: Run the full suite (publish.yml passes true)
+        type: boolean
+        default: true
+
+concurrency:
+  group: tests-${{ github.event_name }}-${{ github.ref }}
+  # Cancel superseded runs on feature branches only. Runs on main must
+  # finish (the release gate needs them), and so must tag runs.
+  cancel-in-progress: ${{ startsWith(github.ref, 'refs/heads/') && github.ref != 'refs/heads/main' }}
+
+permissions:
+  contents: read
+
+env:
+  LVGL_TAG: v9.3.0
+  LVGL_COMMIT: c033a98afddd65aaafeebea625382a94020fe4a7
+
+jobs:
+  plan:
+    name: Plan
+    runs-on: ubuntu-latest
+    outputs:
+      full: ${{ steps.plan.outputs.full }}
+      code: ${{ steps.plan.outputs.code }}
+      example: ${{ steps.plan.outputs.example }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - id: plan
+        shell: bash
+        env:
+          EVENT: ${{ github.event_name }}
+          REF: ${{ github.ref }}
+          BEFORE: ${{ github.event.before }}
+          CALLED_FULL: ${{ inputs.full }}
+        run: |
+          # Full suite: anything but a feature-branch push. A call from
+          # publish.yml arrives with the caller's tag-push event, so it is
+          # recognised by its input and by the tag ref.
+          if [ "$CALLED_FULL" = "true" ] || [ "$EVENT" != "push" ] \
+             || [ "$REF" = "refs/heads/main" ] || [[ "$REF" == refs/tags/* ]]; then
+            echo "full=true" >> "$GITHUB_OUTPUT"
+            echo "code=true" >> "$GITHUB_OUTPUT"
+            echo "example=true" >> "$GITHUB_OUTPUT"
+            echo "Full suite ($EVENT on $REF)"
+            exit 0
+          fi
+          # Feature-branch push: cheap checks, filtered by what changed.
+          if [ -z "$BEFORE" ] || [ "$BEFORE" = "0000000000000000000000000000000000000000" ]; then
+            BASE=$(git merge-base origin/main HEAD)
+          else
+            BASE=$BEFORE
+          fi
+          CHANGED=$(git diff --name-only "$BASE" HEAD)
+          echo "Changed since $BASE:"; echo "$CHANGED"
+          code=false; example=false
+          while IFS= read -r f; do
+            [ -z "$f" ] && continue
+            case "$f" in
+              docs/*|*.md) ;;
+              examples/*) example=true ;;
+              *) code=true ;;
+            esac
+          done <<< "$CHANGED"
+          echo "full=false" >> "$GITHUB_OUTPUT"
+          echo "code=$code" >> "$GITHUB_OUTPUT"
+          echo "example=$example" >> "$GITHUB_OUTPUT"
+          echo "Cheap checks: code=$code example=$example"
+
+  pytest:
+    name: pytest (Ubuntu, Python ${{ matrix.python }})
+    needs: plan
+    if: needs.plan.outputs.code == 'true'
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python: ["3.10", "3.11", "3.12", "3.13"]
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python }}
+      - run: pip install -e . pytest
+      - run: pytest -q --ignore=tests/compile
+
+  pytest-windows:
+    name: pytest (Windows, Python 3.13)
+    needs: plan
+    if: needs.plan.outputs.full == 'true'
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+      - run: pip install -e . pytest
+      - run: pytest -q --ignore=tests/compile
+
+  compile-gcc:
+    name: Compile (gcc/g++, LVGL 9.3.0)
+    needs: plan
+    if: needs.plan.outputs.code == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: LVGL at the pinned tag and commit
+        uses: actions/checkout@v4
+        with:
+          repository: lvgl/lvgl
+          ref: ${{ env.LVGL_TAG }}
+          path: _lvgl
+      - name: Verify LVGL commit
+        shell: bash
+        run: |
+          head=$(git -C _lvgl rev-parse HEAD)
+          [ "$head" = "$LVGL_COMMIT" ] || { echo "LVGL $LVGL_TAG is $head, expected $LVGL_COMMIT"; exit 1; }
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+      - run: pip install -e . pytest pypng lz4
+      - name: Compile generated output
+        run: pytest -q tests/compile -rA
+        env:
+          LVGL_DIR: ${{ github.workspace }}/_lvgl
+          FIGMA2LVGL_REQUIRE_COMPILE: "1"
+          FIGMA2LVGL_CC: gcc
+
+  compile-msvc:
+    name: Compile (MSVC, LVGL 9.3.0)
+    needs: plan
+    if: needs.plan.outputs.full == 'true'
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: LVGL at the pinned tag and commit
+        uses: actions/checkout@v4
+        with:
+          repository: lvgl/lvgl
+          ref: ${{ env.LVGL_TAG }}
+          path: _lvgl
+      - name: Verify LVGL commit
+        shell: bash
+        run: |
+          head=$(git -C _lvgl rev-parse HEAD)
+          [ "$head" = "$LVGL_COMMIT" ] || { echo "LVGL $LVGL_TAG is $head, expected $LVGL_COMMIT"; exit 1; }
+      - uses: ilammy/msvc-dev-cmd@v1
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+      - run: pip install -e . pytest pypng lz4
+      - name: Compile generated output
+        run: pytest -q tests/compile -rA
+        env:
+          LVGL_DIR: ${{ github.workspace }}\_lvgl
+          FIGMA2LVGL_REQUIRE_COMPILE: "1"
+          FIGMA2LVGL_CC: msvc
+
+  wheel:
+    name: Wheel (offline install, no network)
+    needs: plan
+    if: needs.plan.outputs.code == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+      - run: pip install build
+      - run: python -m build --wheel --outdir dist
+      - run: python tests/wheel/check_wheel.py dist
+
+  example-ui:
+    name: Generate the ESP-IDF example UI
+    needs: plan
+    if: needs.plan.outputs.full == 'true' || needs.plan.outputs.example == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+      - run: pip install -e . pypng lz4
+      - name: Generate ui_src from the example design
+        run: >
+          python -m figma2lvgl.main
+          -x examples/espidf/ili9486/design/ili9486.xml
+          -i examples/espidf/ili9486/design
+          -d "$RUNNER_TEMP/example" -y
+          --lvgl-tool figma2lvgl/tools/LVGLImage.py
+      - uses: actions/upload-artifact@v4
+        with:
+          name: example-ui-src
+          path: ${{ runner.temp }}/example/ui_src
+          if-no-files-found: error
+
+  espidf:
+    name: ESP-IDF ${{ matrix.idf }} (${{ matrix.target }})
+    needs: example-ui
+    runs-on: ubuntu-latest
+    container: espressif/idf:${{ matrix.idf }}
+    strategy:
+      fail-fast: false
+      matrix:
+        # The versions the example was checked with on hardware (example README).
+        idf: [v5.5.2, v6.0.3]
+        target: [esp32c3]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          name: example-ui-src
+          path: ${{ runner.temp }}/ui_src
+      - name: Build the example
+        shell: bash
+        env:
+          FIGMA2LVGL_UI_SRC: ${{ runner.temp }}/ui_src
+          IDF_TARGET: ${{ matrix.target }}
+        run: |
+          . "$IDF_PATH/export.sh"
+          cd examples/espidf/ili9486
+          idf.py -B build -D SDKCONFIG=build/sdkconfig \
+            -D "SDKCONFIG_DEFAULTS=sdkconfig.defaults;sdkconfig.defaults.${IDF_TARGET}" \
+            set-target "$IDF_TARGET" build
+
+  ci-ok:
+    # One check to require in branch protection: green only when every job
+    # that ran succeeded and none was cancelled.
+    name: CI result
+    if: always()
+    needs: [plan, pytest, pytest-windows, compile-gcc, compile-msvc, wheel, example-ui, espidf]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check job results
+        env:
+          RESULTS: ${{ toJSON(needs.*.result) }}
+        run: |
+          echo "$RESULTS"
+          if echo "$RESULTS" | grep -qE '"(failure|cancelled)"'; then
+            echo "A job failed or was cancelled"; exit 1
+          fi

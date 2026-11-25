@@ -375,6 +375,25 @@ More platform examples (STM32, Zephyr, bare-metal) coming soon.
 
 ---
 
+## 🧪 Development and Tests
+
+The test sessions mirror CI. With [nox](https://nox.thea.codes/) installed:
+
+```bash
+nox                  # tests, compile, wheel
+nox -s tests         # parser and generator tests
+nox -s compile       # generated output compiled as C and C++ against LVGL 9.3
+nox -s wheel         # build the wheel, install it offline, run it with no network
+nox -s compile_msvc  # the compile check with MSVC (Visual Studio Developer prompt)
+nox -s espidf        # build the ESP-IDF example (ESP-IDF terminal)
+```
+
+The compile session fetches LVGL v9.3.0 once into `.nox/`. To run the
+compile tests directly, set `LVGL_DIR` to an LVGL checkout and run
+`pytest tests/compile`.
+
+---
+
 ## 🏁 Design Philosophy
 
 | Principle | What it means |

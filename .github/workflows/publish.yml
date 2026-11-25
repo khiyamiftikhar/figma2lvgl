@@ -1,36 +1,166 @@
+# Release pipeline, run on a release tag (RELEASING.md, stages 6-9):
+#   gate     the tagged commit is on main and test.yml passed for it there
+#   test     the full test suite again, on the tagged commit
+#   build    wheel and sdist built once, SHA-256 recorded
+#   verify   the wheel installed offline and run with no network
+#   publish  those same files uploaded to PyPI (trusted publishing)
+#   confirm  the SHA-256 on PyPI compared with the build
+#
+# The file keeps the name publish.yml because PyPI's trusted publisher is
+# registered for this workflow file name. Renaming it would make PyPI refuse
+# the upload until the publisher setting is changed on pypi.org.
 name: Publish to PyPI
 
 on:
   push:
     tags:
-      - "v*"          # triggers on v1.0.0, v1.2.3, etc.
+      # Release tags only: vMAJOR.MINOR.PATCH. Other tags starting with "v"
+      # (such as v1-espidf) must not publish.
+      - "v[0-9]+.[0-9]+.[0-9]+"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: publish-${{ github.ref }}
+  cancel-in-progress: false
 
 jobs:
-  build-and-publish:
-    name: Build and publish
+  gate:
+    name: Gate (commit on main, tests green there)
     runs-on: ubuntu-latest
-    environment: pypi                  # you create this in GitHub repo settings
-
     permissions:
-      id-token: write                  # required for trusted publishing (no API key needed)
-
+      contents: read
+      actions: read
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
         with:
-          fetch-depth: 0      # this line, fetches full history + tags
+          fetch-depth: 0
+      - name: Tagged commit is on main
+        run: |
+          git fetch --quiet origin main
+          if ! git merge-base --is-ancestor "$GITHUB_SHA" origin/main; then
+            echo "Tag ${GITHUB_REF_NAME} points at $GITHUB_SHA, which is not on main."
+            echo "Tag only commits on main (RELEASING.md)."
+            exit 1
+          fi
+      - name: test.yml passed for this commit on main
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          runs=$(gh api "repos/${GITHUB_REPOSITORY}/actions/workflows/test.yml/runs?head_sha=${GITHUB_SHA}&event=push&branch=main&status=success" --jq '.total_count')
+          if [ "$runs" -lt 1 ]; then
+            echo "No successful test.yml run on main for $GITHUB_SHA."
+            echo "Wait for the push run on main to pass, then tag (RELEASING.md stage 4)."
+            exit 1
+          fi
+          echo "Found $runs successful test.yml run(s) on main for $GITHUB_SHA"
 
-      - name: Set up Python
-        uses: actions/setup-python@v5
+  test:
+    name: Full test suite on the tagged commit
+    needs: gate
+    uses: ./.github/workflows/test.yml
+    with:
+      full: true
+
+  build:
+    name: Build once
+    needs: test
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+    steps:
+      - uses: actions/checkout@v4
         with:
-          python-version: "3.11"
+          fetch-depth: 0          # setuptools-scm reads the version from the tag
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+      - run: pip install build
+      - run: python -m build --outdir dist
+      - id: version
+        name: Version matches the tag
+        run: |
+          version="${GITHUB_REF_NAME#v}"
+          ls dist
+          test -f "dist/figma2lvgl-${version}-py3-none-any.whl" || { echo "No wheel for ${version}"; exit 1; }
+          test -f "dist/figma2lvgl-${version}.tar.gz" || { echo "No sdist for ${version}"; exit 1; }
+          echo "version=${version}" >> "$GITHUB_OUTPUT"
+      - name: Record SHA-256
+        run: (cd dist && sha256sum * | tee ../SHA256SUMS)
+      - uses: actions/upload-artifact@v4
+        with:
+          name: dist
+          path: |
+            dist/
+            SHA256SUMS
+          if-no-files-found: error
 
-      - name: Install build tools
-        run: pip install build
+  verify:
+    name: Verify the built wheel
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          name: dist
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+      - name: Files unchanged since build
+        run: (cd dist && sha256sum -c ../SHA256SUMS)
+      - run: python tests/wheel/check_wheel.py dist
 
-      - name: Build package
-        run: python -m build           # produces dist/*.whl and dist/*.tar.gz
+  publish:
+    name: Publish to PyPI
+    needs: [build, verify]
+    runs-on: ubuntu-latest
+    environment: pypi
+    permissions:
+      id-token: write             # trusted publishing, no API token
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: dist
+      - name: Files unchanged since build
+        run: (cd dist && sha256sum -c ../SHA256SUMS)
+      - uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          packages-dir: dist/
 
-      - name: Publish to PyPI
-        uses: pypa/gh-action-pypi-publish@release/v1
-        # No API token needed — uses PyPI trusted publisher
+  confirm:
+    name: Confirm PyPI has the tested files
+    needs: [build, publish]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: dist
+      - name: Compare SHA-256 with PyPI
+        env:
+          VERSION: ${{ needs.build.outputs.version }}
+        run: |
+          url="https://pypi.org/pypi/figma2lvgl/${VERSION}/json"
+          for attempt in 1 2 3 4 5 6 7 8 9 10; do
+            if curl -fsS "$url" -o pypi.json; then break; fi
+            echo "PyPI does not list ${VERSION} yet (attempt ${attempt}); waiting"
+            sleep 30
+          done
+          test -s pypi.json || { echo "figma2lvgl ${VERSION} not found on PyPI"; exit 1; }
+          python3 - <<'EOF'
+          import json, sys
+          urls = json.load(open("pypi.json"))["urls"]
+          pypi = {u["filename"]: u["digests"]["sha256"] for u in urls}
+          built = {}
+          for line in open("SHA256SUMS"):
+              digest, name = line.split()
+              built[name.lstrip("*")] = digest
+          bad = False
+          for name, digest in built.items():
+              got = pypi.get(name)
+              status = "match" if got == digest else ("MISSING" if got is None else "MISMATCH")
+              print(f"{status:8} {name}")
+              bad |= got != digest
+          sys.exit(1 if bad else 0)
+          EOF

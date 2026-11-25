@@ -1,0 +1,15 @@
+# Line endings: every text file is stored and checked out with LF, so an
+# edit on Windows or Linux never rewrites a whole file. Editors on Windows
+# (VS Code, Visual Studio) handle LF files.
+* text=auto eol=lf
+
+# Windows-only scripts keep CRLF.
+*.bat text eol=crlf
+*.cmd text eol=crlf
+*.ps1 text eol=crlf
+
+# Binary files: never converted or diffed as text.
+*.png binary
+*.jpg binary
+*.zip binary
+*.bin binary
