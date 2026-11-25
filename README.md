@@ -368,7 +368,7 @@ See the `examples/` folder for ready-to-use project setups:
 ```
 examples/
   espidf/
-    ili9486/        ← ESP32 + ILI9486 320×480 display
+    ili9486/        ← ESP32 + ILI9486 320×480 display (build steps in its README.md)
 ```
 
 More platform examples (STM32, Zephyr, bare-metal) coming soon.

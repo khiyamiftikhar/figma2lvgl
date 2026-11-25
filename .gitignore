@@ -2,12 +2,24 @@ __pycache__/
 generated/
 backup/
 build/
+# Per-target build folders (idf.py -B build_esp32c3 ...)
+build_*/
 dependencies.lock
+# The example's lockfile is committed: it pins the exact LVGL and driver
+# versions the example and CI build against.
+!examples/espidf/ili9486/dependencies.lock
 sdkconfig
+# Per-target generated configs (sdkconfig.esp32, sdkconfig.esp32c3, ...).
+# The sdkconfig.defaults* inputs are committed.
+sdkconfig.*
+!sdkconfig.defaults
+!sdkconfig.defaults.*
 managed_components/
 .vscode/
 dump_repo.py
-*.txt
+# Text dumps at the repo root only. A repo-wide *.txt would also hide new
+# CMakeLists.txt and requirements.txt files.
+/*.txt
   3.0
 dist/
 figma2lvgl.egg-info/

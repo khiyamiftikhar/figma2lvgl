@@ -9,8 +9,25 @@
   Registry (`khiyamiftikhar/esp-lcd-ili9486 ^1.1.0`) instead of a git
   branch, with the init code updated for that driver version.
 
+- ESP-IDF example: LVGL pinned to `~9.3.0`, with `dependencies.lock`
+  committed so builds resolve the same component versions. The design
+  inputs moved to `examples/espidf/ili9486/design/`, the example builds
+  every generated file from its own `ui_src/` (or `FIGMA2LVGL_UI_SRC`),
+  and the generated `sdkconfig.old` was removed.
+- ESP-IDF example: ESP32-C3 support (`sdkconfig.defaults.esp32c3`). Pins
+  are split into per-target defaults files. Touch CS is a setting
+  (`CONFIG_EXAMPLE_TOUCH_PIN_CS`) instead of a hardcoded GPIO, and touch uses
+  the display's SPI host and MISO settings instead of fixed values.
+- ESP-IDF example: `esp-lcd-ili9486` 2.0.0 (ESP-IDF 5.5.2 and 6.x). The
+  horizontal-mirror workaround is removed (the driver fixed the cause),
+  `rgb_endian` is replaced by `rgb_ele_order` (removed in IDF 6), and the
+  example requires `esp_driver_spi` / `esp_driver_gpio` explicitly.
+- `.gitignore`: `*.txt` now applies to the repo root only, so new
+  `CMakeLists.txt` files are no longer ignored.
+
 ### Added
 - `RELEASING.md`: version rules, tagging rules and the release checklist.
+- ESP-IDF example README: build steps, wiring and the verified configuration.
 
 ## [0.4.5] — 2026-05-17
 
