@@ -75,8 +75,6 @@ idf.py -B build_esp32c3 -D SDKCONFIG=sdkconfig.esp32c3 -D SDKCONFIG_DEFAULTS="sd
 
 Add `flash monitor` after `build` to flash and watch the log.
 
-```
-
 ## Wiring
 
 | Signal | ESP32 | ESP32-C3 |
@@ -101,12 +99,16 @@ The last configuration built, flashed and checked on hardware.
 
 | Item | Value |
 |---|---|
-| Date | _to fill_ |
-| figma2lvgl commit | _to fill_ |
-| ESP-IDF | _to fill_ |
-| Target | _to fill_ (ESP32-C3 for the first check) |
-| LVGL (from `dependencies.lock`) | _to fill_ |
-| esp_lvgl_port | _to fill_ |
-| esp-lcd-ili9486 | _to fill_ |
-| esp_lcd_touch_xpt2046 | _to fill_ |
-| Result | _to fill_ |
+| Date | 2026-11-25 |
+| figma2lvgl commit | 57b9054 |
+| ESP-IDF | 5.5.2 and 6.0.3 |
+| Target | ESP32-C3 |
+| LVGL (from `dependencies.lock`) | 9.3.0 |
+| esp_lvgl_port | 2.9.0 |
+| esp-lcd-ili9486 | 2.0.0 |
+| esp_lcd_touch_xpt2046 | 1.0.6 (esp_lcd_touch 1.2.1) |
+| Result | Home screen, labels, bar animation, both images, button click and long press correct. Orientation and colours correct with driver 2.0.0 |
+
+The committed `dependencies.lock` was resolved with ESP-IDF 5.5.2. Building
+with 6.0.3 rewrites only its `idf` entry. The ESP32 defaults are kept but
+were not checked on hardware in this round.
