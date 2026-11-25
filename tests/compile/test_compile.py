@@ -12,11 +12,13 @@ Environment:
                               turns the skip into a failure.
   FIGMA2LVGL_CC               "gcc" (default: gcc/g++) or "msvc" (cl.exe).
 
-Known bugs: KNOWN_BUGS lists the v0.4.5 bugs that make some cases fail. A
-case listed there passes only if compilation fails and every error is
-explained by one of its listed bugs (and each listed bug shows up). Any
-other error, such as a missing header, fails the test. v0.4.6 PR 4 fixes
-B1 and B2 and empties KNOWN_BUGS.
+Known bugs: KNOWN_BUGS lists the v0.4.5 bugs that break some generated
+files. Such a file passes only if each listed bug shows up in the compiler
+output, as an error or as a warning, and every error is explained by a
+listed bug. Any other error, such as a missing header, fails the test. A
+bug may show as a warning with one compiler and an error with another:
+MSVC only warns about B2, gcc rejects it. v0.4.6 PR 4 fixes B1 and B2 and
+empties KNOWN_BUGS.
 """
 
 import os
@@ -48,6 +50,7 @@ CASES = {
 class Diagnostic:
     file: str
     line: int
+    severity: str  # "error" or "warning"
     message: str
 
 
@@ -58,8 +61,9 @@ def _b1(d: Diagnostic) -> bool:
 
 def _b2(d: Diagnostic) -> bool:
     # Empty style emitted as { .text = {0}, .box = {0} }, out of declaration
-    # order; C++ requires declaration order. g++ reports it at the end of the
-    # initializer, so match on the message.
+    # order; C++ requires declaration order. g++ rejects it (reported at the
+    # end of the initializer, so match on the message); MSVC warns
+    # "designator appearing out of declaration order" and compiles.
     return "ui_style_t" in d.message and "order" in d.message.lower()
 
 
@@ -162,12 +166,14 @@ def _command(cc: str, lang: str, src: Path, ui_src: Path, lvgl: Path):
     return cmd + [str(src)]
 
 
-_GCC_ERROR = re.compile(r"^(?P<file>.*?):(?P<line>\d+):(?:\d+:)? (?:fatal )?error: (?P<msg>.*)$")
-_MSVC_ERROR = re.compile(r"^(?P<file>.*?)\((?P<line>\d+)(?:,\d+)?\)\s*: (?:fatal )?error (?P<code>C\d+): (?P<msg>.*)$")
+_GCC_DIAG = re.compile(
+    r"^(?P<file>.*?):(?P<line>\d+):(?:\d+:)? (?:fatal )?(?P<sev>error|warning): (?P<msg>.*)$")
+_MSVC_DIAG = re.compile(
+    r"^(?P<file>.*?)\((?P<line>\d+)(?:,\d+)?\)\s*: (?:fatal )?(?P<sev>error|warning) (?P<code>C\d+): (?P<msg>.*)$")
 
 
-def _errors(cc: str, output: str):
-    pattern = _MSVC_ERROR if cc == "msvc" else _GCC_ERROR
+def _diagnostics(cc: str, output: str):
+    pattern = _MSVC_DIAG if cc == "msvc" else _GCC_DIAG
     found = []
     for line in output.splitlines():
         m = pattern.match(line.strip())
@@ -175,7 +181,7 @@ def _errors(cc: str, output: str):
             msg = m.group("msg")
             if cc == "msvc":
                 msg = f"{m.group('code')}: {msg}"
-            found.append(Diagnostic(m.group("file"), int(m.group("line")), msg))
+            found.append(Diagnostic(m.group("file"), int(m.group("line")), m.group("sev"), msg))
     return found
 
 
@@ -208,22 +214,22 @@ def test_generated_output_compiles(generated, case, lang):
             assert result.returncode == 0, f"{where} failed to compile:\n{output}"
             continue
 
-        # A known bug must still make this unit fail, for its own reason only.
-        assert result.returncode != 0, (
-            f"{where} compiled, but it should still fail on "
-            f"{', '.join(expected)}. If PR 4 fixed it, remove it from KNOWN_BUGS."
+        # Each known bug must still show (as an error or a warning), and no
+        # error may have another cause.
+        diags = _diagnostics(cc, output)
+        errors = [d for d in diags if d.severity == "error"]
+        missing = [bug for bug, match in expected.items() if not any(match(d) for d in diags)]
+        assert not missing, (
+            f"{where} no longer shows {', '.join(missing)}. "
+            f"If PR 4 fixed it, remove it from KNOWN_BUGS.\n{output}"
         )
-        errors = _errors(cc, output)
-        assert errors, f"{where} failed without a parsable error:\n{output}"
+        if result.returncode != 0:
+            assert errors, f"{where} failed without a parsable error:\n{output}"
         unexplained = [e for e in errors if not any(m(e) for m in expected.values())]
         assert not unexplained, (
             f"{where} has errors not explained by {', '.join(expected)}:\n"
             + "\n".join(f"  {e.file}:{e.line}: {e.message}" for e in unexplained)
             + f"\n\nFull output:\n{output}"
         )
-        for bug, match in expected.items():
-            assert any(match(e) for e in errors), (
-                f"{where}: expected {bug} among the errors, got:\n{output}"
-            )
 
     assert checked, f"no {lang} units generated for {case}"
