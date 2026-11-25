@@ -128,19 +128,16 @@ def emit_screen_struct_type(screen) -> str:
 def emit_node_initializer(node: ParsedNode, indent: str = "    ") -> str:
     """
     Emit the designated initializer block for one node.
-    Always emits .style first: empty → { .text = {0}, .box = {0} },
-    non-empty → populated sub-structs. Then emits widget-specific fields.
+    Always emits .style first (render_style_init: members in declaration
+    order, so the initializer is valid C and C++), then the widget-specific
+    fields.
     """
     lines = []
     wt = node.widget_type
 
-    # Always emit style — empty → explicit member zero-init, non-empty → populated sub-structs.
-    # Note: .style = {0} is valid C99 but fails in C++ mode (ESP-IDF can compile as C++).
-    # Explicit .text = {0}, .box = {0} is unambiguous on all compilers.
-    if node.style.is_empty():
-        lines.append(f"{indent}.style = {{ .text = {{0}}, .box = {{0}} }},")
-    else:
-        lines.append(render_style_init(node.style, indent))
+    # C++ requires designators in declaration order (box, text, effects);
+    # render_style_init emits them that way, for empty styles too (B2).
+    lines.append(render_style_init(node.style, indent))
 
     if wt == WidgetType.LABEL and node.text_content:
         lines.append(f'{indent}.text = "{node.text_content}",')
