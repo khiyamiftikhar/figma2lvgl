@@ -49,8 +49,27 @@ The first build resolves components exactly as `dependencies.lock` says.
 To update a component, change `main/idf_component.yml`, run
 `idf.py update-dependencies`, and commit the new lockfile.
 
-`sdkconfig` and `build/` are per target. When switching targets,
-`idf.py set-target` regenerates them from the defaults files.
+`sdkconfig` and `build/` are per target. To keep several targets side by
+side, give each its own build folder and config (both git-ignored), and
+list the shared defaults file before the target's own.
+
+**ESP32** (PowerShell)
+
+```
+$env:IDF_TARGET="esp32"
+idf.py -B build_esp32 -D SDKCONFIG=sdkconfig.esp32 -D SDKCONFIG_DEFAULTS="sdkconfig.defaults;sdkconfig.defaults.esp32" -D IDF_TARGET=esp32 build
+```
+
+**ESP32-C3** (PowerShell)
+
+```
+$env:IDF_TARGET="esp32c3"
+idf.py -B build_esp32c3 -D SDKCONFIG=sdkconfig.esp32c3 -D SDKCONFIG_DEFAULTS="sdkconfig.defaults;sdkconfig.defaults.esp32c3" -D IDF_TARGET=esp32c3 build
+```
+
+Add `flash monitor` after `build` to flash and watch the log.
+
+```
 
 ## Wiring
 
