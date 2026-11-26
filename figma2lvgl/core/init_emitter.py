@@ -66,7 +66,9 @@ def _emit_node_init(node: ParsedNode, path: str, parent_lv: str) -> str:
                 cb_suffix = lvgl_event.replace("LV_EVENT_", "").lower()
                 events.append((lvgl_event, cb_suffix))
 
-        screen_snake = path.split(".")[0].lstrip("s_")
+        # Struct path "s_<screen>.<...>": drop the "s_" prefix only. lstrip
+        # strips characters, so "s_settings" became "ettings" (B1).
+        screen_snake = path.split(".")[0].removeprefix("s_")
         lines += [
             f"    /* {node.id} (button) */",
             f"    {path}.lv_obj = lv_button_create({parent_lv});",

@@ -1,5 +1,11 @@
+"""figma2lvgl command line: Figma XML (FigML) + PNG images -> LVGL 9 C sources.
+
+The steps are described in figma2lvgl-design, docs/design/09_cli_execution_flow.md.
+Steps 1-6 only read inputs. Steps 7-13 write ui_src/ through core/output.py,
+so a failed run never destroys the last good output.
+"""
+
 import sys
-import os
 import shutil
 import subprocess
 import argparse
@@ -11,69 +17,20 @@ from figma2lvgl.core.figma_parser import parse_screen
 from figma2lvgl.core.generator import generate_screen
 from figma2lvgl.core.utils.utils import write_file
 from figma2lvgl.core.config_writer import write_ui_config
+from figma2lvgl.core import output
 from figma2lvgl.tools.image_converter import convert_images
 
 logging.basicConfig(level=logging.INFO, format="%(levelname)s: %(message)s")
 logger = logging.getLogger(__name__)
 
-
-
-
-
-#The image converion code downloaded and used from offical lvgl repo, has header inclusion
-#which falss back to "lvgl/lvgl.h" which causes compile error for esp32. it relaces that
-# block after generation
-#
-def fix_lvgl_includes(priv_src_dir):
-    old_block = '''#if defined(LV_LVGL_H_INCLUDE_SIMPLE)
-#include "lvgl.h"
-#elif defined(LV_LVGL_H_INCLUDE_SYSTEM)
-#include <lvgl.h>
-#elif defined(LV_BUILD_TEST)
-#include "../lvgl.h"
-#else
-#include "lvgl/lvgl.h"
-#endif'''
-
-    new_block = '''#if defined(LV_LVGL_H_INCLUDE_SIMPLE)
-#include "lvgl.h"
-#elif defined(LV_LVGL_H_INCLUDE_SYSTEM)
-#include <lvgl.h>
-#elif defined(LV_BUILD_TEST)
-#include "../lvgl.h"
-#elif defined(ESP_PLATFORM)
-#include "lvgl.h"
-#else
-#include "lvgl/lvgl.h"
-#endif'''
-
-    for c_file in Path(priv_src_dir).glob("*.c"):
-        with open(c_file, "r", encoding="utf-8") as f:
-            content = f.read()
-
-        if old_block in content:
-            content = content.replace(old_block, new_block)
-
-            with open(c_file, "w", encoding="utf-8") as f:
-                f.write(content)
-
-            print(f"  Patched LVGL include block in {c_file.name}")
+# LVGL's image converter, bundled unmodified from LVGL v9.3.0 (see the
+# header of that file for the tag, commit, SHA-256 and licence).
+BUNDLED_LVGL_TOOL = Path(__file__).parent / "tools" / "LVGLImage.py"
+STATIC_SRC = Path(__file__).parent / "static_src"
 
 
 # -------------------------------------------------
-# Clean directory completely and recreate it
-# -------------------------------------------------
-# -------------------------------------------------
-# Clean directory completely and recreate it
-# -------------------------------------------------
-def reset_directory(path):
-    if os.path.exists(path):
-        shutil.rmtree(path)
-    os.makedirs(path, exist_ok=True)
-
-
-# -------------------------------------------------
-# Check if ui_src already has content and ask user
+# Step 9: check if ui_src already has content and ask the user
 # -------------------------------------------------
 def confirm_overwrite(ui_src: Path, auto_yes: bool = False) -> bool:
     """
@@ -83,7 +40,7 @@ def confirm_overwrite(ui_src: Path, auto_yes: bool = False) -> bool:
     if not ui_src.exists():
         return True
 
-    subfolders = ["src", "include", "priv_src", "priv_include"]
+    subfolders = output.MANAGED
     has_content = any(
         (ui_src / sub).is_dir() and any((ui_src / sub).iterdir())
         for sub in subfolders
@@ -100,12 +57,13 @@ def confirm_overwrite(ui_src: Path, auto_yes: bool = False) -> bool:
     print(" WARNING: Output folder already has content")
     print("==========================================")
     print(f"  {ui_src}")
-    print("\n  The following subfolders will be wiped and regenerated:")
+    print("\n  The following subfolders will be regenerated:")
     for sub in subfolders:
         folder = ui_src / sub
         if folder.is_dir():
             count = len(list(folder.iterdir()))
             print(f"    {sub}/  ({count} file(s))")
+    print("  Other files in it are kept.")
     print()
 
     while True:
@@ -117,18 +75,22 @@ def confirm_overwrite(ui_src: Path, auto_yes: bool = False) -> bool:
             return False
         print("  Please enter y or n.")
 
-# -------------------------------------------------
-# Validate required assets exist
-# -------------------------------------------------
-def validate_assets(screens, images_dir):
-    required_assets = set()
-    for screen in screens:
-        required_assets.update(screen.get_required_assets())   # v0.4.0: no registry arg
 
+# -------------------------------------------------
+# Step 5: required assets exist
+# -------------------------------------------------
+def required_assets(screens):
+    names = set()
+    for screen in screens:
+        names.update(screen.get_required_assets())
+    return sorted(names)
+
+
+def validate_assets(screens, images_dir: Path) -> bool:
     missing = [
-        os.path.join(images_dir, asset_id + ".png")
-        for asset_id in required_assets
-        if not os.path.exists(os.path.join(images_dir, asset_id + ".png"))
+        images_dir / f"{asset_id}.png"
+        for asset_id in required_assets(screens)
+        if not (images_dir / f"{asset_id}.png").exists()
     ]
 
     if missing:
@@ -145,57 +107,55 @@ def validate_assets(screens, images_dir):
     return True
 
 
-# run_image_converter removed — FIX-8: use convert_images() directly
+# -------------------------------------------------
+# --verify-compile (step 2 checks, step 11 run)
+# -------------------------------------------------
+def check_compile_setup(lvgl_includes):
+    """Return an error message, or None if --verify-compile can run."""
+    if not lvgl_includes:
+        return ("--verify-compile needs --lvgl-include: the LVGL folder holding lvgl.h "
+                "(and the folder holding lv_conf.h, if separate).")
+    for inc in lvgl_includes:
+        if not inc.is_dir():
+            return f"--lvgl-include folder not found: {inc}"
+    if not any((inc / "lvgl.h").is_file() for inc in lvgl_includes):
+        return ("no lvgl.h found in the --lvgl-include folders: "
+                + ", ".join(str(i) for i in lvgl_includes))
+    if shutil.which("gcc") is None:
+        return "--verify-compile needs gcc on PATH."
+    return None
 
 
-def _verify_compile(src_dir: Path, include_dir: Path, priv_inc: Path):
-    """
-    Syntax-check generated C files using gcc -fsyntax-only.
-    Does not link or run — just checks that the C is syntactically valid.
-    Exits with code 1 if any file fails.
-
-    Requires gcc on PATH. A stub lvgl.h is not required for syntax checking
-    since we pass -DLVGL_COMPILE_CHECK to suppress #include resolution.
-    In practice, most LVGL type errors are caught regardless.
-    """
-    import shutil
-    if not shutil.which("gcc"):
-        logger.warning("--verify-compile: gcc not found on PATH, skipping.")
-        return
-
-    c_files = sorted(src_dir.glob("*.c"))
-    if not c_files:
-        logger.warning("--verify-compile: no .c files found in %s", src_dir)
-        return
-
-    cmd = [
-        "gcc", "-fsyntax-only",
-        f"-I{include_dir}",
-        f"-I{priv_inc}",
-        "-DLVGL_COMPILE_CHECK",
-    ] + [str(f) for f in c_files]
-
-    logger.debug("Compile check: %s", " ".join(cmd))
-    result = subprocess.run(cmd, capture_output=True, text=True)
-
-    if result.returncode != 0:
-        logger.error("Compile check FAILED:\n%s", result.stderr)
-        sys.exit(1)
-
+def verify_compile(ui_src: Path, lvgl_includes) -> None:
+    """Syntax-check every generated .c against the real LVGL headers.
+    Raises output.OutputError on the first failure."""
+    c_files = sorted((ui_src / "src").glob("*.c")) + sorted((ui_src / "priv_src").glob("*.c"))
+    base = [
+        "gcc", "-std=c99", "-fsyntax-only",
+        "-DLV_CONF_INCLUDE_SIMPLE", "-DLV_LVGL_H_INCLUDE_SIMPLE",
+        f"-I{ui_src / 'include'}", f"-I{ui_src / 'priv_include'}",
+    ] + [f"-I{inc}" for inc in lvgl_includes]
+    for c_file in c_files:
+        result = subprocess.run(base + [str(c_file)], capture_output=True, text=True)
+        if result.returncode != 0:
+            raise output.OutputError(
+                f"compile check failed for {c_file.name}:\n{result.stderr}")
     logger.info("Compile check passed (%d file(s)).", len(c_files))
+
+
 # -------------------------------------------------
 # Argument parsing
 # -------------------------------------------------
-def parse_args():
+def parse_args(argv=None):
     parser = argparse.ArgumentParser(
         description="LVGL UI Generator — converts Figma XML + images to C/H source files.",
         formatter_class=argparse.RawTextHelpFormatter,
         epilog=(
             "Examples:\n"
-            "  Basic:      figma2lvgl -x layout.xml\n"
-            "  Full:       figma2lvgl -x layout.xml -i ./assets -d ./output\n"
-            "  CI:         figma2lvgl -x layout.xml --yes --lvgl-tool ./tools/LVGLImage.py\n"
-            "  Air-gapped: figma2lvgl -x layout.xml -y --lvgl-tool /ci/tools/LVGLImage.py\n"
+            "  Basic:   figma2lvgl -x layout.xml\n"
+            "  Full:    figma2lvgl -x layout.xml -i ./assets -d ./output\n"
+            "  CI:      figma2lvgl -x layout.xml --yes\n"
+            "  Checked: figma2lvgl -x layout.xml -y --verify-compile --lvgl-include ../lvgl\n"
         )
     )
 
@@ -217,18 +177,14 @@ def parse_args():
     parser.add_argument(
         "-y", "--yes",
         action="store_true", default=False,
-        help=(
-            "Skip all interactive prompts.\n"
-            "Assumes yes to overwrite and auto-downloads LVGLImage.py if not cached.\n"
-            "For air-gapped CI use --lvgl-tool instead of relying on download."
-        )
+        help="Skip the overwrite prompt."
     )
     parser.add_argument(
         "--lvgl-tool",
         metavar="PATH", default=None, type=Path,
         help=(
-            "Path to LVGLImage.py. Skips cache lookup and download prompt.\n"
-            "Use in CI to pin the tool version or in air-gapped environments."
+            "Path to a different LVGLImage.py, for example one matching a newer LVGL.\n"
+            "Default: the copy bundled with figma2lvgl (from LVGL v9.3.0)."
         )
     )
     parser.add_argument(
@@ -259,91 +215,92 @@ def parse_args():
         "--verify-compile",
         action="store_true", default=False,
         help=(
-            "After generation, syntax-check generated C files using gcc.\n"
-            "Requires gcc on PATH. Checks syntax only — does not link or run.\n"
-            "Useful for catching template or substitution bugs early."
+            "Syntax-check the generated C with gcc against real LVGL headers\n"
+            "before the output is replaced. Needs --lvgl-include and gcc.\n"
+            "A failed check keeps the previous output."
+        )
+    )
+    parser.add_argument(
+        "--lvgl-include",
+        metavar="PATH", type=Path, action="append", default=[],
+        help=(
+            "Include folder for --verify-compile: the LVGL folder holding lvgl.h,\n"
+            "and the folder holding lv_conf.h if separate. Repeat for each folder."
         )
     )
 
-    return parser.parse_args()
+    return parser.parse_args(argv)
+
 
 # -------------------------------------------------
-# Copy static files into priv_include
+# Step 10: everything that goes into the new ui_src/
 # -------------------------------------------------
-def copy_static_files(priv_src: Path, priv_inc: Path) -> bool:
-    static_src = Path(__file__).parent / "static_src"
+def build_output(tree: output.OutputTree, screens, images_dir: Path,
+                 lvgl_tool: Path, color_format: str) -> None:
+    # 1. Images (LVGLImage.py runs as a separate process; its files are
+    #    recorded by listing the folders it wrote to).
+    priv_src = tree.dir("priv_src")
+    priv_inc = tree.dir("priv_include")
+    if not convert_images(images_dir, priv_src, priv_inc, lvgl_tool,
+                          color_format=color_format):
+        raise output.OutputError("image conversion failed (see the error above).")
+    tree.record_tree("priv_src")
+    tree.record_tree("priv_include")
 
-    if not static_src.is_dir():
-        logger.warning("static_src/ not found at %s, skipping.", static_src)
-        return True
+    # 2. Static files.
+    for header in sorted(STATIC_SRC.glob("*.h")):
+        shutil.copy2(header, tree.path(f"priv_include/{header.name}"))
+    for source in sorted(STATIC_SRC.glob("*.c")):
+        shutil.copy2(source, tree.path(f"priv_src/{source.name}"))
+    logger.info("Copied static files.")
 
-    for header in static_src.glob("*.h"):
-        shutil.copy2(str(header), str(priv_inc / header.name))
-        logger.info("Copied %s -> priv_include/", header.name)
+    # 3. ui_config.h
+    config = tree.path("priv_include/ui_config.h")
+    largest = write_ui_config(screens, config.parent)
+    logger.info("ui_config.h written (largest screen: %s)", largest)
 
-    for source in static_src.glob("*.c"):
-        shutil.copy2(str(source), str(priv_src / source.name))
-        logger.info("Copied %s -> priv_src/", source.name)
+    # 4. Screens.
+    logger.info("Generating UI files...")
+    for screen in screens:
+        c_fname, h_fname, h_text, c_text = generate_screen(screen)
+        write_file(tree.path(f"include/{h_fname}"), h_text)
+        write_file(tree.path(f"src/{c_fname}"), c_text)
+        logger.info("  %s  %s", c_fname, h_fname)
 
-    return True
 
-#-- Dependencies
-def find_or_download_lvgl_tool(
-    auto_yes: bool = False,
-    tool_override: Path = None,
-) -> Path:
-    """
-    Resolve LVGLImage.py path.
-    --lvgl-tool bypasses cache and download entirely (best for CI).
-    --yes auto-confirms the download prompt.
-    """
-    if tool_override is not None:
-        if not tool_override.is_file():
-            logger.error("--lvgl-tool path not found: %s", tool_override)
-            return None
-        logger.info("Using LVGLImage.py from --lvgl-tool: %s", tool_override)
-        return tool_override
+# -------------------------------------------------
+# Step 11: what the new ui_src/ must contain
+# -------------------------------------------------
+def validate_output(tree: output.OutputTree, screens, assets) -> None:
+    expected = [
+        "priv_include/ui_config.h", "priv_include/ui_defs.h",
+        "priv_include/ui_style.h", "priv_include/assets.h",
+        "priv_src/ui_style.c",
+    ]
+    for screen in screens:
+        c_fname, h_fname, _, _ = generate_screen(screen)
+        expected += [f"src/{c_fname}", f"include/{h_fname}"]
+    expected += [f"priv_src/{name}.c" for name in assets]
+    tree.require(expected)
 
-    import platformdirs
-    cache_dir = Path(platformdirs.user_cache_dir("figma2lvgl"))
-    cached = cache_dir / "LVGLImage.py"
+    declared = (tree.root / "priv_include" / "assets.h").read_text(encoding="utf-8")
+    undeclared = [name for name in assets if f"LV_IMG_DECLARE({name});" not in declared]
+    if undeclared:
+        raise output.OutputError(
+            "images used by the design are not declared in assets.h: " + ", ".join(undeclared))
 
-    if cached.is_file():
-        return cached
 
-    print("\n  figma2lvgl requires LVGLImage.py from the LVGL project (MIT licensed).")
-    print("  Source: https://github.com/lvgl/lvgl/blob/master/scripts/LVGLImage.py")
-    print()
-
-    if auto_yes:
-        answer = "y"
-        logger.info("--yes flag set: auto-downloading LVGLImage.py")
-    else:
-        answer = input("  Download and cache it now? [y/n]: ").strip().lower()
-
-    if answer not in ("y", "yes"):
-        print("  Aborted. Use --lvgl-tool <path> to provide it manually.")
-        return None
-
-    import urllib.request
-    url = "https://raw.githubusercontent.com/lvgl/lvgl/master/scripts/LVGLImage.py"
-    cache_dir.mkdir(parents=True, exist_ok=True)
-    print("  Downloading...")
-    urllib.request.urlretrieve(url, cached)
-    logger.info("Saved to %s", cached)
-    return cached
-
-#############
 # -------------------------------------------------
 # Main
 # -------------------------------------------------
-def main():
-    args = parse_args()
+def main(argv=None):
+    args = parse_args(argv)
 
+    # Step 1
     if args.verbose:
         logging.getLogger().setLevel(logging.DEBUG)
 
-    # --- Resolve paths ---
+    # Step 2: resolve paths, check --verify-compile can run.
     xml_path = Path(args.xml).resolve()
     if not xml_path.is_file():
         logger.error("XML file not found: %s", xml_path)
@@ -355,13 +312,24 @@ def main():
         sys.exit(1)
 
     dest_dir = Path(args.dest).resolve() if args.dest else xml_path.parent
+    ui_src = dest_dir / output.UI_SRC
 
-    ui_src      = dest_dir  / "ui_src"
-    src_dir     = ui_src    / "src"
-    include_dir = ui_src    / "include"
-    priv_src    = ui_src    / "priv_src"
-    priv_inc    = ui_src    / "priv_include"
+    lvgl_includes = [p.resolve() for p in args.lvgl_include]
+    if args.verify_compile:
+        problem = check_compile_setup(lvgl_includes)
+        if problem:
+            logger.error(problem)
+            sys.exit(1)
+    elif lvgl_includes:
+        logger.warning("--lvgl-include has no effect without --verify-compile.")
 
+    if args.patch_esp_includes:
+        logger.warning(
+            "--patch-esp-includes is deprecated and has no effect. "
+            "ESP-IDF include patching is now applied automatically."
+        )
+
+    # Step 3
     print("\n==========================================")
     print(" LVGL UI Generator")
     print("==========================================")
@@ -370,7 +338,7 @@ def main():
     print(f"  Output dir : {ui_src}")
     print("==========================================\n")
 
-    # --- Parse XML ---
+    # Step 4: parse XML.
     try:
         tree = ET.parse(xml_path)
         root = tree.getroot()
@@ -390,62 +358,49 @@ def main():
 
     screens = [parse_screen(frame) for frame in frames]
 
-    # --- Validate assets ---
+    # Step 5: assets.
     if not validate_assets(screens, images_dir):
         sys.exit(1)
+    assets = required_assets(screens)
 
-    # --- Resolve LVGLImage.py ---
-    lvgl_tool = find_or_download_lvgl_tool(
-        auto_yes=args.yes,
-        tool_override=args.lvgl_tool,
-    )
-    if lvgl_tool is None:
+    # Step 6: LVGLImage.py
+    if args.lvgl_tool is not None:
+        lvgl_tool = args.lvgl_tool.resolve()
+        if not lvgl_tool.is_file():
+            logger.error("--lvgl-tool path not found: %s", lvgl_tool)
+            sys.exit(1)
+        logger.info("Using LVGLImage.py from --lvgl-tool: %s", lvgl_tool)
+    else:
+        lvgl_tool = BUNDLED_LVGL_TOOL
+
+    # Steps 7-13: under the lock.
+    try:
+        with output.OutputLock(dest_dir):
+            for message in output.recover(dest_dir):          # step 8
+                logger.warning(message)
+
+            if not confirm_overwrite(ui_src, auto_yes=args.yes):   # step 9
+                sys.exit(0)
+
+            def build(t):                                       # step 10
+                build_output(t, screens, images_dir, lvgl_tool, args.color_format)
+
+            def validate(t):                                    # step 11
+                validate_output(t, screens, assets)
+                if args.verify_compile:
+                    verify_compile(t.root, lvgl_includes)
+
+            for warning in output.write_output(dest_dir, build, validate):  # 12-13
+                logger.warning(warning)
+    except output.OutputError as e:
+        logger.error("%s", e)
+        if ui_src.exists():
+            logger.error("The previous output in %s is unchanged.", ui_src)
         sys.exit(1)
 
-    # --- Confirm overwrite ---
-    if not confirm_overwrite(ui_src, auto_yes=args.yes):
-        sys.exit(0)
-
-    # --- Reset output folders ---
-    logger.info("Cleaning output folders...")
-    for folder in [src_dir, include_dir, priv_src, priv_inc]:
-        reset_directory(folder)
-
-    # --- Run image converter ---
-    if not convert_images(
-        images_dir, priv_src, priv_inc, lvgl_tool,
-        color_format=args.color_format,
-    ):
-        sys.exit(1)
-
-    # ESP include patching is now applied automatically in image_converter.py.
-    if args.patch_esp_includes:
-        logger.warning(
-            "--patch-esp-includes is deprecated and has no effect. "
-            "ESP-IDF include patching is now applied automatically."
-        )
-
-    # --- Copy static files ---
-    logger.info("Copying static files...")
-    if not copy_static_files(priv_src, priv_inc):
-        sys.exit(1)
-
-    # --- Generate ui_config.h ---
-    largest = write_ui_config(screens, priv_inc)
-    logger.info("ui_config.h written (largest screen: %s)", largest)
-
-    # --- Generate screen files ---
-    logger.info("Generating UI files...")
-    for screen in screens:
-        c_fname, h_fname, h_text, c_text = generate_screen(screen)
-        write_file(str(include_dir / h_fname), h_text)
-        write_file(str(src_dir     / c_fname), c_text)
-        logger.info("  %s  %s", c_fname, h_fname)
-
-    # --- Optional compile check (--verify-compile) ---
-    if args.verify_compile:
-        _verify_compile(src_dir, include_dir, priv_inc)
-
+    # Step 14
+    src_dir, include_dir = ui_src / "src", ui_src / "include"
+    priv_src, priv_inc = ui_src / "priv_src", ui_src / "priv_include"
     print("\n==========================================")
     print(" PIPELINE COMPLETED SUCCESSFULLY")
     print("==========================================")

@@ -8,17 +8,23 @@ dynamic = ["version"]
 description = "Generate LVGL9 C source files from Figma XML exports"
 readme = "README.md"
 license = { file = "LICENSE" }
-requires-python = ">=3.8"
+requires-python = ">=3.10"
 authors = [
     { name = "Khiyam Iftikhar", email = "khiyamiftikhar@gmail.com" }
 ]
 dependencies = [
-    "platformdirs>=3.0",
+    # Needed by the bundled LVGLImage.py (image conversion).
+    "pypng>=0.20220715.0",
+    "lz4>=4.0",
 ]
 keywords = ["lvgl", "lvgl9", "figma", "codegen", "embedded", "ui", "lvgl-ui"]
 classifiers = [
     "Development Status :: 3 - Alpha",
     "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
     "License :: OSI Approved :: MIT License",
     "Operating System :: OS Independent",
     "Topic :: Software Development :: Code Generators",

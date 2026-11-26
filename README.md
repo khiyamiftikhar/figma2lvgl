@@ -31,9 +31,11 @@ pip install figma2lvgl
 ### Prerequisites
 
 - **Figma** with the **FigML — Figma XML Exporter** plugin installed
-- **Python 3.9+**
-- **LVGLImage.py** — LVGL's official image converter. Auto-downloaded and cached
-  on first use, or supply with `--lvgl-tool` for CI / air-gapped builds.
+- **Python 3.10+**
+- **LVGL 9.3** in your firmware project. Image files are converted with LVGL's
+  own `LVGLImage.py` from LVGL v9.3.0, which ships inside the package (MIT
+  licence, provenance in its header). Nothing is downloaded. For a different
+  LVGL version, pass that version's `LVGLImage.py` with `--lvgl-tool`.
 
 ---
 
@@ -50,15 +52,17 @@ figma2lvgl -x layout.xml
 | `-x` / `--xml` | Path to Figma XML file | **Required** |
 | `-i` / `--images` | Folder containing PNG images | Same directory as XML |
 | `-d` / `--dest` | Destination for generated output | Same directory as XML |
-| `-y` / `--yes` | Skip all prompts; auto-download LVGLImage.py if not cached | off |
-| `--lvgl-tool PATH` | Path to LVGLImage.py — bypasses cache and download (for CI) | auto |
+| `-y` / `--yes` | Skip the overwrite prompt | off |
+| `--lvgl-tool PATH` | Use a different `LVGLImage.py` (for example a newer LVGL's) | bundled (LVGL v9.3.0) |
 | `-f` / `--color-format` | PNG pixel encoding: `RGB565`, `RGB888`, `ARGB8888`, `L8` | `RGB565` |
 | `--patch-esp-includes` | **Deprecated** — ESP-IDF include patching is now applied automatically to all generated image files. Flag kept for backward compatibility, has no effect. | — |
 | `-v` / `--verbose` | Enable debug-level logging | off |
-| `--verify-compile` | Syntax-check generated C files with `gcc` after generation | off |
+| `--verify-compile` | Syntax-check the generated C with `gcc` against real LVGL headers before replacing the output; a failed check keeps the previous output | off |
+| `--lvgl-include PATH` | Include folder for `--verify-compile`: the LVGL folder with `lvgl.h`, and the one with `lv_conf.h` if separate. Repeat as needed | — |
 
-> ¹ Prefer `target_compile_definitions(${COMPONENT_LIB} PUBLIC LV_LVGL_H_INCLUDE_SIMPLE=1)`
-> in your `CMakeLists.txt` instead of this flag.
+> Outside ESP-IDF, define `LV_LVGL_H_INCLUDE_SIMPLE` in your build (for example
+> `target_compile_definitions(... PUBLIC LV_LVGL_H_INCLUDE_SIMPLE=1)`), so the
+> converted image files include `"lvgl.h"` like the rest of `ui_src/`.
 
 ### Examples
 
@@ -69,8 +73,11 @@ figma2lvgl -x layout.xml
 # Full control
 figma2lvgl -x layout.xml -i assets/images -d build/output
 
-# CI pipeline (no prompts, pinned tool, 32-bit display)
-figma2lvgl -x layout.xml --yes --lvgl-tool ./tools/LVGLImage.py -f ARGB8888
+# CI pipeline (no prompts, 32-bit display)
+figma2lvgl -x layout.xml --yes -f ARGB8888
+
+# Check the generated C against your LVGL before replacing the output
+figma2lvgl -x layout.xml --yes --verify-compile --lvgl-include ../lvgl --lvgl-include ./config
 
 # ESP-IDF — no special flags needed, include patching is automatic
 figma2lvgl -x layout.xml
@@ -89,6 +96,13 @@ ui_src/
 ```
 
 Drop `ui_src/` into your project and add the source files to your build system.
+
+**Regenerating is safe.** The new output is generated and checked next to
+`ui_src/` (in `ui_src.staging/`) and only then swapped in, so a failed run
+leaves the previous `ui_src/` exactly as it was. Files you add to `ui_src/`
+yourself (for example a `CMakeLists.txt`) are kept across runs. A
+`ui_src.lock` file next to it stops two runs from writing at once. If a run
+was killed, the next run tidies up and tells you what it did.
 
 > **Build system note:** ensure `priv_include/` is on the include path for
 > **all** source files in `ui_src/`. ESP-IDF and Zephyr handle this automatically.

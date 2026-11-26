@@ -2,6 +2,37 @@
 
 ## [Unreleased]
 
+### Fixed
+- **Screens whose name starts with "s"** (such as `settings`) generated a
+  button callback without the "s" (`ui_ettings_on_…`), so the C did not
+  compile. Callback names now keep the full screen name. (B1)
+- **C++:** an empty style was emitted as `{ .text = {0}, .box = {0} }`, out of
+  declaration order, which g++ rejects (MSVC warns). It is now
+  `{ .box = {0}, .text = {0}, .effects = {0} }`. The C++ fix announced in
+  0.4.5 did not cover this. (B2)
+- **Python version:** the package declared Python 3.8+ but needs 3.10. It now
+  requires 3.10. (B3)
+- **Image conversion on a clean install** failed because `pypng` and `lz4`
+  were not dependencies. They are now. (B5)
+- **`LVGLImage.py`** was downloaded from LVGL's `master` branch, unpinned. The
+  package now uses its bundled copy, LVGL v9.3.0's file unmodified, with the
+  tag, commit, SHA-256 and LVGL's MIT licence in its header. Nothing is
+  downloaded; `platformdirs` is no longer a dependency. (B6)
+- **`--verify-compile`** never had LVGL headers, so it could not pass. It now
+  requires `--lvgl-include` and compiles against the real headers. (B7)
+
+### Changed
+- **A failed run no longer destroys the previous output.** figma2lvgl
+  generates into `ui_src.staging/`, validates it (and runs
+  `--verify-compile` there), then swaps it in. Before, the old output was
+  deleted before anything was generated. Files you keep in `ui_src/` are
+  carried over, a `ui_src.lock` file prevents two runs at once, and a run
+  that was killed is tidied up by the next one.
+- `--yes` now only skips the overwrite prompt (there is no download to confirm).
+- Image files now come from LVGL v9.3.0's converter. Outside ESP-IDF, define
+  `LV_LVGL_H_INCLUDE_SIMPLE` so they include `"lvgl.h"` (as in 0.4.5, whose
+  downloaded converter had the same fallback).
+
 ### Changed
 - Repository: removed the stale copy of the v0.4.0 tree under
   `docs/figma2lvgl_v040_fixed/` and its zip. Package code is unchanged.

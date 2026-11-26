@@ -17,8 +17,8 @@ files. Such a file passes only if each listed bug shows up in the compiler
 output, as an error or as a warning, and every error is explained by a
 listed bug. Any other error, such as a missing header, fails the test. A
 bug may show as a warning with one compiler and an error with another:
-MSVC only warns about B2, gcc rejects it. v0.4.6 PR 4 fixes B1 and B2 and
-empties KNOWN_BUGS.
+MSVC only warns about B2, gcc rejects it. B1 and B2 were fixed in v0.4.6, so
+KNOWN_BUGS is empty and every case must compile cleanly.
 """
 
 import os
@@ -35,7 +35,6 @@ ROOT = Path(__file__).resolve().parents[2]
 FIXTURES = ROOT / "tests" / "fixtures"
 LV_CONF_DIR = ROOT / "tests" / "lvgl"
 EXAMPLE_DESIGN = ROOT / "examples" / "espidf" / "ili9486" / "design"
-BUNDLED_LVGL_TOOL = ROOT / "figma2lvgl" / "tools" / "LVGLImage.py"
 
 # name -> (xml, images folder or None)
 CASES = {
@@ -67,13 +66,14 @@ def _b2(d: Diagnostic) -> bool:
     return "ui_style_t" in d.message and "order" in d.message.lower()
 
 
-# bug -> (generated files it breaks as {(case, file, lang)}, matcher)
-KNOWN_BUGS = {
-    "B1": ({("probe_b1", "ui_settings.c", "c"),
-            ("probe_b1", "ui_settings.c", "cxx")}, _b1),
-    "B2": ({("example", "ui_home.c", "cxx"),
-            ("selection", "ui_home_screen.c", "cxx")}, _b2),
-}
+# bug -> (generated files it breaks as {(case, file, lang)}, matcher).
+# Empty since v0.4.6: B1 and B2 are fixed, and probe_b1 now must compile.
+# The matchers above stay as a record of how each bug showed.
+KNOWN_BUGS = {}
+
+# Fixed bugs that must not come back, not even as a warning (MSVC only
+# warns about B2, so a clean exit code alone would miss it).
+REGRESSIONS = {"B1": _b1, "B2": _b2}
 
 
 def _expected_bugs(case: str, src: Path, lang: str):
@@ -119,7 +119,6 @@ def generated(tmp_path_factory):
             cmd = [
                 sys.executable, "-m", "figma2lvgl.main",
                 "-x", str(xml), "-d", str(out), "-y",
-                "--lvgl-tool", str(BUNDLED_LVGL_TOOL),
             ]
             if images is not None:
                 cmd += ["-i", str(images)]
@@ -147,16 +146,19 @@ def _units(ui_src: Path):
 
 
 def _command(cc: str, lang: str, src: Path, ui_src: Path, lvgl: Path):
+    # LV_LVGL_H_INCLUDE_SIMPLE as the README tells users to set: image files
+    # from LVGLImage.py otherwise fall back to "lvgl/lvgl.h" (unless
+    # ESP_PLATFORM), while every other generated file includes "lvgl.h".
     includes = [LV_CONF_DIR, ui_src / "include", ui_src / "priv_include", lvgl]
     if cc == "gcc":
         if lang == "c":
             cmd = ["gcc", "-std=c99", "-Werror=implicit-function-declaration"]
         else:
             cmd = ["g++", "-x", "c++", "-std=c++20"]
-        cmd += ["-fsyntax-only", "-Wall", "-DLV_CONF_INCLUDE_SIMPLE"]
+        cmd += ["-fsyntax-only", "-Wall", "-DLV_CONF_INCLUDE_SIMPLE", "-DLV_LVGL_H_INCLUDE_SIMPLE"]
         cmd += [f"-I{p}" for p in includes]
     else:
-        cmd = ["cl", "/nologo", "/Zs", "/DLV_CONF_INCLUDE_SIMPLE"]
+        cmd = ["cl", "/nologo", "/Zs", "/DLV_CONF_INCLUDE_SIMPLE", "/DLV_LVGL_H_INCLUDE_SIMPLE"]
         if lang == "c":
             # C4013: function undefined, assuming extern returning int.
             cmd += ["/TC", "/std:c11", "/we4013"]
@@ -212,6 +214,9 @@ def test_generated_output_compiles(generated, case, lang):
 
         if not expected:
             assert result.returncode == 0, f"{where} failed to compile:\n{output}"
+            back = [bug for bug, match in REGRESSIONS.items()
+                    if any(match(d) for d in _diagnostics(cc, output))]
+            assert not back, f"{where}: fixed bug(s) {', '.join(back)} are back:\n{output}"
             continue
 
         # Each known bug must still show (as an error or a warning), and no
