@@ -33,7 +33,7 @@ commit is what sets it.
 | 2 | Test the PR | All CI checks green on the release PR |
 | 3 | Merge | Merge the PR into `main` |
 | 4 | Test the commit | Wait for the full suite to pass on the resulting commit on `main` |
-| 5 | Tag | `git tag -a vX.Y.Z <commit> -m "figma2lvgl X.Y.Z"` then `git push origin vX.Y.Z` |
+| 5 | Tag | `git tag -a vX.Y.Z <commit> -m "figma2lvgl X.Y.Z"` then `git push origin vX.Y.Z`. Only after stage 4 is green: the full suite takes about 10 minutes, and the publish gate refuses a commit whose run hasn't finished |
 | 6 | Gate | The release workflow confirms the commit is on `main` with a green run, then runs the full suite again |
 | 7 | Build and verify | The wheel and sdist are built once, their SHA-256 recorded, and the wheel tested from a clean install |
 | 8 | Publish | Those same files are uploaded to PyPI |
@@ -48,7 +48,9 @@ PyPI. The workflow keeps the name `publish.yml` because PyPI's trusted
 publisher is registered for that file name.
 
 Stage 4 (the push run on `main`) is the "Tests" workflow run for the merge
-commit. The "CI result" job is the single check to require in branch
+commit. If a tag was pushed too early, the gate fails with "No successful
+test.yml run on main": wait for that run to go green, then use "Re-run all
+jobs" on the failed "Publish to PyPI" run. The tag doesn't need to change. The "CI result" job is the single check to require in branch
 protection.
 
 ## Where the old tags are
