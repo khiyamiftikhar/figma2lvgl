@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Two frames with one screen name: an error (doc 10, C4 / N11). -->
+<page name="Page_1" type="PAGE"><children>
+  <Frame name="Home" width="320" height="480" type="FRAME"><children></children></Frame>
+  <Frame name="home" width="320" height="480" type="FRAME"><children></children></Frame>
+</children></page>

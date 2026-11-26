@@ -56,34 +56,22 @@ def _emit_node_init(node: ParsedNode, path: str, parent_lv: str) -> str:
 
     # ── BUTTON ────────────────────────────────────────────────────────────────
     elif wt == WidgetType.BUTTON:
-        from figma2lvgl.core.utils.figma_helpers import EVENT_SUFFIX_MAP, BUTTON_DEFAULT_EVENT
-        # Build list of (event_constant, callback_suffix) pairs.
-        # LV_EVENT_CLICKED is always registered.
-        events = [("LV_EVENT_CLICKED", "clicked")]
-        for mod in node.event_modifiers:
-            lvgl_event = EVENT_SUFFIX_MAP.get(mod)
-            if lvgl_event and lvgl_event != BUTTON_DEFAULT_EVENT:
-                cb_suffix = lvgl_event.replace("LV_EVENT_", "").lower()
-                events.append((lvgl_event, cb_suffix))
-
-        # Struct path "s_<screen>.<...>": drop the "s_" prefix only. lstrip
-        # strips characters, so "s_settings" became "ettings" (B1).
-        screen_snake = path.split(".")[0].removeprefix("s_")
+        from figma2lvgl.core.figma_parser import button_events
         lines += [
             f"    /* {node.id} (button) */",
             f"    {path}.lv_obj = lv_button_create({parent_lv});",
             f"    lv_obj_set_pos({path}.lv_obj, {node.x}, {node.y});",
             f"    lv_obj_set_size({path}.lv_obj, {node.w}, {node.h});",
             f"    {{",
-            f"        lv_obj_t *_lbl = lv_label_create({path}.lv_obj);",
-            f"        lv_label_set_text(_lbl, {path}.label_text);",
-            f"        lv_obj_center(_lbl);",
+            f"        lv_obj_t *lbl = lv_label_create({path}.lv_obj);",
+            f"        lv_label_set_text(lbl, {path}.label_text);",
+            f"        lv_obj_center(lbl);",
             f"        /* text color/font applied to the label directly, not the container */",
-            f"        ui_apply_style(_lbl, UI_CHILD_LABEL, &{path}.style);",
+            f"        ui_apply_style(lbl, UI_CHILD_LABEL, &{path}.style);",
             f"    }}",
         ]
-        for lvgl_event, cb_suffix in events:
-            cb_name = f"ui_{screen_snake}_on_{node.id}_{cb_suffix}"
+        for lvgl_event, event in button_events(node):
+            cb_name = node.symbols[("cb", event)]
             lines += [
                 f"    lv_obj_add_event_cb({path}.lv_obj, {cb_name},",
                 f"                        {lvgl_event}, NULL);",
@@ -94,7 +82,7 @@ def _emit_node_init(node: ParsedNode, path: str, parent_lv: str) -> str:
 
     # ── SLIDER ────────────────────────────────────────────────────────────────
     elif wt == WidgetType.SLIDER:
-        cb_name = _callback_name_for(path)
+        cb_name = node.symbols[("cb", None)]
         lines += [
             f"    /* {node.id} (slider) */",
             f"    {path}.lv_obj = lv_slider_create({parent_lv});",
@@ -143,21 +131,6 @@ def _emit_node_init(node: ParsedNode, path: str, parent_lv: str) -> str:
         ]
 
     return "\n".join(lines)
-
-
-def _callback_name_for(path: str) -> str:
-    """
-    Derive the callback function name from the struct path.
-    "s_home.btn_ok" → "ui_home_on_btn_ok"
-    "s_home.panel_top.brightness_slider" → "ui_home_on_brightness_slider"
-    """
-    parts = path.split(".")
-    # parts[0] = "s_home" → "home"
-    # Use removeprefix (not lstrip) — lstrip strips chars not the string,
-    # so "s_settings".lstrip("s_") incorrectly yields "ettings".
-    screen = parts[0].removeprefix("s_")
-    widget = parts[-1]
-    return f"ui_{screen}_on_{widget}"
 
 
 def emit_init_body(screen: ParsedScreen) -> str:

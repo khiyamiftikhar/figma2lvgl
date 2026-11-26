@@ -79,7 +79,7 @@ static struct {
 // ------------------------------
 // BAR ANIMATION HELPER
 // ------------------------------
-static void _bar_anim_exec_cb(void *obj, int32_t v)
+static void bar_anim_exec_cb(void *obj, int32_t v)
 {
     lv_bar_set_value((lv_obj_t *)obj, v, LV_ANIM_OFF);
 }
@@ -120,13 +120,13 @@ void ui_home_bar_set_value(int value, uint32_t duration_ms)
         lv_bar_set_value(s_home.bar.lv_obj, value, LV_ANIM_OFF);
         return;
     }
-    lv_anim_t _a;
-    lv_anim_init(&_a);
-    lv_anim_set_var(&_a, s_home.bar.lv_obj);
-    lv_anim_set_exec_cb(&_a, _bar_anim_exec_cb);
-    lv_anim_set_values(&_a, lv_bar_get_value(s_home.bar.lv_obj), value);
-    lv_anim_set_time(&_a, duration_ms);
-    lv_anim_start(&_a);
+    lv_anim_t anim;
+    lv_anim_init(&anim);
+    lv_anim_set_var(&anim, s_home.bar.lv_obj);
+    lv_anim_set_exec_cb(&anim, bar_anim_exec_cb);
+    lv_anim_set_values(&anim, lv_bar_get_value(s_home.bar.lv_obj), value);
+    lv_anim_set_time(&anim, duration_ms);
+    lv_anim_start(&anim);
 }
 
 void ui_home_wifi_off_display(void)
@@ -139,8 +139,8 @@ void ui_home_wifi_off_display(void)
 void ui_home_btn_test_set_label(const char *text)
 {
     if (!s_home.btn_test.lv_obj) return;
-    lv_obj_t *_lbl = lv_obj_get_child(s_home.btn_test.lv_obj, 0);
-    if (_lbl) lv_label_set_text(_lbl, text);
+    lv_obj_t *lbl = lv_obj_get_child(s_home.btn_test.lv_obj, 0);
+    if (lbl) lv_label_set_text(lbl, text);
 }
 
 // ------------------------------
@@ -203,11 +203,11 @@ void ui_home_init(void)
     lv_obj_set_pos(s_home.btn_test.lv_obj, 127, 429);
     lv_obj_set_size(s_home.btn_test.lv_obj, 44, 37);
     {
-        lv_obj_t *_lbl = lv_label_create(s_home.btn_test.lv_obj);
-        lv_label_set_text(_lbl, s_home.btn_test.label_text);
-        lv_obj_center(_lbl);
+        lv_obj_t *lbl = lv_label_create(s_home.btn_test.lv_obj);
+        lv_label_set_text(lbl, s_home.btn_test.label_text);
+        lv_obj_center(lbl);
         /* text color/font applied to the label directly, not the container */
-        ui_apply_style(_lbl, UI_CHILD_LABEL, &s_home.btn_test.style);
+        ui_apply_style(lbl, UI_CHILD_LABEL, &s_home.btn_test.style);
     }
     lv_obj_add_event_cb(s_home.btn_test.lv_obj, ui_home_on_btn_test_clicked,
                         LV_EVENT_CLICKED, NULL);

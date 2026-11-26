@@ -6,14 +6,14 @@
 #   2. init_emitter   → flat BFS _init() body
 #   3. setter_emitter → setters, callbacks, prototypes
 
-from figma2lvgl.core.figma_parser import ParsedScreen
+from figma2lvgl.core.figma_parser import ParsedScreen, assign_design_symbols
 from figma2lvgl.core.node_emitter import emit_screen_struct_type
 from figma2lvgl.core.init_emitter import emit_init_body
 from figma2lvgl.core.setter_emitter import collect_setters_and_callbacks
 
 
 _BAR_ANIM_CB = """\
-static void _bar_anim_exec_cb(void *obj, int32_t v)
+static void bar_anim_exec_cb(void *obj, int32_t v)
 {
     lv_bar_set_value((lv_obj_t *)obj, v, LV_ANIM_OFF);
 }"""
@@ -25,13 +25,16 @@ def generate_screen(screen: ParsedScreen) -> tuple[str, str, str, str]:
 
     Returns (c_filename, h_filename, h_text, c_text).
     """
+    if not screen.symbols:
+        # Parsed on its own (parse_screen), not through parse_design.
+        assign_design_symbols([screen])
     snake   = screen.snake
     sv      = f"s_{snake}"
     guard   = f"UI_{snake.upper()}_H"
     h_fname = f"ui_{snake}.h"
     c_fname = f"ui_{snake}.c"
-    init_fn = f"ui_{snake}_init"
-    load_fn = f"ui_{snake}_load"
+    init_fn = screen.symbols["init"]
+    load_fn = screen.symbols["load"]
 
     # ── Pass 1: struct type + initializer ────────────────────────────────────
     struct_block = emit_screen_struct_type(screen)
