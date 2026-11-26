@@ -1,6 +1,6 @@
 # Changelog
 
-## [Unreleased]
+## [0.4.6] - 2026-11-26
 
 ### Fixed
 - **Screens whose name starts with "s"** (such as `settings`) generated a
