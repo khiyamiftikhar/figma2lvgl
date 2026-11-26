@@ -1,0 +1,159 @@
+{
+  "screen": "coords_test",
+  "nodes": [
+    {
+      "name": "Group",
+      "type": "GROUP",
+      "parent": "coords_test",
+      "x": 20,
+      "y": 30,
+      "screen_x": 20,
+      "screen_y": 30,
+      "visible": true,
+      "opacity": 1
+    },
+    {
+      "name": "btn_a",
+      "type": "RECTANGLE",
+      "parent": "Group",
+      "x": 20,
+      "y": 30,
+      "screen_x": 20,
+      "screen_y": 30,
+      "visible": true,
+      "opacity": 1
+    },
+    {
+      "name": "Frame 12",
+      "type": "FRAME",
+      "parent": "coords_test",
+      "x": 160,
+      "y": 20,
+      "screen_x": 160,
+      "screen_y": 20,
+      "visible": true,
+      "opacity": 1
+    },
+    {
+      "name": "btn_b",
+      "type": "RECTANGLE",
+      "parent": "Frame 12",
+      "x": 15,
+      "y": 25,
+      "screen_x": 175,
+      "screen_y": 45,
+      "visible": true,
+      "opacity": 1
+    },
+    {
+      "name": "Group",
+      "type": "GROUP",
+      "parent": "coords_test",
+      "x": 30,
+      "y": 140,
+      "screen_x": 30,
+      "screen_y": 140,
+      "visible": true,
+      "opacity": 1
+    },
+    {
+      "name": "Frame 13",
+      "type": "FRAME",
+      "parent": "Group",
+      "x": 30,
+      "y": 140,
+      "screen_x": 30,
+      "screen_y": 140,
+      "visible": true,
+      "opacity": 1
+    },
+    {
+      "name": "btn_c",
+      "type": "RECTANGLE",
+      "parent": "Frame 13",
+      "x": 10,
+      "y": 20,
+      "screen_x": 40,
+      "screen_y": 160,
+      "visible": true,
+      "opacity": 1
+    },
+    {
+      "name": "Frame 14",
+      "type": "FRAME",
+      "parent": "coords_test",
+      "x": 170,
+      "y": 140,
+      "screen_x": 170,
+      "screen_y": 140,
+      "visible": true,
+      "opacity": 1
+    },
+    {
+      "name": "Group",
+      "type": "GROUP",
+      "parent": "Frame 14",
+      "x": 25,
+      "y": 35,
+      "screen_x": 195,
+      "screen_y": 175,
+      "visible": true,
+      "opacity": 1
+    },
+    {
+      "name": "btn_d",
+      "type": "RECTANGLE",
+      "parent": "Group",
+      "x": 25,
+      "y": 35,
+      "screen_x": 195,
+      "screen_y": 175,
+      "visible": true,
+      "opacity": 1
+    },
+    {
+      "name": "hidden_box",
+      "type": "FRAME",
+      "parent": "coords_test",
+      "x": 30,
+      "y": 270,
+      "screen_x": 30,
+      "screen_y": 270,
+      "visible": false,
+      "opacity": 1
+    },
+    {
+      "name": "btn_e",
+      "type": "RECTANGLE",
+      "parent": "hidden_box",
+      "x": 20,
+      "y": 15,
+      "screen_x": 50,
+      "screen_y": 285,
+      "visible": true,
+      "opacity": 1
+    },
+    {
+      "name": "btn_hidden",
+      "type": "RECTANGLE",
+      "parent": "coords_test",
+      "x": 180,
+      "y": 280,
+      "screen_x": 180,
+      "screen_y": 280,
+      "visible": false,
+      "opacity": 1
+    },
+    {
+      "name": "btn_ghost",
+      "type": "RECTANGLE",
+      "parent": "coords_test",
+      "x": 180,
+      "y": 360,
+      "screen_x": 180,
+      "screen_y": 360,
+      "visible": true,
+      "opacity": 0
+    }
+  ]
+}
