@@ -13,6 +13,19 @@ static const char *TAG = "touch";
 /* Chip-select GPIO: "figma2lvgl example" menu (main/Kconfig.projbuild),
  * set per target in sdkconfig.defaults.<target>. */
 #define TOUCH_PIN_CS    CONFIG_EXAMPLE_TOUCH_PIN_CS
+/* Axis flips: "figma2lvgl example" menu. They describe the module's touch
+ * wiring, not the display. With esp-lcd-ili9486 1.x the display itself was
+ * mirrored in X, which is why this used to be mirror_x = 0. */
+#ifdef CONFIG_EXAMPLE_TOUCH_MIRROR_X
+#define TOUCH_MIRROR_X  1
+#else
+#define TOUCH_MIRROR_X  0
+#endif
+#ifdef CONFIG_EXAMPLE_TOUCH_MIRROR_Y
+#define TOUCH_MIRROR_Y  1
+#else
+#define TOUCH_MIRROR_Y  0
+#endif
 #define TOUCH_H_RES     CONFIG_ILI9486_H_RES
 #define TOUCH_V_RES     CONFIG_ILI9486_V_RES
 
@@ -47,8 +60,8 @@ esp_err_t touch_init(lv_display_t *disp)
         .int_gpio_num = GPIO_NUM_NC,   // polling mode
         .flags = {
             .swap_xy  = 0,
-            .mirror_x = 0,
-            .mirror_y = 1,
+            .mirror_x = TOUCH_MIRROR_X,
+            .mirror_y = TOUCH_MIRROR_Y,
         },
     };
 
