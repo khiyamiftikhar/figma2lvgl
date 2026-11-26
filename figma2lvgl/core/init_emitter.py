@@ -112,10 +112,22 @@ def _emit_node_init(node: ParsedNode, path: str, parent_lv: str) -> str:
         lines += [
             f"    /* {node.id} (panel) */",
             f"    {path}.lv_obj = lv_obj_create({parent_lv});",
+            # Only the layer's own style, no theme background, border,
+            # radius or padding (design doc 10, section 3.5; N20).
+            f"    lv_obj_remove_style_all({path}.lv_obj);",
             f"    lv_obj_set_pos({path}.lv_obj, {node.x}, {node.y});",
             f"    lv_obj_set_size({path}.lv_obj, {node.w}, {node.h});",
             f"    lv_obj_clear_flag({path}.lv_obj, LV_OBJ_FLAG_CLICKABLE);",
             f"    lv_obj_set_scrollbar_mode({path}.lv_obj, LV_SCROLLBAR_MODE_OFF);",
+        ]
+        if not node.clips:
+            # Figma clips only frames with clipsContent; LVGL clips by default (N23).
+            lines.append(f"    lv_obj_add_flag({path}.lv_obj, LV_OBJ_FLAG_OVERFLOW_VISIBLE);")
+        if node.style.box.bg_color is not None and node.style.box.bg_opa is None:
+            # A fill without an opacity is opaque in Figma; the default after
+            # lv_obj_remove_style_all() is transparent.
+            lines.append(f"    lv_obj_set_style_bg_opa({path}.lv_obj, LV_OPA_COVER, LV_PART_MAIN);")
+        lines += [
             f"    ui_apply_style({path}.lv_obj, UI_CHILD_PANEL, &{path}.style);",
         ]
 

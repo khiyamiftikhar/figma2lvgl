@@ -321,11 +321,15 @@ def classify(node) -> NodeInfo:
         rule, wtype = Rule.R13, WidgetType.PANEL
     else:
         rule, wtype = Rule.R14, None
+        if has_visual_properties(node):
+            why = (f"{node.tag} layers aren't drawn as boxes (only Rectangle "
+                   f"and Frame are); export it as an image named icon_* or image_*")
+        else:
+            why = ("no type keyword and nothing visible. Rename it (btn_, "
+                   "slider_, list_, bar, icon, image, panel) or give it a fill "
+                   "or stroke")
         diags.append(Diagnostic(
-            "skipped_leaf", (raw,),
-            f"skipping '{raw}' (tag {node.tag}): no type keyword and nothing "
-            f"visible. Rename it (btn_, slider_, list_, bar, icon, image, "
-            f"panel) or give it a fill or stroke"))
+            "skipped_leaf", (raw,), f"skipping '{raw}' (tag {node.tag}): {why}"))
 
     # Keywords a keyword rule overrode (3.4, "Mixed keywords").
     if rule in _KEYWORD_RULES:

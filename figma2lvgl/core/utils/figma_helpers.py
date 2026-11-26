@@ -32,6 +32,9 @@ BUTTON_DEFAULT_EVENT = "LV_EVENT_CLICKED"
 
 def parse_widget_name(raw_name: str) -> tuple[str, list[str]]:
     """
+    0.4.6 rule, no longer used by the parser (v0.5.0 uses core/naming.py).
+    Kept as the reference for the compatibility tests; removed after v0.5.0.
+
     Split a Figma widget name into (base_name, event_modifier_keys).
 
     base_name  — used for normalize_id() → struct field, API function names
@@ -112,6 +115,9 @@ def _instance_has_vector_children(node) -> bool:
 
 def detect_widget_type(node) -> WidgetType | None:
     """
+    0.4.6 rules, no longer used by the parser (v0.5.0 uses core/naming.py).
+    Kept as the reference for the compatibility tests; removed after v0.5.0.
+
     Determine the WidgetType for a Figma XML node.
 
     Detection priority (in order):
