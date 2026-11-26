@@ -191,6 +191,10 @@ class ParsedNode:
         self.children        = children if children is not None else []
         self.event_modifiers = event_modifiers if event_modifiers is not None else []
         self.clips           = clips
+        self.layer:        str = id          # Figma layer name, for messages
+        self.asset_name:   str | None = None # IMAGE: symbol and PNG stem (4.4)
+        self.component_id: str | None = None # IMAGE: mainComponent id
+        self.symbols:      dict = {}         # external symbols (assign_design_symbols)
 
     @property
     def is_dynamic_text(self) -> bool:
@@ -251,7 +255,7 @@ def _event_key(info) -> list:
     return []
 
 
-def _parse_children(parent_xml, screen_name: str, depth: int, seen_ids: set,
+def _parse_children(parent_xml, screen_name: str, depth: int, counters,
                     frame_origin=(0.0, 0.0), parent_origin=(0.0, 0.0)):
     """Parse the children of one XML node.
 
@@ -259,6 +263,12 @@ def _parse_children(parent_xml, screen_name: str, depth: int, seen_ids: set,
                    the children's x/y are relative to.
     parent_origin: screen position of the generated parent (a PANEL or the
                    screen), which generated positions are relative to.
+    counters:      naming.Counters for this screen (made-up names, 4.2).
+
+    Returned nodes carry candidate member names; the owner of the scope
+    (parse_screen, or the PANEL branch) makes them unique with
+    _claim_members, so children promoted from a dropped container share
+    their new parent's scope.
     """
     children_el = parent_xml.find("children")
     if children_el is None:
@@ -284,7 +294,7 @@ def _parse_children(parent_xml, screen_name: str, depth: int, seen_ids: set,
 
         # Structural containers: dropped, children promoted to the parent
         if wtype == WidgetType.STRUCTURAL:
-            result.extend(_parse_children(child_xml, screen_name, depth, seen_ids,
+            result.extend(_parse_children(child_xml, screen_name, depth, counters,
                                           own_frame, parent_origin))
             continue
 
@@ -307,16 +317,24 @@ def _parse_children(parent_xml, screen_name: str, depth: int, seen_ids: set,
                 screen_name, depth, name, MAX_DEPTH,
             )
 
-        # Struct field name: modifiers removed by naming.classify, then the
-        # 0.4.6 normalization (lowercase first). Duplicate handling and the
-        # C identifier fixes move to naming.py in v0.5.0 PR 3.
+        # Struct member name before sibling uniqueness (doc 10, 4.2-4.3).
         event_mods = _event_key(info)
-        base_name  = info.base.lower() if name else f"node_{len(result)}"
-        node_id    = normalize_id(base_name)
-        if node_id in seen_ids:
-            node_id = f"{node_id}_{depth}"
-            logger.warning("Duplicate id — renamed to '%s'", node_id)
-        seen_ids.add(node_id)
+        node_id, diags = naming.member_candidate(info, counters)
+        for d in diags:
+            logger.warning("In screen '%s': %s", screen_name, d.message)
+
+        # Image: the asset (symbol and PNG) comes from the layer's base name,
+        # not the member name, so repeated layers share one picture (4.4).
+        asset, component_id = None, None
+        if wtype == WidgetType.IMAGE:
+            if normalize_id(info.base.lower()):
+                asset, diags = naming.asset_name(info.base, counters, name)
+                for d in diags:
+                    logger.warning("In screen '%s': %s", screen_name, d.message)
+            else:
+                asset = node_id
+            main = child_xml.find("mainComponent")
+            component_id = main.attrib.get("id") if main is not None else None
 
         # Position relative to the generated parent (doc 10, section 3.5).
         x = int(round(abs_x - parent_origin[0], 6))
@@ -348,8 +366,9 @@ def _parse_children(parent_xml, screen_name: str, depth: int, seen_ids: set,
             pass  # firmware fills at runtime — stop recursion
 
         elif wtype == WidgetType.PANEL:
-            children = _parse_children(child_xml, screen_name, depth + 1, seen_ids,
+            children = _parse_children(child_xml, screen_name, depth + 1, counters,
                                        own_frame, (abs_x, abs_y))
+            _claim_members(children, screen_name)
 
         result.append(ParsedNode(
             widget_type     = wtype,
@@ -369,6 +388,9 @@ def _parse_children(parent_xml, screen_name: str, depth: int, seen_ids: set,
                                and _is_frame_like(child_xml)
                                and child_xml.attrib.get("clipsContent", "").lower() == "true"),
         ))
+        result[-1].layer        = name
+        result[-1].asset_name   = asset
+        result[-1].component_id = component_id
 
     return result
 
@@ -376,10 +398,14 @@ def _parse_children(parent_xml, screen_name: str, depth: int, seen_ids: set,
 # ── ParsedScreen ──────────────────────────────────────────────────────────────
 
 class ParsedScreen:
-    def __init__(self, name: str):
+    def __init__(self, name: str, snake: str | None = None):
         self.name     = name
-        self.snake    = to_snake_case(name)
+        # Screen name (doc 10, 4.2): from parse_design when the whole design
+        # is parsed (validated, unique, reserved stems avoided); otherwise
+        # 0.4.6's to_snake_case.
+        self.snake    = snake if snake is not None else to_snake_case(name)
         self.children: list[ParsedNode] = []
+        self.symbols:  dict = {}         # "init", "load" (assign_design_symbols)
 
     def get_required_assets(self) -> list[str]:
         """Return IDs of all IMAGE nodes (need matching PNG files)."""
@@ -387,7 +413,7 @@ class ParsedScreen:
         def walk(nodes):
             for node in nodes:
                 if node.widget_type == WidgetType.IMAGE:
-                    assets.append(node.id)
+                    assets.append(node.asset_name or node.id)
                 walk(node.children)
         walk(self.children)
         return assets
@@ -412,9 +438,107 @@ class ParsedScreen:
 
 # ── Entry point ───────────────────────────────────────────────────────────────
 
-def parse_screen(frame_node) -> ParsedScreen:
+def _claim_members(nodes, screen_name: str) -> None:
+    """Make the member names of one struct's children unique (doc 10, 4.5)."""
+    names, diags = naming.Allocator().claim_all([(n.id, n.layer) for n in nodes])
+    for node, new in zip(nodes, names):
+        node.id = new
+    for d in diags:
+        logger.warning("In screen '%s': %s", screen_name, d.message)
+
+
+def parse_screen(frame_node, snake: str | None = None) -> ParsedScreen:
     frame_name = frame_node.attrib.get("name", "unnamed")
-    screen     = ParsedScreen(frame_name)
-    seen_ids: set[str] = set()
-    screen.children = _parse_children(frame_node, frame_name, depth=0, seen_ids=seen_ids)
+    screen     = ParsedScreen(frame_name, snake)
+    counters   = naming.Counters()
+    screen.children = _parse_children(frame_node, frame_name, depth=0, counters=counters)
+    _claim_members(screen.children, frame_name)
     return screen
+
+
+# Setter operations per widget type (setter_emitter adds the bodies).
+SETTER_OPS = {
+    WidgetType.LABEL:  ("set_text",),
+    WidgetType.IMAGE:  ("display",),
+    WidgetType.BAR:    ("set_value",),
+    WidgetType.BUTTON: ("set_label",),
+    WidgetType.SLIDER: ("set_value",),
+}
+
+
+def button_events(node) -> list[tuple[str, str]]:
+    """(LVGL event, callback event name) for a button: clicked always, plus
+    the event of an explicit suffix."""
+    events = [("LV_EVENT_CLICKED", "clicked")]
+    for key in node.event_modifiers:
+        lv, name = naming.EVENTS[key]
+        if lv != "LV_EVENT_CLICKED":
+            events.append((lv, name))
+    return events
+
+
+def assign_design_symbols(screens) -> None:
+    """Every external symbol of the design, in one allocator (doc 10, 4.6).
+
+    Stores the names in screen.symbols ("init", "load") and node.symbols
+    (setter op, ("cb", event or None), "get"). The emitters only read them.
+    """
+    specs = []
+    for screen in screens:
+        widgets = []
+        for node, node_path in _nodes_dfs(screen):
+            wt = node.widget_type
+            widgets.append(naming.WidgetSymbols(
+                key=node, path=node_path, layer=node.layer,
+                setter_ops=SETTER_OPS.get(wt, ()),
+                events=tuple(e for _lv, e in button_events(node)) if wt == WidgetType.BUTTON else (),
+                slider_callback=(wt == WidgetType.SLIDER),
+                accessor=(wt == WidgetType.DYNAMIC),
+            ))
+        specs.append(naming.ScreenSymbols(screen.snake, tuple(widgets)))
+    names, diags = naming.assign_symbols(specs, naming.Allocator(code="flattened_collision"))
+    for d in diags:
+        logger.warning("%s", d.message)
+    for screen in screens:
+        screen.symbols = {"init": names[(screen.snake, "init")],
+                          "load": names[(screen.snake, "load")]}
+        for node, _path in _nodes_dfs(screen):
+            node.symbols = {}
+    for key, name in names.items():
+        if isinstance(key[0], ParsedNode):
+            node, rest = key[0], key[1:]
+            node.symbols[rest if len(rest) > 1 else rest[0]] = name
+
+
+def _nodes_dfs(screen):
+    """(node, member path) in traversal order: depth-first, XML order (doc 10)."""
+    def walk(nodes, prefix):
+        for n in nodes:
+            path = prefix + (n.id,)
+            yield n, path
+            yield from walk(n.children, path)
+    return list(walk(screen.children, ()))
+
+
+def parse_design(frames) -> list:
+    """Parse all screens of a design, with the design-wide naming steps:
+    screen names (C4, reserved stems), image identity (4.4) and external
+    symbols (4.6). Raises naming.NamingError for a design the contract
+    rejects."""
+    raws = [f.attrib.get("name", "unnamed") for f in frames]
+    snakes, diags = naming.assign_screen_names(raws)
+    for d in diags:
+        logger.warning("%s", d.message)
+    screens = [parse_screen(f, snake) for f, snake in zip(frames, snakes)]
+
+    uses = []
+    for screen in screens:
+        for node, _path in _nodes_dfs(screen):
+            if node.widget_type == WidgetType.IMAGE:
+                uses.append(naming.ImageUse(node.asset_name, node.layer,
+                                            node.component_id, (node.w, node.h)))
+    for d in naming.check_asset_identity(uses):
+        logger.warning("%s", d.message)
+
+    assign_design_symbols(screens)
+    return screens

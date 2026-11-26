@@ -101,7 +101,7 @@ class TestStructure:
         assert "ui_testscreen_on_btn_ok_clicked" in self.h   # declared in header
 
     def test_bar_anim_helper(self):
-        assert "_bar_anim_exec_cb" in self.c
+        assert "bar_anim_exec_cb" in self.c
 
     def test_init_fn_present(self):
         assert "void ui_testscreen_init(void)" in self.c

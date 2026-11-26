@@ -416,7 +416,7 @@ static struct {
 // ------------------------------
 // BAR ANIMATION HELPER
 // ------------------------------
-static void _bar_anim_exec_cb(void *obj, int32_t v)
+static void bar_anim_exec_cb(void *obj, int32_t v)
 {
     lv_bar_set_value((lv_obj_t *)obj, v, LV_ANIM_OFF);
 }
@@ -452,36 +452,36 @@ void ui_rules_caption_set_text(const char *text)
 void ui_rules_btn_ok_set_label(const char *text)
 {
     if (!s_rules.btn_ok.lv_obj) return;
-    lv_obj_t *_lbl = lv_obj_get_child(s_rules.btn_ok.lv_obj, 0);
-    if (_lbl) lv_label_set_text(_lbl, text);
+    lv_obj_t *lbl = lv_obj_get_child(s_rules.btn_ok.lv_obj, 0);
+    if (lbl) lv_label_set_text(lbl, text);
 }
 
 void ui_rules_btn_next_set_label(const char *text)
 {
     if (!s_rules.btn_next.lv_obj) return;
-    lv_obj_t *_lbl = lv_obj_get_child(s_rules.btn_next.lv_obj, 0);
-    if (_lbl) lv_label_set_text(_lbl, text);
+    lv_obj_t *lbl = lv_obj_get_child(s_rules.btn_next.lv_obj, 0);
+    if (lbl) lv_label_set_text(lbl, text);
 }
 
 void ui_rules_btnback_set_label(const char *text)
 {
     if (!s_rules.btnback.lv_obj) return;
-    lv_obj_t *_lbl = lv_obj_get_child(s_rules.btnback.lv_obj, 0);
-    if (_lbl) lv_label_set_text(_lbl, text);
+    lv_obj_t *lbl = lv_obj_get_child(s_rules.btnback.lv_obj, 0);
+    if (lbl) lv_label_set_text(lbl, text);
 }
 
 void ui_rules_btn_press_set_label(const char *text)
 {
     if (!s_rules.btn_press.lv_obj) return;
-    lv_obj_t *_lbl = lv_obj_get_child(s_rules.btn_press.lv_obj, 0);
-    if (_lbl) lv_label_set_text(_lbl, text);
+    lv_obj_t *lbl = lv_obj_get_child(s_rules.btn_press.lv_obj, 0);
+    if (lbl) lv_label_set_text(lbl, text);
 }
 
 void ui_rules_btn_save_set_label(const char *text)
 {
     if (!s_rules.btn_save.lv_obj) return;
-    lv_obj_t *_lbl = lv_obj_get_child(s_rules.btn_save.lv_obj, 0);
-    if (_lbl) lv_label_set_text(_lbl, text);
+    lv_obj_t *lbl = lv_obj_get_child(s_rules.btn_save.lv_obj, 0);
+    if (lbl) lv_label_set_text(lbl, text);
 }
 
 void ui_rules_slider_vol_set_value(int32_t value)
@@ -526,13 +526,13 @@ void ui_rules_battery_bar_set_value(int value, uint32_t duration_ms)
         lv_bar_set_value(s_rules.battery_bar.lv_obj, value, LV_ANIM_OFF);
         return;
     }
-    lv_anim_t _a;
-    lv_anim_init(&_a);
-    lv_anim_set_var(&_a, s_rules.battery_bar.lv_obj);
-    lv_anim_set_exec_cb(&_a, _bar_anim_exec_cb);
-    lv_anim_set_values(&_a, lv_bar_get_value(s_rules.battery_bar.lv_obj), value);
-    lv_anim_set_time(&_a, duration_ms);
-    lv_anim_start(&_a);
+    lv_anim_t anim;
+    lv_anim_init(&anim);
+    lv_anim_set_var(&anim, s_rules.battery_bar.lv_obj);
+    lv_anim_set_exec_cb(&anim, bar_anim_exec_cb);
+    lv_anim_set_values(&anim, lv_bar_get_value(s_rules.battery_bar.lv_obj), value);
+    lv_anim_set_time(&anim, duration_ms);
+    lv_anim_start(&anim);
 }
 
 void ui_rules_batterybar_set_value(int value, uint32_t duration_ms)
@@ -542,13 +542,13 @@ void ui_rules_batterybar_set_value(int value, uint32_t duration_ms)
         lv_bar_set_value(s_rules.batterybar.lv_obj, value, LV_ANIM_OFF);
         return;
     }
-    lv_anim_t _a;
-    lv_anim_init(&_a);
-    lv_anim_set_var(&_a, s_rules.batterybar.lv_obj);
-    lv_anim_set_exec_cb(&_a, _bar_anim_exec_cb);
-    lv_anim_set_values(&_a, lv_bar_get_value(s_rules.batterybar.lv_obj), value);
-    lv_anim_set_time(&_a, duration_ms);
-    lv_anim_start(&_a);
+    lv_anim_t anim;
+    lv_anim_init(&anim);
+    lv_anim_set_var(&anim, s_rules.batterybar.lv_obj);
+    lv_anim_set_exec_cb(&anim, bar_anim_exec_cb);
+    lv_anim_set_values(&anim, lv_bar_get_value(s_rules.batterybar.lv_obj), value);
+    lv_anim_set_time(&anim, duration_ms);
+    lv_anim_start(&anim);
 }
 
 void ui_rules_icon_wifi_display(void)
@@ -568,22 +568,22 @@ void ui_rules_wifi_off_display(void)
 void ui_rules_btn_inner_set_label(const char *text)
 {
     if (!s_rules.btn_inner.lv_obj) return;
-    lv_obj_t *_lbl = lv_obj_get_child(s_rules.btn_inner.lv_obj, 0);
-    if (_lbl) lv_label_set_text(_lbl, text);
+    lv_obj_t *lbl = lv_obj_get_child(s_rules.btn_inner.lv_obj, 0);
+    if (lbl) lv_label_set_text(lbl, text);
 }
 
 void ui_rules_btn_slider_set_label(const char *text)
 {
     if (!s_rules.btn_slider.lv_obj) return;
-    lv_obj_t *_lbl = lv_obj_get_child(s_rules.btn_slider.lv_obj, 0);
-    if (_lbl) lv_label_set_text(_lbl, text);
+    lv_obj_t *lbl = lv_obj_get_child(s_rules.btn_slider.lv_obj, 0);
+    if (lbl) lv_label_set_text(lbl, text);
 }
 
 void ui_rules_button_icon_set_label(const char *text)
 {
     if (!s_rules.button_icon.lv_obj) return;
-    lv_obj_t *_lbl = lv_obj_get_child(s_rules.button_icon.lv_obj, 0);
-    if (_lbl) lv_label_set_text(_lbl, text);
+    lv_obj_t *lbl = lv_obj_get_child(s_rules.button_icon.lv_obj, 0);
+    if (lbl) lv_label_set_text(lbl, text);
 }
 
 void ui_rules_bar_volume_slider_set_value(int32_t value)
@@ -599,13 +599,13 @@ void ui_rules_volume_slider_bar_set_value(int value, uint32_t duration_ms)
         lv_bar_set_value(s_rules.volume_slider_bar.lv_obj, value, LV_ANIM_OFF);
         return;
     }
-    lv_anim_t _a;
-    lv_anim_init(&_a);
-    lv_anim_set_var(&_a, s_rules.volume_slider_bar.lv_obj);
-    lv_anim_set_exec_cb(&_a, _bar_anim_exec_cb);
-    lv_anim_set_values(&_a, lv_bar_get_value(s_rules.volume_slider_bar.lv_obj), value);
-    lv_anim_set_time(&_a, duration_ms);
-    lv_anim_start(&_a);
+    lv_anim_t anim;
+    lv_anim_init(&anim);
+    lv_anim_set_var(&anim, s_rules.volume_slider_bar.lv_obj);
+    lv_anim_set_exec_cb(&anim, bar_anim_exec_cb);
+    lv_anim_set_values(&anim, lv_bar_get_value(s_rules.volume_slider_bar.lv_obj), value);
+    lv_anim_set_time(&anim, duration_ms);
+    lv_anim_start(&anim);
 }
 
 lv_obj_t *ui_rules_get_list_icon(void)
@@ -625,13 +625,13 @@ void ui_rules_bar_icon_set_value(int value, uint32_t duration_ms)
         lv_bar_set_value(s_rules.bar_icon.lv_obj, value, LV_ANIM_OFF);
         return;
     }
-    lv_anim_t _a;
-    lv_anim_init(&_a);
-    lv_anim_set_var(&_a, s_rules.bar_icon.lv_obj);
-    lv_anim_set_exec_cb(&_a, _bar_anim_exec_cb);
-    lv_anim_set_values(&_a, lv_bar_get_value(s_rules.bar_icon.lv_obj), value);
-    lv_anim_set_time(&_a, duration_ms);
-    lv_anim_start(&_a);
+    lv_anim_t anim;
+    lv_anim_init(&anim);
+    lv_anim_set_var(&anim, s_rules.bar_icon.lv_obj);
+    lv_anim_set_exec_cb(&anim, bar_anim_exec_cb);
+    lv_anim_set_values(&anim, lv_bar_get_value(s_rules.bar_icon.lv_obj), value);
+    lv_anim_set_time(&anim, duration_ms);
+    lv_anim_start(&anim);
 }
 
 void ui_rules_icon_bar_set_value(int value, uint32_t duration_ms)
@@ -641,13 +641,13 @@ void ui_rules_icon_bar_set_value(int value, uint32_t duration_ms)
         lv_bar_set_value(s_rules.icon_bar.lv_obj, value, LV_ANIM_OFF);
         return;
     }
-    lv_anim_t _a;
-    lv_anim_init(&_a);
-    lv_anim_set_var(&_a, s_rules.icon_bar.lv_obj);
-    lv_anim_set_exec_cb(&_a, _bar_anim_exec_cb);
-    lv_anim_set_values(&_a, lv_bar_get_value(s_rules.icon_bar.lv_obj), value);
-    lv_anim_set_time(&_a, duration_ms);
-    lv_anim_start(&_a);
+    lv_anim_t anim;
+    lv_anim_init(&anim);
+    lv_anim_set_var(&anim, s_rules.icon_bar.lv_obj);
+    lv_anim_set_exec_cb(&anim, bar_anim_exec_cb);
+    lv_anim_set_values(&anim, lv_bar_get_value(s_rules.icon_bar.lv_obj), value);
+    lv_anim_set_time(&anim, duration_ms);
+    lv_anim_start(&anim);
 }
 
 void ui_rules_slider_panel_set_value(int32_t value)
@@ -671,8 +671,8 @@ void ui_rules_header_title_set_text(const char *text)
 void ui_rules_box_with_hidden_child_btn_shown_set_label(const char *text)
 {
     if (!s_rules.box_with_hidden_child.btn_shown.lv_obj) return;
-    lv_obj_t *_lbl = lv_obj_get_child(s_rules.box_with_hidden_child.btn_shown.lv_obj, 0);
-    if (_lbl) lv_label_set_text(_lbl, text);
+    lv_obj_t *lbl = lv_obj_get_child(s_rules.box_with_hidden_child.btn_shown.lv_obj, 0);
+    if (lbl) lv_label_set_text(lbl, text);
 }
 
 // ------------------------------
@@ -703,11 +703,11 @@ void ui_rules_init(void)
     lv_obj_set_pos(s_rules.btn_ok.lv_obj, 4, 24);
     lv_obj_set_size(s_rules.btn_ok.lv_obj, 40, 20);
     {
-        lv_obj_t *_lbl = lv_label_create(s_rules.btn_ok.lv_obj);
-        lv_label_set_text(_lbl, s_rules.btn_ok.label_text);
-        lv_obj_center(_lbl);
+        lv_obj_t *lbl = lv_label_create(s_rules.btn_ok.lv_obj);
+        lv_label_set_text(lbl, s_rules.btn_ok.label_text);
+        lv_obj_center(lbl);
         /* text color/font applied to the label directly, not the container */
-        ui_apply_style(_lbl, UI_CHILD_LABEL, &s_rules.btn_ok.style);
+        ui_apply_style(lbl, UI_CHILD_LABEL, &s_rules.btn_ok.style);
     }
     lv_obj_add_event_cb(s_rules.btn_ok.lv_obj, ui_rules_on_btn_ok_clicked,
                         LV_EVENT_CLICKED, NULL);
@@ -718,11 +718,11 @@ void ui_rules_init(void)
     lv_obj_set_pos(s_rules.btn_next.lv_obj, 48, 24);
     lv_obj_set_size(s_rules.btn_next.lv_obj, 40, 20);
     {
-        lv_obj_t *_lbl = lv_label_create(s_rules.btn_next.lv_obj);
-        lv_label_set_text(_lbl, s_rules.btn_next.label_text);
-        lv_obj_center(_lbl);
+        lv_obj_t *lbl = lv_label_create(s_rules.btn_next.lv_obj);
+        lv_label_set_text(lbl, s_rules.btn_next.label_text);
+        lv_obj_center(lbl);
         /* text color/font applied to the label directly, not the container */
-        ui_apply_style(_lbl, UI_CHILD_LABEL, &s_rules.btn_next.style);
+        ui_apply_style(lbl, UI_CHILD_LABEL, &s_rules.btn_next.style);
     }
     lv_obj_add_event_cb(s_rules.btn_next.lv_obj, ui_rules_on_btn_next_clicked,
                         LV_EVENT_CLICKED, NULL);
@@ -733,11 +733,11 @@ void ui_rules_init(void)
     lv_obj_set_pos(s_rules.btnback.lv_obj, 92, 24);
     lv_obj_set_size(s_rules.btnback.lv_obj, 40, 20);
     {
-        lv_obj_t *_lbl = lv_label_create(s_rules.btnback.lv_obj);
-        lv_label_set_text(_lbl, s_rules.btnback.label_text);
-        lv_obj_center(_lbl);
+        lv_obj_t *lbl = lv_label_create(s_rules.btnback.lv_obj);
+        lv_label_set_text(lbl, s_rules.btnback.label_text);
+        lv_obj_center(lbl);
         /* text color/font applied to the label directly, not the container */
-        ui_apply_style(_lbl, UI_CHILD_LABEL, &s_rules.btnback.style);
+        ui_apply_style(lbl, UI_CHILD_LABEL, &s_rules.btnback.style);
     }
     lv_obj_add_event_cb(s_rules.btnback.lv_obj, ui_rules_on_btnback_clicked,
                         LV_EVENT_CLICKED, NULL);
@@ -748,11 +748,11 @@ void ui_rules_init(void)
     lv_obj_set_pos(s_rules.btn_press.lv_obj, 136, 24);
     lv_obj_set_size(s_rules.btn_press.lv_obj, 40, 20);
     {
-        lv_obj_t *_lbl = lv_label_create(s_rules.btn_press.lv_obj);
-        lv_label_set_text(_lbl, s_rules.btn_press.label_text);
-        lv_obj_center(_lbl);
+        lv_obj_t *lbl = lv_label_create(s_rules.btn_press.lv_obj);
+        lv_label_set_text(lbl, s_rules.btn_press.label_text);
+        lv_obj_center(lbl);
         /* text color/font applied to the label directly, not the container */
-        ui_apply_style(_lbl, UI_CHILD_LABEL, &s_rules.btn_press.style);
+        ui_apply_style(lbl, UI_CHILD_LABEL, &s_rules.btn_press.style);
     }
     lv_obj_add_event_cb(s_rules.btn_press.lv_obj, ui_rules_on_btn_press_clicked,
                         LV_EVENT_CLICKED, NULL);
@@ -763,11 +763,11 @@ void ui_rules_init(void)
     lv_obj_set_pos(s_rules.btn_save.lv_obj, 180, 24);
     lv_obj_set_size(s_rules.btn_save.lv_obj, 40, 20);
     {
-        lv_obj_t *_lbl = lv_label_create(s_rules.btn_save.lv_obj);
-        lv_label_set_text(_lbl, s_rules.btn_save.label_text);
-        lv_obj_center(_lbl);
+        lv_obj_t *lbl = lv_label_create(s_rules.btn_save.lv_obj);
+        lv_label_set_text(lbl, s_rules.btn_save.label_text);
+        lv_obj_center(lbl);
         /* text color/font applied to the label directly, not the container */
-        ui_apply_style(_lbl, UI_CHILD_LABEL, &s_rules.btn_save.style);
+        ui_apply_style(lbl, UI_CHILD_LABEL, &s_rules.btn_save.style);
     }
     lv_obj_add_event_cb(s_rules.btn_save.lv_obj, ui_rules_on_btn_save_clicked,
                         LV_EVENT_CLICKED, NULL);
@@ -889,11 +889,11 @@ void ui_rules_init(void)
     lv_obj_set_pos(s_rules.btn_inner.lv_obj, 14, 182);
     lv_obj_set_size(s_rules.btn_inner.lv_obj, 40, 20);
     {
-        lv_obj_t *_lbl = lv_label_create(s_rules.btn_inner.lv_obj);
-        lv_label_set_text(_lbl, s_rules.btn_inner.label_text);
-        lv_obj_center(_lbl);
+        lv_obj_t *lbl = lv_label_create(s_rules.btn_inner.lv_obj);
+        lv_label_set_text(lbl, s_rules.btn_inner.label_text);
+        lv_obj_center(lbl);
         /* text color/font applied to the label directly, not the container */
-        ui_apply_style(_lbl, UI_CHILD_LABEL, &s_rules.btn_inner.style);
+        ui_apply_style(lbl, UI_CHILD_LABEL, &s_rules.btn_inner.style);
     }
     lv_obj_add_event_cb(s_rules.btn_inner.lv_obj, ui_rules_on_btn_inner_clicked,
                         LV_EVENT_CLICKED, NULL);
@@ -915,11 +915,11 @@ void ui_rules_init(void)
     lv_obj_set_pos(s_rules.btn_slider.lv_obj, 4, 216);
     lv_obj_set_size(s_rules.btn_slider.lv_obj, 40, 20);
     {
-        lv_obj_t *_lbl = lv_label_create(s_rules.btn_slider.lv_obj);
-        lv_label_set_text(_lbl, s_rules.btn_slider.label_text);
-        lv_obj_center(_lbl);
+        lv_obj_t *lbl = lv_label_create(s_rules.btn_slider.lv_obj);
+        lv_label_set_text(lbl, s_rules.btn_slider.label_text);
+        lv_obj_center(lbl);
         /* text color/font applied to the label directly, not the container */
-        ui_apply_style(_lbl, UI_CHILD_LABEL, &s_rules.btn_slider.style);
+        ui_apply_style(lbl, UI_CHILD_LABEL, &s_rules.btn_slider.style);
     }
     lv_obj_add_event_cb(s_rules.btn_slider.lv_obj, ui_rules_on_btn_slider_clicked,
                         LV_EVENT_CLICKED, NULL);
@@ -930,11 +930,11 @@ void ui_rules_init(void)
     lv_obj_set_pos(s_rules.button_icon.lv_obj, 48, 216);
     lv_obj_set_size(s_rules.button_icon.lv_obj, 40, 20);
     {
-        lv_obj_t *_lbl = lv_label_create(s_rules.button_icon.lv_obj);
-        lv_label_set_text(_lbl, s_rules.button_icon.label_text);
-        lv_obj_center(_lbl);
+        lv_obj_t *lbl = lv_label_create(s_rules.button_icon.lv_obj);
+        lv_label_set_text(lbl, s_rules.button_icon.label_text);
+        lv_obj_center(lbl);
         /* text color/font applied to the label directly, not the container */
-        ui_apply_style(_lbl, UI_CHILD_LABEL, &s_rules.button_icon.style);
+        ui_apply_style(lbl, UI_CHILD_LABEL, &s_rules.button_icon.style);
     }
     lv_obj_add_event_cb(s_rules.button_icon.lv_obj, ui_rules_on_button_icon_clicked,
                         LV_EVENT_CLICKED, NULL);
@@ -1051,11 +1051,11 @@ void ui_rules_init(void)
     lv_obj_set_pos(s_rules.box_with_hidden_child.btn_shown.lv_obj, 4, 4);
     lv_obj_set_size(s_rules.box_with_hidden_child.btn_shown.lv_obj, 40, 20);
     {
-        lv_obj_t *_lbl = lv_label_create(s_rules.box_with_hidden_child.btn_shown.lv_obj);
-        lv_label_set_text(_lbl, s_rules.box_with_hidden_child.btn_shown.label_text);
-        lv_obj_center(_lbl);
+        lv_obj_t *lbl = lv_label_create(s_rules.box_with_hidden_child.btn_shown.lv_obj);
+        lv_label_set_text(lbl, s_rules.box_with_hidden_child.btn_shown.label_text);
+        lv_obj_center(lbl);
         /* text color/font applied to the label directly, not the container */
-        ui_apply_style(_lbl, UI_CHILD_LABEL, &s_rules.box_with_hidden_child.btn_shown.style);
+        ui_apply_style(lbl, UI_CHILD_LABEL, &s_rules.box_with_hidden_child.btn_shown.style);
     }
     lv_obj_add_event_cb(s_rules.box_with_hidden_child.btn_shown.lv_obj, ui_rules_on_btn_shown_clicked,
                         LV_EVENT_CLICKED, NULL);

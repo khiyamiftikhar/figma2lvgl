@@ -13,7 +13,8 @@ import logging
 import xml.etree.ElementTree as ET
 from pathlib import Path
 
-from figma2lvgl.core.figma_parser import parse_screen
+from figma2lvgl.core.figma_parser import parse_design
+from figma2lvgl.core import naming
 from figma2lvgl.core.naming import NamingError
 from figma2lvgl.core.generator import generate_screen
 from figma2lvgl.core.utils.utils import write_file
@@ -106,6 +107,49 @@ def validate_assets(screens, images_dir: Path) -> bool:
         return False
 
     return True
+
+
+# -------------------------------------------------
+# Step 5b: name spaces (design doc 10, section 5)
+# -------------------------------------------------
+BUNDLED_GUARDS = ("UI_STYLE_H", "UI_DEFS_H")
+
+
+def check_names(screens, images_dir: Path) -> list[str]:
+    """Check the planned output before anything is written: linker
+    symbols, header-guard macros and file paths (case-insensitive) must each
+    be produced once. Returns error messages."""
+    pngs = sorted(p.stem for p in images_dir.glob("*.png"))
+    problems = [
+        f"image file {stem}.png would replace figma2lvgl's own {stem}.c; rename it "
+        f"(a layer named '{stem}' uses image_{stem}.png)"
+        for stem in pngs if stem.casefold() in naming.RESERVED_FILE_STEMS
+    ]
+    if problems:
+        return problems
+
+    m = naming.OutputManifest()
+    for screen in screens:
+        for name in screen.symbols.values():
+            m.symbols.append((name, screen.name))
+        for node, _path, _parent in screen.all_nodes_bfs():
+            for name in node.symbols.values():
+                m.symbols.append((name, node.layer))
+        m.macros.append((f"UI_{screen.snake.upper()}_H", screen.name))
+        m.files.append((f"include/ui_{screen.snake}.h", screen.name))
+        m.files.append((f"src/ui_{screen.snake}.c", screen.name))
+    for stem in pngs:
+        m.symbols.append((stem, f"{stem}.png"))
+        m.files.append((f"priv_src/{stem}.c", f"{stem}.png"))
+    for guard in BUNDLED_GUARDS:
+        m.macros.append((guard, "figma2lvgl"))
+    for f in sorted(STATIC_SRC.glob("*.h")):
+        m.files.append((f"priv_include/{f.name}", "figma2lvgl"))
+    for f in sorted(STATIC_SRC.glob("*.c")):
+        m.files.append((f"priv_src/{f.name}", "figma2lvgl"))
+    m.files += [("priv_include/assets.h", "figma2lvgl"),
+                ("priv_include/ui_config.h", "figma2lvgl")]
+    return [d.message for d in naming.check_namespaces(m)]
 
 
 # -------------------------------------------------
@@ -358,7 +402,7 @@ def main(argv=None):
         sys.exit(1)
 
     try:
-        screens = [parse_screen(frame) for frame in frames]
+        screens = parse_design(frames)
     except NamingError as e:
         logger.error("%s", e)
         sys.exit(1)
@@ -367,6 +411,13 @@ def main(argv=None):
     if not validate_assets(screens, images_dir):
         sys.exit(1)
     assets = required_assets(screens)
+
+    # Step 5b: every generated name once per name space (doc 10, section 5).
+    problems = check_names(screens, images_dir)
+    if problems:
+        for problem in problems:
+            logger.error("%s", problem)
+        sys.exit(1)
 
     # Step 6: LVGLImage.py
     if args.lvgl_tool is not None:

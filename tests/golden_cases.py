@@ -22,6 +22,7 @@ CASES = {
     "coords": (FIXTURES / "coords" / "coords.xml", None),
     "coords2": (FIXTURES / "coords" / "coords2.xml", None),
     "classify": (FIXTURES / "naming_classify.xml", EXAMPLE_DESIGN),
+    "hostile": (FIXTURES / "hostile" / "hostile.xml", FIXTURES / "hostile"),
 }
 
 

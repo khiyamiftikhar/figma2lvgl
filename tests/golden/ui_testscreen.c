@@ -61,7 +61,7 @@ static struct {
 // ------------------------------
 // BAR ANIMATION HELPER
 // ------------------------------
-static void _bar_anim_exec_cb(void *obj, int32_t v)
+static void bar_anim_exec_cb(void *obj, int32_t v)
 {
     lv_bar_set_value((lv_obj_t *)obj, v, LV_ANIM_OFF);
 }
@@ -79,8 +79,8 @@ static void _bar_anim_exec_cb(void *obj, int32_t v)
 void ui_testscreen_btn_ok_set_label(const char *text)
 {
     if (!s_testscreen.btn_ok.lv_obj) return;
-    lv_obj_t *_lbl = lv_obj_get_child(s_testscreen.btn_ok.lv_obj, 0);
-    if (_lbl) lv_label_set_text(_lbl, text);
+    lv_obj_t *lbl = lv_obj_get_child(s_testscreen.btn_ok.lv_obj, 0);
+    if (lbl) lv_label_set_text(lbl, text);
 }
 
 void ui_testscreen_battery_bar_set_value(int value, uint32_t duration_ms)
@@ -90,13 +90,13 @@ void ui_testscreen_battery_bar_set_value(int value, uint32_t duration_ms)
         lv_bar_set_value(s_testscreen.battery_bar.lv_obj, value, LV_ANIM_OFF);
         return;
     }
-    lv_anim_t _a;
-    lv_anim_init(&_a);
-    lv_anim_set_var(&_a, s_testscreen.battery_bar.lv_obj);
-    lv_anim_set_exec_cb(&_a, _bar_anim_exec_cb);
-    lv_anim_set_values(&_a, lv_bar_get_value(s_testscreen.battery_bar.lv_obj), value);
-    lv_anim_set_time(&_a, duration_ms);
-    lv_anim_start(&_a);
+    lv_anim_t anim;
+    lv_anim_init(&anim);
+    lv_anim_set_var(&anim, s_testscreen.battery_bar.lv_obj);
+    lv_anim_set_exec_cb(&anim, bar_anim_exec_cb);
+    lv_anim_set_values(&anim, lv_bar_get_value(s_testscreen.battery_bar.lv_obj), value);
+    lv_anim_set_time(&anim, duration_ms);
+    lv_anim_start(&anim);
 }
 
 void ui_testscreen_panel_top_time_set_text(const char *text)
@@ -136,11 +136,11 @@ void ui_testscreen_init(void)
     lv_obj_set_pos(s_testscreen.btn_ok.lv_obj, 100, 380);
     lv_obj_set_size(s_testscreen.btn_ok.lv_obj, 120, 44);
     {
-        lv_obj_t *_lbl = lv_label_create(s_testscreen.btn_ok.lv_obj);
-        lv_label_set_text(_lbl, s_testscreen.btn_ok.label_text);
-        lv_obj_center(_lbl);
+        lv_obj_t *lbl = lv_label_create(s_testscreen.btn_ok.lv_obj);
+        lv_label_set_text(lbl, s_testscreen.btn_ok.label_text);
+        lv_obj_center(lbl);
         /* text color/font applied to the label directly, not the container */
-        ui_apply_style(_lbl, UI_CHILD_LABEL, &s_testscreen.btn_ok.style);
+        ui_apply_style(lbl, UI_CHILD_LABEL, &s_testscreen.btn_ok.style);
     }
     lv_obj_add_event_cb(s_testscreen.btn_ok.lv_obj, ui_testscreen_on_btn_ok_clicked,
                         LV_EVENT_CLICKED, NULL);

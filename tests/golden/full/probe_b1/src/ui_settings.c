@@ -41,8 +41,8 @@ static struct {
 void ui_settings_btn_ok_set_label(const char *text)
 {
     if (!s_settings.btn_ok.lv_obj) return;
-    lv_obj_t *_lbl = lv_obj_get_child(s_settings.btn_ok.lv_obj, 0);
-    if (_lbl) lv_label_set_text(_lbl, text);
+    lv_obj_t *lbl = lv_obj_get_child(s_settings.btn_ok.lv_obj, 0);
+    if (lbl) lv_label_set_text(lbl, text);
 }
 
 // ------------------------------
@@ -65,11 +65,11 @@ void ui_settings_init(void)
     lv_obj_set_pos(s_settings.btn_ok.lv_obj, 100, 380);
     lv_obj_set_size(s_settings.btn_ok.lv_obj, 120, 44);
     {
-        lv_obj_t *_lbl = lv_label_create(s_settings.btn_ok.lv_obj);
-        lv_label_set_text(_lbl, s_settings.btn_ok.label_text);
-        lv_obj_center(_lbl);
+        lv_obj_t *lbl = lv_label_create(s_settings.btn_ok.lv_obj);
+        lv_label_set_text(lbl, s_settings.btn_ok.label_text);
+        lv_obj_center(lbl);
         /* text color/font applied to the label directly, not the container */
-        ui_apply_style(_lbl, UI_CHILD_LABEL, &s_settings.btn_ok.style);
+        ui_apply_style(lbl, UI_CHILD_LABEL, &s_settings.btn_ok.style);
     }
     lv_obj_add_event_cb(s_settings.btn_ok.lv_obj, ui_settings_on_btn_ok_clicked,
                         LV_EVENT_CLICKED, NULL);

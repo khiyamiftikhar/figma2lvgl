@@ -263,9 +263,9 @@ def test_button_keeps_trailing_numbers():
     ("BatteryBar", "bar", "batterybar", None),           # 0.4.6 form (rev 4)
     ("Brightness Slider", "slider", "brightness_slider", None),
     ("2nd row", "label", "label_2nd_row", "renamed_invalid"),   # N3
-    ("default", "label", "default_", "renamed_invalid"),
-    ("class", "label", "class_", "renamed_invalid"),
-    ("new", "button", "new_", "renamed_invalid"),
+    ("default", "label", "label_default", "renamed_invalid"),
+    ("class", "label", "label_class", "renamed_invalid"),
+    ("new", "button", "button_new", "renamed_invalid"),
     ("lv_logo", "image", "image_lv_logo", "renamed_invalid"),   # C5
     ("LV_Logo", "image", "image_lv_logo", "renamed_invalid"),
     ("★", "label", "label_1", "renamed_invalid"),
@@ -293,7 +293,16 @@ def test_reserved_field_never_used_as_member(field):  # N12
         # C5 applies first: the LVGL prefix gets the type prefix.
         assert (name, codes(diags)) == ("label_" + field, ["renamed_invalid"])
     else:
-        assert (name, codes(diags)) == (field + "_", ["renamed_reserved"])
+        assert (name, codes(diags)) == ("label_" + field, ["renamed_reserved"])
+
+
+def test_fixed_names_never_end_with_underscore():
+    # Member names are joined with "_" into function names; a trailing "_"
+    # would make "__" (found by the hostile fixture, doc 10 rev 5).
+    c = Counters()
+    for base in ["default", "class", "int", "2nd", "lv_x", "★", ""] + sorted(nm.RESERVED_FIELDS):
+        name, _ = nm.to_identifier(base, "label", c)
+        assert not name.endswith("_") and nm.is_valid_identifier(name + "_set_text"), name
 
 
 def test_c1_on_hostile_names():
@@ -383,7 +392,7 @@ def test_screen_reserved_stems(raws, expected):
 
 def test_screen_name_validated():
     names, diags = nm.assign_screen_names(["2nd page", "default"])
-    assert names == ["screen_2nd_page", "default_"]
+    assert names == ["screen_2nd_page", "screen_default"]
     assert codes(diags) == ["renamed_invalid", "renamed_invalid"]
 
 

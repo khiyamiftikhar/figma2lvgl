@@ -424,7 +424,9 @@ def to_identifier(base: str, prefix: str, counters: Counters,
     elif name.startswith("lv_"):
         fixed, why = f"{prefix}_{name}", "LVGL namespace"
     elif name in KEYWORDS:
-        fixed, why = f"{name}_", "C/C++ keyword"
+        # A prefix, not a trailing "_": member names are joined with "_" into
+        # function names, and "default_" + "_set_text" would contain "__" (C1).
+        fixed, why = f"{prefix}_{name}", "C/C++ keyword"
     if why is None:
         return name, []
     return fixed, [Diagnostic(
@@ -438,11 +440,12 @@ def member_candidate(info: NodeInfo, counters: Counters) -> tuple[str, list[Diag
     name, diags = to_identifier(info.base, TYPE_PREFIX[info.widget_type],
                                 counters, info.layer)
     if name in RESERVED_FIELDS:
+        new = f"{TYPE_PREFIX[info.widget_type]}_{name}"
         diags.append(Diagnostic(
             "renamed_reserved", (info.layer,),
             f"layer '{info.layer}': '{name}' is a generated field name; "
-            f"using '{name}_'", old=name, new=name + "_"))
-        name += "_"
+            f"using '{new}'", old=name, new=new))
+        name = new
     return name, diags
 
 
@@ -533,6 +536,10 @@ def assign_screen_names(raws: Sequence[str]) -> tuple[list[str], list[Diagnostic
         seen[name] = raw
     reserved = {stem[3:] for stem in RESERVED_FILE_STEMS if stem.startswith("ui_")}
     names, d = Allocator(reserved, code="renamed_reserved").claim_all(cands)
+    d = [Diagnostic(x.code, x.layers,
+                    f"frame '{x.layers[0]}': screen name '{x.old}' would write "
+                    f"ui_{x.old}.c/.h, which are figma2lvgl's own files; using "
+                    f"'{x.new}'", x.old, x.new) for x in d]
     return names, diags + d
 
 

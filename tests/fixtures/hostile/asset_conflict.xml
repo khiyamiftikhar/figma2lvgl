@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Two instances named icon_wifi of different components: an error (doc 10, 4.4). -->
+<page name="Page_1" type="PAGE"><children>
+  <Frame name="home" width="320" height="480" type="FRAME"><children><icon_wifi name="icon_wifi" x="4" y="4" width="48" height="48" type="INSTANCE"><children><Vector name="v" width="40" height="40" type="VECTOR"/></children><mainComponent id="36:3" /></icon_wifi><icon_wifi name="icon_wifi" x="60" y="4" width="48" height="48" type="INSTANCE"><children><Vector name="v" width="40" height="40" type="VECTOR"/></children><mainComponent id="40:1" /></icon_wifi></children></Frame>
+</children></page>

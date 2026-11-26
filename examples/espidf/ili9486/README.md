@@ -36,6 +36,17 @@ regenerated `ui_src/` builds without editing it. Set the
 `FIGMA2LVGL_UI_SRC` environment variable to build against generated output
 in another folder (CI does this).
 
+## Known issues
+
+Touch isn't calibrated. The XPT2046 component turns raw readings into screen
+coordinates with a fixed linear formula, and resistive panels don't use
+their raw range evenly, so taps are accurate in the middle of the screen and
+drift near the edges (on the reference module, a button at the bottom edge
+reacts only at its lower border). The positions figma2lvgl generates are
+correct; this is the touch input only. Calibrating would mean a
+`process_coordinates` callback in `main/touch.c` with values measured on the
+module.
+
 ## Requirements
 
 ESP-IDF 5.5.2 or later, including 6.x (`esp-lcd-ili9486` 2.0.0 supports
