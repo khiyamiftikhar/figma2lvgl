@@ -4,7 +4,6 @@
 # The parser now recurses into Figma's child hierarchy, correctly
 # representing containers, buttons, sliders, and dynamic lists.
 
-import re
 import logging
 
 from figma2lvgl.core.widget_type import WidgetType
@@ -12,9 +11,7 @@ from figma2lvgl.core.utils.utils import (
     normalize_id, to_snake_case, sanitize_c_string,
     UI_MAX_STRING_LENGTH, int_attr,
 )
-from figma2lvgl.core.utils.figma_helpers import (
-    detect_widget_type, parse_widget_name,
-)
+from figma2lvgl.core import naming
 
 logger = logging.getLogger(__name__)
 
@@ -178,6 +175,7 @@ class ParsedNode:
         depth:          int  = 0,
         children:       list = None,
         event_modifiers: list = None,   # e.g. ["lp"] → long press registered
+        clips:          bool = False,   # PANEL: clip children (Figma clipsContent)
     ):
         self.widget_type     = widget_type
         self.id              = id
@@ -192,21 +190,12 @@ class ParsedNode:
         self.depth           = depth
         self.children        = children if children is not None else []
         self.event_modifiers = event_modifiers if event_modifiers is not None else []
+        self.clips           = clips
 
     @property
     def is_dynamic_text(self) -> bool:
         """True → char[] in RAM + setter. False → const char * in Flash."""
         return self.widget_type not in (WidgetType.BUTTON,)
-
-
-# ── Slider range helper ───────────────────────────────────────────────────────
-
-def _parse_slider_range(name: str):
-    m = re.search(r'_(n?\d+)_(n?\d+)$', name.lower())
-    if m:
-        def val(s): return -int(s[1:]) if s.startswith('n') else int(s)
-        return val(m.group(1)), val(m.group(2))
-    return 0, 100
 
 
 # ── Button label helper ───────────────────────────────────────────────────────
@@ -231,30 +220,76 @@ def _find_button_label(button_xml) -> str:
 
 # ── Recursive children parser ─────────────────────────────────────────────────
 
-def _parse_children(parent_xml, screen_name: str, depth: int, seen_ids: set):
+# Nodes with their own coordinate space (design doc 10, section 3.5). The
+# exporter writes x/y relative to the nearest of these; Groups are
+# transparent. Hand-written XML without a type attribute: the Frame tag.
+_FRAME_LIKE_TYPES = {"FRAME", "COMPONENT", "INSTANCE"}
+
+
+def _is_frame_like(node) -> bool:
+    node_type = node.attrib.get("type")
+    if node_type:
+        return node_type in _FRAME_LIKE_TYPES
+    return node.tag == "Frame"
+
+
+def _float_attr(node, key) -> float:
+    try:
+        return float(node.attrib.get(key) or 0)
+    except ValueError:
+        return 0.0
+
+
+def _event_key(info) -> list:
+    """The 0.4.6 event_modifiers list for a button: [] unless the name had an
+    explicit suffix (then the suffix key, e.g. ["lp"])."""
+    if info.widget_type != WidgetType.BUTTON or info.base == info.layer:
+        return []
+    for key, (_lv, name) in naming.EVENTS.items():
+        if name == info.event:
+            return [key]
+    return []
+
+
+def _parse_children(parent_xml, screen_name: str, depth: int, seen_ids: set,
+                    frame_origin=(0.0, 0.0), parent_origin=(0.0, 0.0)):
+    """Parse the children of one XML node.
+
+    frame_origin:  screen position of the nearest frame-like ancestor, which
+                   the children's x/y are relative to.
+    parent_origin: screen position of the generated parent (a PANEL or the
+                   screen), which generated positions are relative to.
+    """
     children_el = parent_xml.find("children")
     if children_el is None:
         return []
 
     result = []
     for child_xml in children_el:
-        wtype = detect_widget_type(child_xml)
+        info  = naming.classify(child_xml)
+        wtype = info.widget_type
         name  = child_xml.attrib.get("name", "")
+        for d in info.diagnostics:
+            logger.warning("In screen '%s': %s", screen_name, d.message)
 
-        # Structural frames: invisible grouping — drop and promote children
-        if wtype == WidgetType.STRUCTURAL:
-            result.extend(_parse_children(child_xml, screen_name, depth, seen_ids))
+        # Screen position of this node, and of the space its children use.
+        abs_x = frame_origin[0] + _float_attr(child_xml, "x")
+        abs_y = frame_origin[1] + _float_attr(child_xml, "y")
+        own_frame = (abs_x, abs_y) if _is_frame_like(child_xml) else frame_origin
+
+        # Hidden in Figma: not generated, with its whole subtree
+        if info.rule is naming.Rule.HIDDEN:
+            logger.info("In screen '%s': skipping hidden layer '%s'.", screen_name, name)
             continue
 
-        # Unrecognized nodes: skip with warning
+        # Structural containers: dropped, children promoted to the parent
+        if wtype == WidgetType.STRUCTURAL:
+            result.extend(_parse_children(child_xml, screen_name, depth, seen_ids,
+                                          own_frame, parent_origin))
+            continue
+
+        # Skipped nodes (the diagnostic above says why)
         if wtype is None:
-            logger.warning(
-                "In screen '%s': skipping node '%s' (tag='%s'). "
-                "Rename to include a type keyword "
-                "(btn_*, slider_*, list_*, bar, icon, image) "
-                "or give it a fill/border to make it a panel.",
-                screen_name, name, child_xml.tag,
-            )
             continue
 
         # Hard depth limit
@@ -272,26 +307,20 @@ def _parse_children(parent_xml, screen_name: str, depth: int, seen_ids: set):
                 screen_name, depth, name, MAX_DEPTH,
             )
 
-        # Normalize ID — strip behavioral modifiers BEFORE forming the struct field name.
-        # Modifiers (event suffixes, range numbers) are consumed by the generator
-        # and must never leak into C struct names or API function names.
-        raw_name_for_id = name or f"node_{len(result)}"
-        base_name, event_mods = parse_widget_name(raw_name_for_id)
-
-        # Slider range numbers: also strip from base name for a clean ID.
-        # "_0_255" is configuration data, not identity.
-        if wtype == WidgetType.SLIDER:
-            import re as _re
-            base_name = _re.sub(r'_(n?\d+)_(n?\d+)$', '', base_name)
-
-        node_id = normalize_id(base_name)
+        # Struct field name: modifiers removed by naming.classify, then the
+        # 0.4.6 normalization (lowercase first). Duplicate handling and the
+        # C identifier fixes move to naming.py in v0.5.0 PR 3.
+        event_mods = _event_key(info)
+        base_name  = info.base.lower() if name else f"node_{len(result)}"
+        node_id    = normalize_id(base_name)
         if node_id in seen_ids:
             node_id = f"{node_id}_{depth}"
             logger.warning("Duplicate id — renamed to '%s'", node_id)
         seen_ids.add(node_id)
 
-        x = int_attr(child_xml, "x")
-        y = int_attr(child_xml, "y")
+        # Position relative to the generated parent (doc 10, section 3.5).
+        x = int(round(abs_x - parent_origin[0], 6))
+        y = int(round(abs_y - parent_origin[1], 6))
         w = int_attr(child_xml, "width")
         h = int_attr(child_xml, "height")
 
@@ -310,16 +339,17 @@ def _parse_children(parent_xml, screen_name: str, depth: int, seen_ids: set):
             # No recursion — button label is an LVGL internal detail
 
         elif wtype == WidgetType.SLIDER:
-            slider_min, slider_max = _parse_slider_range(name)
+            slider_min, slider_max = info.value_range or (0, 100)
 
         elif wtype == WidgetType.BAR:
-            bar_min, bar_max = _parse_slider_range(name)
+            bar_min, bar_max = info.value_range or (0, 100)
 
         elif wtype == WidgetType.DYNAMIC:
             pass  # firmware fills at runtime — stop recursion
 
         elif wtype == WidgetType.PANEL:
-            children = _parse_children(child_xml, screen_name, depth + 1, seen_ids)
+            children = _parse_children(child_xml, screen_name, depth + 1, seen_ids,
+                                       own_frame, (abs_x, abs_y))
 
         result.append(ParsedNode(
             widget_type     = wtype,
@@ -335,6 +365,9 @@ def _parse_children(parent_xml, screen_name: str, depth: int, seen_ids: set):
             depth           = depth,
             children        = children,
             event_modifiers = event_mods,
+            clips           = (wtype == WidgetType.PANEL
+                               and _is_frame_like(child_xml)
+                               and child_xml.attrib.get("clipsContent", "").lower() == "true"),
         ))
 
     return result

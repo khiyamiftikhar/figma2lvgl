@@ -122,10 +122,13 @@ void ui_testscreen_init(void)
 
     /* panel_top (panel) */
     s_testscreen.panel_top.lv_obj = lv_obj_create(s_testscreen.lv_screen);
+    lv_obj_remove_style_all(s_testscreen.panel_top.lv_obj);
     lv_obj_set_pos(s_testscreen.panel_top.lv_obj, 0, 0);
     lv_obj_set_size(s_testscreen.panel_top.lv_obj, 320, 80);
     lv_obj_clear_flag(s_testscreen.panel_top.lv_obj, LV_OBJ_FLAG_CLICKABLE);
     lv_obj_set_scrollbar_mode(s_testscreen.panel_top.lv_obj, LV_SCROLLBAR_MODE_OFF);
+    lv_obj_add_flag(s_testscreen.panel_top.lv_obj, LV_OBJ_FLAG_OVERFLOW_VISIBLE);
+    lv_obj_set_style_bg_opa(s_testscreen.panel_top.lv_obj, LV_OPA_COVER, LV_PART_MAIN);
     ui_apply_style(s_testscreen.panel_top.lv_obj, UI_CHILD_PANEL, &s_testscreen.panel_top.style);
 
     /* btn_ok (button) */

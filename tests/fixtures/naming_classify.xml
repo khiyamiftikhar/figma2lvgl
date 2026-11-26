@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- One node per classification rule of design doc 10 (R1-R14), the mixed-
+     keyword table (3.4), modifier cases (4.1) and visibility (3.2).
+     Images use the example design's PNGs (icon_wifi, wifi_off).
+     Expected results: tests/test_classify_fixture.py. -->
+<page id="0:1" name="Page_1" type="PAGE">
+  <children>
+    <Frame id="1:1" name="rules" x="0" y="0" width="320" height="480" clipsContent="true" type="FRAME">
+      <children>
+        <Text id="2:1" name="caption" x="4" y="4" width="80" height="16" fontSize="12" characters="Rules" type="TEXT"><fills><fill color="#000000"/></fills></Text>
+        <Rectangle id="2:2" name="btn_ok" x="4" y="24" width="40" height="20" type="RECTANGLE"><fills><fill color="#2196f3"/></fills></Rectangle>
+        <Rectangle id="2:3" name="Btn Next" x="48" y="24" width="40" height="20" type="RECTANGLE"><fills><fill color="#2196f3"/></fills></Rectangle>
+        <Rectangle id="2:4" name="BtnBack" x="92" y="24" width="40" height="20" type="RECTANGLE"><fills><fill color="#2196f3"/></fills></Rectangle>
+        <Rectangle id="2:5" name="btn_press" x="136" y="24" width="40" height="20" type="RECTANGLE"><fills><fill color="#2196f3"/></fills></Rectangle>
+        <Rectangle id="2:6" name="btn_save_lp" x="180" y="24" width="40" height="20" type="RECTANGLE"><fills><fill color="#2196f3"/></fills></Rectangle>
+        <Rectangle id="2:7" name="slider_vol" x="4" y="48" width="100" height="10" type="RECTANGLE"><fills><fill color="#9e9e9e"/></fills></Rectangle>
+        <Rectangle id="2:8" name="volume-slider" x="108" y="48" width="100" height="10" type="RECTANGLE"><fills><fill color="#9e9e9e"/></fills></Rectangle>
+        <Rectangle id="2:9" name="brightness_slider_0_255" x="4" y="62" width="100" height="10" type="RECTANGLE"><fills><fill color="#9e9e9e"/></fills></Rectangle>
+        <Rectangle id="2:10" name="slider_rev_100_0" x="108" y="62" width="100" height="10" type="RECTANGLE"><fills><fill color="#9e9e9e"/></fills></Rectangle>
+        <Rectangle id="2:11" name="slider_flat_5_5" x="212" y="62" width="100" height="10" type="RECTANGLE"><fills><fill color="#9e9e9e"/></fills></Rectangle>
+        <Frame id="2:12" name="list_items" x="4" y="76" width="100" height="40" clipsContent="true" type="FRAME">
+          <children><Rectangle id="2:13" name="row" x="0" y="0" width="100" height="10" type="RECTANGLE"><fills><fill color="#ffffff"/></fills></Rectangle></children>
+        </Frame>
+        <Rectangle id="2:14" name="battery_bar_n10_90" x="108" y="76" width="100" height="10" type="RECTANGLE"><fills><fill color="#4caf50"/></fills></Rectangle>
+        <Rectangle id="2:15" name="BatteryBar" x="108" y="90" width="100" height="10" type="RECTANGLE"><fills><fill color="#4caf50"/></fills></Rectangle>
+        <Rectangle id="2:16" name="icon_wifi" x="212" y="76" width="48" height="48" type="RECTANGLE"/>
+        <Vector id="2:17" name="decoration" x="4" y="120" width="10" height="10" type="VECTOR"><fills><fill color="#000000"/></fills></Vector>
+        <wifi_off id="2:18" name="wifi_off" x="20" y="120" width="48" height="48" type="INSTANCE">
+          <children><Vector id="I2:18;1" name="Icon" x="2" y="2" width="44" height="44" type="VECTOR"><strokes><stroke color="#1e1e1e"/></strokes></Vector></children>
+          <mainComponent id="9:1" />
+        </wifi_off>
+        <card_inst id="2:19" name="card_inst" x="72" y="120" width="60" height="30" type="INSTANCE">
+          <children><Rectangle id="I2:19;1" name="bg" x="0" y="0" width="60" height="30" type="RECTANGLE"><fills><fill color="#eeeeee"/></fills></Rectangle></children>
+        </card_inst>
+        <Frame id="2:20" name="panel_slot" x="136" y="120" width="60" height="30" type="FRAME"/>
+        <Frame id="2:21" name="Header" x="200" y="120" width="100" height="30" clipsContent="true" type="FRAME">
+          <children><Text id="2:22" name="title" x="4" y="4" width="80" height="16" fontSize="12" characters="Head" type="TEXT"><fills><fill color="#ffffff"/></fills></Text></children>
+          <fills><fill color="#3f51b5"/></fills>
+        </Frame>
+        <Frame id="2:23" name="Content" x="4" y="172" width="120" height="40" type="FRAME">
+          <children><Rectangle id="2:24" name="btn_inner" x="10" y="10" width="40" height="20" type="RECTANGLE"><fills><fill color="#2196f3"/></fills></Rectangle></children>
+        </Frame>
+        <Rectangle id="2:25" name="toolbar_bg" x="128" y="172" width="120" height="20" type="RECTANGLE"><fills><fill color="#607d8b"/></fills></Rectangle>
+        <Rectangle id="2:26" name="silicone_pad" x="252" y="172" width="20" height="20" type="RECTANGLE"/>
+        <Ellipse id="2:27" name="dot" x="276" y="172" width="10" height="10" type="ELLIPSE"><fills><fill color="#000000"/></fills></Ellipse>
+        <Rectangle id="2:28" name="btn_slider" x="4" y="216" width="40" height="20" type="RECTANGLE"><fills><fill color="#2196f3"/></fills></Rectangle>
+        <Rectangle id="2:29" name="button_icon" x="48" y="216" width="40" height="20" type="RECTANGLE"><fills><fill color="#2196f3"/></fills></Rectangle>
+        <Rectangle id="2:30" name="bar_volume_slider" x="92" y="216" width="100" height="10" type="RECTANGLE"><fills><fill color="#9e9e9e"/></fills></Rectangle>
+        <Rectangle id="2:31" name="volume_slider_bar" x="196" y="216" width="100" height="10" type="RECTANGLE"><fills><fill color="#4caf50"/></fills></Rectangle>
+        <Frame id="2:32" name="list_icon" x="4" y="240" width="60" height="30" type="FRAME"/>
+        <Frame id="2:33" name="grid_bar" x="68" y="240" width="60" height="30" type="FRAME"/>
+        <Rectangle id="2:34" name="bar_icon" x="132" y="240" width="60" height="10" type="RECTANGLE"><fills><fill color="#4caf50"/></fills></Rectangle>
+        <Rectangle id="2:35" name="icon_bar" x="196" y="240" width="60" height="10" type="RECTANGLE"><fills><fill color="#4caf50"/></fills></Rectangle>
+        <Frame id="2:36" name="panel_btn" x="4" y="274" width="60" height="30" type="FRAME"><fills><fill color="#cccccc"/></fills></Frame>
+        <Rectangle id="2:37" name="slider_panel" x="68" y="274" width="100" height="10" type="RECTANGLE"><fills><fill color="#9e9e9e"/></fills></Rectangle>
+        <Frame id="2:38" name="panel_2_3" x="172" y="274" width="60" height="30" type="FRAME"><fills><fill color="#cccccc"/></fills></Frame>
+        <Text id="2:39" name="time_click" x="4" y="308" width="80" height="16" fontSize="12" characters="12:00" type="TEXT"><fills><fill color="#000000"/></fills></Text>
+        <Rectangle id="2:40" name="btn_hidden" visible="false" x="88" y="308" width="40" height="20" type="RECTANGLE"><fills><fill color="#2196f3"/></fills></Rectangle>
+        <Frame id="2:41" name="box_with_hidden_child" x="132" y="308" width="100" height="40" clipsContent="true" type="FRAME">
+          <children>
+            <Rectangle id="2:42" name="btn_shown" x="4" y="4" width="40" height="20" type="RECTANGLE"><fills><fill color="#2196f3"/></fills></Rectangle>
+            <Rectangle id="2:43" name="btn_gone" visible="false" x="50" y="4" width="40" height="20" type="RECTANGLE"><fills><fill color="#2196f3"/></fills></Rectangle>
+          </children>
+          <fills><fill color="#eeeeee"/></fills>
+        </Frame>
+        <Frame id="2:44" name="ghost_fill" x="236" y="308" width="60" height="30" type="FRAME"><fills><fill visible="false" color="#ff0000"/></fills></Frame>
+        <Frame id="2:45" name="radius_only" x="236" y="342" width="60" height="30" cornerRadius="8" type="FRAME"/>
+      </children>
+      <fills><fill color="#ffffff"/></fills>
+    </Frame>
+  </children>
+</page>

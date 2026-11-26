@@ -14,6 +14,7 @@ import xml.etree.ElementTree as ET
 from pathlib import Path
 
 from figma2lvgl.core.figma_parser import parse_screen
+from figma2lvgl.core.naming import NamingError
 from figma2lvgl.core.generator import generate_screen
 from figma2lvgl.core.utils.utils import write_file
 from figma2lvgl.core.config_writer import write_ui_config
@@ -356,7 +357,11 @@ def main(argv=None):
         logger.error("No <Frame> nodes found in XML.")
         sys.exit(1)
 
-    screens = [parse_screen(frame) for frame in frames]
+    try:
+        screens = [parse_screen(frame) for frame in frames]
+    except NamingError as e:
+        logger.error("%s", e)
+        sys.exit(1)
 
     # Step 5: assets.
     if not validate_assets(screens, images_dir):
