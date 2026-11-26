@@ -12,4 +12,23 @@ menu "figma2lvgl example"
             On ESP32-C3 boards avoid GPIO8 (onboard LED and strapping pin),
             GPIO9 (BOOT strapping pin) and GPIO2 (strapping pin).
 
+    config EXAMPLE_TOUCH_MIRROR_X
+        bool "Mirror touch X"
+        default y
+        help
+            Flip the touch X axis so taps land where they are drawn. Where
+            the XPT2046's origin sits depends on how the module wires its
+            resistive film, not on the display settings. The default fits
+            the common red 3.5" ILI9486 + XPT2046 module with
+            esp-lcd-ili9486 2.x, whose touch origin is at the corner
+            opposite the display's. If a tap on the left of the screen hits
+            a widget on the right, toggle this.
+
+    config EXAMPLE_TOUCH_MIRROR_Y
+        bool "Mirror touch Y"
+        default y
+        help
+            Flip the touch Y axis. As for X: toggle this if a tap near the
+            top hits a widget near the bottom.
+
 endmenu

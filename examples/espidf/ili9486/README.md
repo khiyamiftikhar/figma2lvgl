@@ -24,6 +24,13 @@ target. The touch chip-select is the example's own setting
 (`idf.py menuconfig` → "figma2lvgl example"), since the XPT2046 component
 has none; touch shares the display's SPI host and bus pins.
 
+The same menu has "Mirror touch X" and "Mirror touch Y", both on by default.
+They depend on how the touch module is wired, not on the display: if a tap
+on one side of the screen hits a widget on the other side, toggle the flag
+for that axis. (The defaults are for the common red 3.5" ILI9486 + XPT2046
+module with esp-lcd-ili9486 2.x. Until v0.5.0 the example had X unflipped,
+left over from driver 1.x, where the display itself was mirrored in X.)
+
 `main/CMakeLists.txt` compiles every file figma2lvgl generated, so a
 regenerated `ui_src/` builds without editing it. Set the
 `FIGMA2LVGL_UI_SRC` environment variable to build against generated output
