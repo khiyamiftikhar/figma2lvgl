@@ -41,12 +41,12 @@ def lvgl_dir(session) -> Path:
 
 @nox.session
 def tests(session):
-    session.install("-e", ".", "pytest")
+    session.install("-e", ".", "pytest", "hypothesis")
     session.run("pytest", "-q", "--ignore=tests/compile", *session.posargs)
 
 
 def _compile(session, cc):
-    session.install("-e", ".", "pytest", "pypng", "lz4")
+    session.install("-e", ".", "pytest", "pypng", "lz4", "hypothesis")
     env = {
         "LVGL_DIR": str(lvgl_dir(session)),
         "FIGMA2LVGL_REQUIRE_COMPILE": "1",
