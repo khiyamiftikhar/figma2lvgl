@@ -4,6 +4,7 @@ design repo). Run `nox -l` to list them, `nox -s compile` to run one.
     tests         pytest on the parser and generator (compile tests skipped)
     compile       generated output compiled as C and C++ with gcc/g++
     compile_msvc  the same with cl.exe (run from a VS Developer prompt)
+    runtime       generated designs run under LVGL with sanitizers (gcc, Linux)
     wheel         build the wheel, install it offline, run it with no network
     espidf        build the ESP-IDF example (needs ESP-IDF in the shell)
 
@@ -22,7 +23,7 @@ LVGL_TAG = "v9.3.0"
 LVGL_COMMIT = "c033a98afddd65aaafeebea625382a94020fe4a7"
 EXAMPLE = ROOT / "examples" / "espidf" / "ili9486"
 
-nox.options.sessions = ["tests", "compile", "wheel"]
+nox.options.sessions = ["tests", "compile", "runtime", "wheel"]
 
 
 def lvgl_dir(session) -> Path:
@@ -42,7 +43,7 @@ def lvgl_dir(session) -> Path:
 @nox.session
 def tests(session):
     session.install("-e", ".", "pytest", "hypothesis")
-    session.run("pytest", "-q", "--ignore=tests/compile", *session.posargs)
+    session.run("pytest", "-q", "--ignore=tests/compile", "--ignore=tests/runtime", *session.posargs)
 
 
 def _compile(session, cc):
@@ -63,6 +64,13 @@ def compile(session):
 @nox.session
 def compile_msvc(session):
     _compile(session, "msvc")
+
+
+@nox.session
+def runtime(session):
+    session.install("-e", ".", "pytest", "pypng", "lz4")
+    env = {"LVGL_DIR": str(lvgl_dir(session)), "FIGMA2LVGL_REQUIRE_RUNTIME": "1"}
+    session.run("pytest", "-q", "tests/runtime", *session.posargs, env=env)
 
 
 @nox.session
