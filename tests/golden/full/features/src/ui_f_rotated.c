@@ -26,7 +26,8 @@ static struct {
     },
     .btn_rotated = {
         .style = {
-            .box = { .has_bg = true, .bg = 0x2196F3 }
+            .box = { .has_bg = true, .bg = 0x2196F3 },
+            .text = { .has_color = true, .color = 0xFFFFFF, .has_size = true, .size = 14 }
         },
         .label_text = "Tilted",
     },
@@ -88,8 +89,8 @@ void ui_f_rotated_init(void)
         lv_obj_t *lbl = lv_label_create(s_f_rotated.btn_rotated.lv_obj);
         lv_label_set_text(lbl, s_f_rotated.btn_rotated.label_text);
         lv_obj_center(lbl);
-        /* text color/font applied to the label directly, not the container */
-        ui_apply_style(lbl, UI_CHILD_LABEL, &s_f_rotated.btn_rotated.style);
+        /* the Figma Text layer's colour/font/alignment; not the button's box */
+        ui_apply_text_style(lbl, &s_f_rotated.btn_rotated.style);
     }
     lv_obj_add_event_cb(s_f_rotated.btn_rotated.lv_obj, ui_f_rotated_on_btn_rotated_clicked,
                         LV_EVENT_CLICKED, NULL);

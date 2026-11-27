@@ -29,7 +29,7 @@ static struct {
         .style = {
             .text = { .has_color = true, .color = 0x212121, .has_size = true, .size = 16 }
         },
-        .text = "First line Second line Third",
+        .text = "First line\nSecond line\nThird",
     },
     .wrapped = {
         .style = {
@@ -39,9 +39,9 @@ static struct {
     },
     .centered = {
         .style = {
-            .text = { .has_color = true, .color = 0x212121, .has_size = true, .size = 18 }
+            .text = { .has_color = true, .color = 0x212121, .has_size = true, .size = 18, .has_align = true, .align = LV_TEXT_ALIGN_CENTER }
         },
-        .text = "Centered text",
+        .text = "Centered\ntext",
     },
 };
 
@@ -105,7 +105,7 @@ void ui_f_text_multiline_init(void)
     s_f_text_multiline.wrapped.lv_obj = lv_label_create(s_f_text_multiline.lv_screen);
     lv_obj_set_pos(s_f_text_multiline.wrapped.lv_obj, 10, 100);
     lv_obj_set_width(s_f_text_multiline.wrapped.lv_obj, 180);
-    lv_label_set_long_mode(s_f_text_multiline.wrapped.lv_obj, LV_LABEL_LONG_CLIP);
+    lv_label_set_long_mode(s_f_text_multiline.wrapped.lv_obj, LV_LABEL_LONG_WRAP);
     lv_label_set_text(s_f_text_multiline.wrapped.lv_obj, s_f_text_multiline.wrapped.text);
     ui_apply_style(s_f_text_multiline.wrapped.lv_obj, UI_CHILD_LABEL, &s_f_text_multiline.wrapped.style);
 

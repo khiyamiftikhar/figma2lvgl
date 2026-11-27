@@ -70,7 +70,8 @@ static struct {
     },
     .btn_test = {
         .style = {
-            .box = { .has_bg = true, .bg = 0xFF686B, .has_radius = true, .radius = 20 }
+            .box = { .has_bg = true, .bg = 0xFF686B, .has_radius = true, .radius = 20 },
+            .text = { .has_color = true, .color = 0x3C1414, .has_size = true, .size = 12 }
         },
         .label_text = "Test",
     },
@@ -206,8 +207,8 @@ void ui_home_init(void)
         lv_obj_t *lbl = lv_label_create(s_home.btn_test.lv_obj);
         lv_label_set_text(lbl, s_home.btn_test.label_text);
         lv_obj_center(lbl);
-        /* text color/font applied to the label directly, not the container */
-        ui_apply_style(lbl, UI_CHILD_LABEL, &s_home.btn_test.style);
+        /* the Figma Text layer's colour/font/alignment; not the button's box */
+        ui_apply_text_style(lbl, &s_home.btn_test.style);
     }
     lv_obj_add_event_cb(s_home.btn_test.lv_obj, ui_home_on_btn_test_clicked,
                         LV_EVENT_CLICKED, NULL);

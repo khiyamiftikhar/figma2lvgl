@@ -10,9 +10,9 @@ import shutil
 import subprocess
 import argparse
 import logging
-import xml.etree.ElementTree as ET
 from pathlib import Path
 
+from figma2lvgl.core.xml_input import read_design
 from figma2lvgl.core.figma_parser import parse_design
 from figma2lvgl.core import naming
 from figma2lvgl.core.naming import NamingError
@@ -385,8 +385,7 @@ def main(argv=None):
 
     # Step 4: parse XML.
     try:
-        tree = ET.parse(xml_path)
-        root = tree.getroot()
+        root = read_design(xml_path)   # keeps line breaks in text
     except Exception as e:
         logger.error("Failed to parse XML: %s", e)
         sys.exit(1)

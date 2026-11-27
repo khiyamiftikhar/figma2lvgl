@@ -25,7 +25,8 @@ def _emit_node_init(node: ParsedNode, path: str, parent_lv: str) -> str:
             f"    {path}.lv_obj = lv_label_create({parent_lv});",
             f"    lv_obj_set_pos({path}.lv_obj, {node.x}, {node.y});",
             f"    lv_obj_set_width({path}.lv_obj, {node.w});",
-            f"    lv_label_set_long_mode({path}.lv_obj, LV_LABEL_LONG_CLIP);",
+            f"    lv_label_set_long_mode({path}.lv_obj, "
+            f"{'LV_LABEL_LONG_WRAP' if node.style.text.wrap else 'LV_LABEL_LONG_CLIP'});",
             f"    lv_label_set_text({path}.lv_obj, {path}.text);",
             f"    ui_apply_style({path}.lv_obj, UI_CHILD_LABEL, &{path}.style);",
         ]
@@ -66,8 +67,8 @@ def _emit_node_init(node: ParsedNode, path: str, parent_lv: str) -> str:
             f"        lv_obj_t *lbl = lv_label_create({path}.lv_obj);",
             f"        lv_label_set_text(lbl, {path}.label_text);",
             f"        lv_obj_center(lbl);",
-            f"        /* text color/font applied to the label directly, not the container */",
-            f"        ui_apply_style(lbl, UI_CHILD_LABEL, &{path}.style);",
+            f"        /* the Figma Text layer's colour/font/alignment; not the button's box */",
+            f"        ui_apply_text_style(lbl, &{path}.style);",
             f"    }}",
         ]
         for lvgl_event, event in button_events(node):

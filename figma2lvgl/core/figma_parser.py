@@ -63,6 +63,7 @@ class ParsedStyleText:
         self.color = None
         self.size  = None
         self.align = None
+        self.wrap  = False   # fixed width in Figma: LVGL wraps lines
 
 
 class ParsedStyleEffects:
@@ -141,7 +142,12 @@ def parse_style(node, widget_type: WidgetType) -> ParsedStyle:
                 style.text.size = round(float(font_size))
             except ValueError:
                 pass
-        # FigML does not export textAlignHorizontal — LVGL default (left) applies.
+        align = node.attrib.get("textAlignHorizontal")
+        if align in ("LEFT", "CENTER", "RIGHT"):
+            style.text.align = align
+        # Figma's fixed-width text (HEIGHT, NONE) wraps. Auto width doesn't,
+        # and neither does text without the attribute (hand-written XML).
+        style.text.wrap = node.attrib.get("textAutoResize") in ("HEIGHT", "NONE")
 
     opacity = node.attrib.get("opacity")
     if opacity is not None:
@@ -221,6 +227,16 @@ def _find_button_label(button_xml) -> str:
             name = name[len(prefix):]
             break
     return name.replace("_", " ").title()
+
+
+def _find_button_text_node(button_xml):
+    """The button's first Text child (its label in Figma), or None."""
+    children_el = button_xml.find("children")
+    if children_el is not None:
+        for child in children_el:
+            if child.tag == "Text":
+                return child
+    return None
 
 
 # ── Recursive children parser ─────────────────────────────────────────────────
@@ -355,7 +371,11 @@ def _parse_children(parent_xml, screen_name: str, depth: int, counters,
 
         elif wtype == WidgetType.BUTTON:
             text_content = _find_button_label(child_xml)
-            # No recursion — button label is an LVGL internal detail
+            # No recursion — button label is an LVGL internal detail. Its
+            # text style is the Figma Text layer's (colour, size, alignment).
+            label_xml = _find_button_text_node(child_xml)
+            if label_xml is not None:
+                style.text = parse_style(label_xml, WidgetType.LABEL).text
 
         elif wtype == WidgetType.SLIDER:
             slider_min, slider_max = info.value_range or (0, 100)

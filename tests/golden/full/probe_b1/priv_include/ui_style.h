@@ -10,6 +10,8 @@ extern "C" {
 
 // Public API
 void ui_apply_style(lv_obj_t *obj, ui_child_type_t type, const ui_style_t *s);
+/* Text colour, font and alignment only (a button's internal label). */
+void ui_apply_text_style(lv_obj_t *obj, const ui_style_t *s);
 
 #ifdef __cplusplus
 }

@@ -268,6 +268,20 @@ class TestSanitize:
     def test_truncation(self):
         assert len(sanitize_c_string("A" * 40, 30)) == 29
 
+    def test_truncation_counts_an_escape_as_one_byte(self):
+        # 28 characters with two line breaks: fits a char[30] as is.
+        assert sanitize_c_string("First line\nSecond line\nThird", 30) == \
+            "First line\\nSecond line\\nThird"
+
+    def test_truncation_never_cuts_an_escape(self):
+        out = sanitize_c_string("A" * 28 + '"B', 30)
+        assert out == "A" * 28 + '\\"'
+        assert not sanitize_c_string("A" * 28 + "\\", 30).endswith("\\\\\\")
+
+    def test_truncation_counts_utf8_bytes(self):
+        out = sanitize_c_string("é" * 20, 30)
+        assert out == "é" * 14 and len(out.encode("utf-8")) <= 29
+
 
 # ── normalize_id tests ────────────────────────────────────────────────────────
 

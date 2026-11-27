@@ -60,19 +60,23 @@ def sanitize_c_string(s, maxlen=UI_MAX_STRING_LENGTH):
     Escape a Python string for safe embedding inside a C string literal.
     Handles quotes, backslashes, and control characters that would produce
     invalid C (e.g. a literal newline from FigML's characters attribute).
-    Truncates to maxlen-1 to leave room for the null terminator.
+    Truncates so the C string (in UTF-8 bytes, an escape counting as the one
+    byte it stands for) fits in maxlen with its null terminator. It never
+    cuts an escape sequence or a multi-byte character in half.
     """
     if s is None:
         return ""
-    s = s.replace('\\', '\\\\')   # must be first
-    s = s.replace('"',  '\\"')
-    s = s.replace('\n', '\\n')
-    s = s.replace('\r', '\\r')
-    s = s.replace('\t', '\\t')
     # FigML sometimes uses Unicode line/paragraph separators instead of \n
-    s = s.replace('\u2028', '\\n')   # LINE SEPARATOR → LVGL newline
-    s = s.replace('\u2029', '\\n')   # PARAGRAPH SEPARATOR → LVGL newline
-    return s[:maxlen - 1]
+    s = s.replace('\u2028', '\n').replace('\u2029', '\n')
+    escapes = {'\\': '\\\\', '"': '\\"', '\n': '\\n', '\r': '\\r', '\t': '\\t'}
+    out, size = [], 0
+    for ch in s:
+        n = len(ch.encode("utf-8"))
+        if size + n > maxlen - 1:
+            break
+        out.append(escapes.get(ch, ch))
+        size += n
+    return "".join(out)
 
 def int_attr(node, key):
     v = node.attrib.get(key)
