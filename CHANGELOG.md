@@ -24,6 +24,10 @@ text looks.
   characters and measured characters instead of UTF-8 bytes, so non-ASCII
   text could overflow and a cut could split an escape. It now fits the
   bytes and never splits a character or an escape.
+- **A frame exported on its own** (the exporter's `<frame>` root, no page)
+  was read as a page: each child became a screen. It is now one screen,
+  with the same code as a page export of that frame (N33). Thanks to
+  xrischan for the idea and first report (#18).
 
 ### Tests
 - **L9, run:** every test design is built into a program with LVGL 9.3
@@ -46,9 +50,8 @@ text looks.
 Found by the new tests, for later releases (design repo,
 `docs/planning/01_findings_2026-11.md`): the screen's fill is ignored
 (N22); buttons, lists, bars and sliders keep parts of LVGL's theme (N29–N31);
-images only show after `…_display()` (N32) and lose transparency (N35); a
-frame exported on its own is read as a page (N33); label text is limited to
-29 bytes (N34); a long press also calls `clicked` (N25).
+images only show after `…_display()` (N32) and lose transparency (N35);
+label text is limited to 29 bytes (N34); a long press also calls `clicked` (N25).
 
 ## [0.5.0] - 2026-11-27
 
