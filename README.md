@@ -32,10 +32,37 @@ pip install figma2lvgl
 
 - **Figma** with the **FigML — Figma XML Exporter** plugin installed
 - **Python 3.10+**
-- **LVGL 9.3** in your firmware project. Image files are converted with LVGL's
-  own `LVGLImage.py` from LVGL v9.3.0, which ships inside the package (MIT
-  licence, provenance in its header). Nothing is downloaded. For a different
-  LVGL version, pass that version's `LVGLImage.py` with `--lvgl-tool`.
+- **LVGL 9.3** in your firmware project: the free, open-source library (MIT).
+  LVGL Pro, LVGL's paid editor, is **not** needed; figma2lvgl doesn't use it.
+  Image files are converted with LVGL's own `LVGLImage.py` from LVGL v9.3.0,
+  which ships inside the package (MIT licence, provenance in its header).
+  Nothing is downloaded. For a different LVGL version, pass that version's
+  `LVGLImage.py` with `--lvgl-tool`.
+
+### Upgrading from 0.4.x
+
+0.5.0 changes what some Figma layers become and what some generated names
+are. A design that compiled with 0.4.6 keeps its names unless it uses one of
+the cases below; every case is listed with old and new names in
+[CHANGELOG.md](CHANGELOG.md) under 0.5.0 → Breaking. In short:
+
+- **Containers without a fill or stroke are no longer panels**, even when
+  renamed (`Content`): they are dropped and their children move up a level,
+  so their names lose that level (`ui_home_content_btn_ok_set_label` →
+  `ui_home_btn_ok_set_label`). Name a container `panel_…` to keep it.
+- **Keywords are whole words**: `toolbar_bg` is no longer a bar,
+  `silicone_pad` no longer an image. They can now use any separator:
+  `Btn OK` and `volume-slider` work.
+- **Repeated names** are numbered `_2`, `_3`, … per parent, and the same
+  name in two different panels is no longer renamed.
+- **Widgets inside Groups and dropped frames are placed where Figma shows
+  them.** 0.4.6 drew many of them at the wrong position or not at all.
+- **Panels look like the Figma layer**: no LVGL theme background, border or
+  padding.
+- **Hidden layers** are no longer generated.
+
+figma2lvgl prints a warning, naming the Figma layer, for every name it
+changes or fixes. Run it on your design and read the warnings.
 
 ---
 
@@ -150,119 +177,165 @@ figma2lvgl reads XML exported via the **FigML — Figma XML Exporter Plugin**.
 
 ### Supported Widgets
 
+figma2lvgl splits each layer name into words (separated by `_`, spaces,
+hyphens or camelCase: `Btn OK`, `btn-ok`, `BtnOk` and `btn_ok` all give the
+words *btn* and *ok*) and looks for type keywords among them. Keywords are
+**whole words**: `toolbar` doesn't contain the keyword `bar`.
+
 #### Text / Label
 
-Any `Text` node is automatically mapped to an LVGL label. The text content
-typed in Figma is baked into the generated struct as the initial display value.
+Any `Text` layer becomes an LVGL label. The text typed in Figma is the
+initial value.
 
 ```
-Figma node type: Text (automatic)
-Figma name:      anything (e.g. "time", "welcome_label", "status")
-Maps to:         lv_label_create()
+Figma layer:  Text (any name, e.g. "time", "welcome_label")
+Maps to:      lv_label_create()
 ```
 
 #### Button
 
-A Frame named with the `btn_` or `button_` prefix maps to an LVGL button.
-The button's text is read from its first `Text` child node in Figma.
+First word `btn` or `button`. The button's text is its first `Text` child.
 
 ```
-Figma node type: FRAME with fill/border/radius
-Figma name:      must start with "btn_" or "button_" (e.g. "btn_ok", "button_cancel")
-Maps to:         lv_button_create()
+Figma name:   "btn_ok", "button_cancel", "Btn OK", "BtnSave"
+Maps to:      lv_button_create()
 ```
 
-**Event suffixes** — append to the name to register additional events.
-`LV_EVENT_CLICKED` is always registered regardless of suffix:
+**Event suffixes**: a last word that registers one more event.
+`LV_EVENT_CLICKED` is always registered:
 
-| Figma name | Extra event registered |
+| Figma name | Events registered |
 |-----------|----------------------|
-| `btn_ok` | click only (default) |
-| `btn_ok_lp` | + `LV_EVENT_LONG_PRESSED` |
-| `btn_ok_lpr` | + `LV_EVENT_LONG_PRESSED_REPEAT` |
-| `btn_ok_press` | + `LV_EVENT_PRESSED` |
-| `btn_ok_release` | + `LV_EVENT_RELEASED` |
+| `btn_ok` | click |
+| `btn_ok_lp` | click + `LV_EVENT_LONG_PRESSED` |
+| `btn_ok_lpr` | click + `LV_EVENT_LONG_PRESSED_REPEAT` |
+| `btn_ok_press` | click + `LV_EVENT_PRESSED` |
+| `btn_ok_release` | click + `LV_EVENT_RELEASED` |
 
-The suffix is stripped before forming the struct field name — `btn_ok_lp`
-and `btn_ok` both produce the same `btn_ok` struct field.
+The suffix isn't part of the name: `btn_ok_lp` gives the field `btn_ok`.
+Suffixes only apply to buttons, and only when something remains after the
+keyword: `btn_press` is a button named `btn_press` (a label named
+`time_click` keeps its full name too).
 
 #### Image / Icon
 
-Any node whose name contains `icon` or `image` maps to an LVGL image widget.
-The node name (normalized) must match the PNG filename in your images folder.
+A word `icon` or `image` anywhere in the name, or a component instance that
+contains vector shapes.
 
 ```
-Figma node type: INSTANCE or FRAME
-Figma name:      must contain "icon" or "image" (e.g. "icon_wifi", "image_logo")
-Maps to:         lv_image_create()
-Asset required:  icon_wifi.png in your images folder
+Figma name:   "icon_wifi", "image_logo", "WifiIcon"
+Maps to:      lv_image_create()
+Asset:        icon_wifi.png in your images folder (named after the layer)
 ```
+
+The PNG is named after the layer, so several layers named `icon_wifi` all
+show `icon_wifi.png`. If they are instances of *different* components,
+figma2lvgl stops with an error naming both; if it can't tell (plain layers),
+it warns.
 
 #### Bar
 
-Any node whose name contains `bar` maps to an LVGL bar widget.
-Encode the value range directly in the name — no code changes needed:
+A word `bar` anywhere in the name. Put the range in the last two words:
 
 ```
-Figma name:      battery_bar          → range 0–100 (default)
-                 battery_bar_0_100    → range 0–100
-                 temp_bar_n20_50      → range −20–50  (prefix n = negative)
-Maps to:         lv_bar_create()
+Figma name:   battery_bar          → range 0–100 (default)
+              battery_bar_0_100    → range 0–100, field "battery_bar"
+              temp_bar_n20_50      → range −20–50 (n = negative)
+Maps to:      lv_bar_create()
 ```
 
 #### Slider
 
+First or last word `slider` (before the range):
+
 ```
-Figma name:      must start with "slider_" or end with "_slider"
-                 brightness_slider_0_255  → range 0–255
-Maps to:         lv_slider_create()
+Figma name:   slider_volume, volume-slider
+              brightness_slider_0_255  → range 0–255
+              slider_rev_100_0         → reversed (LVGL supports min > max)
+Maps to:      lv_slider_create()
 ```
 
 #### Panel (Container)
 
-Any Frame with a fill, border, or meaningful name that doesn't match other
-widget types is treated as a panel container. Its children are parsed
-recursively and appear as nested struct fields.
+A Frame with a visible fill or stroke, or any layer whose first word is
+`panel`. Its children become nested struct fields. A leaf Rectangle or Frame
+with a fill or stroke becomes an empty panel (a coloured box). A panel draws
+only what the Figma layer has (no LVGL theme background, border or padding)
+and clips its children only if the Frame has "Clip content" on.
 
 ```
-Figma node type: FRAME with visible style or semantic name
-Maps to:         lv_obj_create()
+Figma layer:  Frame with a visible fill or stroke, or "panel_…"
+Maps to:      lv_obj_create()
 ```
+
+Containers without a visible fill or stroke (Groups, plain Frames) are
+**dropped**: their children are placed directly in the parent, at the
+position Figma shows. Name a container `panel_…` to keep it as an
+(invisible) panel, for example as a slot your firmware fills at run time.
 
 #### Dynamic Container
 
-Containers named with `list_` or `grid_` prefix are created as scrollable
-containers. Their children are not parsed — firmware fills them at runtime.
+First word `list` or `grid`: a scrollable container whose children are not
+generated; firmware fills it at run time.
 
 ```
-Figma name:      must start with "list_" or "grid_"
-Maps to:         lv_obj_create() with LV_SCROLLBAR_MODE_AUTO
-Accessor:        ui_home_get_list_devices() → returns lv_obj_t*
+Figma name:   "list_devices", "grid_apps"
+Maps to:      lv_obj_create() with LV_SCROLLBAR_MODE_AUTO
+Accessor:     ui_home_get_list_devices() → returns lv_obj_t*
 ```
 
 ### Naming Rules Summary
 
-| Widget | Name Requirement |
+| Widget | Name |
 |--------|----------------|
-| Label | Any `Text` node — name doesn't matter |
-| Button | Starts with `btn_` or `button_` |
-| Image | Contains `icon` or `image` |
-| Bar | Contains `bar` |
-| Slider | Starts with `slider_` or ends with `_slider` |
-| Panel | Frame with fill/border/radius or meaningful name |
-| Dynamic | Starts with `list_` or `grid_` |
+| Label | Any `Text` layer |
+| Button | First word `btn` or `button` |
+| Slider | First or last word `slider` |
+| Dynamic | First word `list` or `grid` |
+| Bar | Word `bar` anywhere |
+| Image | Word `icon` or `image` anywhere |
+| Panel | First word `panel`, or a visible fill/stroke |
 
-> **Names are case-insensitive** — `Bar`, `BAR`, and `bar` all work.
+> **When two keywords meet**, the earlier row wins: `btn_slider` is a button,
+> `bar_icon` a bar, `panel_btn` a panel. figma2lvgl warns which keyword it
+> ignored.
 
-> **Unknown nodes are skipped with a warning.** figma2lvgl logs the screen
-> name and node name and tells you exactly how to rename it.
+> **Skipped layers:** hidden layers (with everything inside them), vectors,
+> component instances without vector shapes, and leaf shapes with no keyword
+> and nothing visible. Each skip is logged with the layer name and how to
+> fix it.
+
+> **Rotation** is not supported: a rotated layer is drawn unrotated, with a
+> warning.
+
+### Generated names
+
+Each layer's name becomes a struct field: lowercased, with anything other
+than letters and digits turned into `_` (`Brightness Slider` →
+`brightness_slider`; camelCase is kept together, so `BatteryBar` →
+`batterybar`). Functions are built from the screen name and the path of
+fields: `ui_home_panel_top_time_set_text()`.
+
+figma2lvgl fixes names that can't be used in C, and warns for each one:
+
+| Layer name | Becomes | Why |
+|---|---|---|
+| `2nd row` | `label_2nd_row` | starts with a digit |
+| `default`, `class` | `label_default`, `label_class` | C or C++ keyword |
+| `style`, `text` | `label_style`, `label_text` | used by the generated struct |
+| `lv_logo` | `image_lv_logo` | LVGL's own prefix |
+| `★` | `label_1` | no usable characters |
+| `title`, `title` (same parent) | `title`, `title_2` | repeated name |
+
+The same name in two different panels is fine (`panel_a.title`,
+`panel_b.title`). If two buttons share a name, their callbacks include the
+parent: `ui_home_on_panel_a_btn_ok_clicked()`. Two frames that give the same
+screen name (`Home` and `home`) are an error; a screen named `style`, `defs`
+or `config` is renamed (`style_2`) because figma2lvgl's own files use those
+names.
 
 > **Nesting depth limits** — depth > 5 emits a warning; depth > 7 skips
 > the subtree with an error. Aim for 2–3 levels in practice.
-
-> **Structural frames** — invisible grouping frames (no fill, no border,
-> auto-generated Figma name like `Frame 12`) are silently dropped and
-> their children promoted to the parent level.
 
 ---
 
@@ -406,6 +479,12 @@ The compile session fetches LVGL v9.3.0 once into `.nox/`. To run the
 compile tests directly, set `LVGL_DIR` to an LVGL checkout and run
 `pytest tests/compile`.
 
+The naming property tests use Hypothesis profiles: `ci` (50 examples, the
+default), `full` (200, compiled) and `nightly` (200, random seed). Pick one
+with `HYPOTHESIS_PROFILE=full`. After an intended change to the generated
+output, regenerate the reference files with `python tests/regen_golden.py`
+and review the diff.
+
 ---
 
 ## 🏁 Design Philosophy
@@ -413,7 +492,7 @@ compile tests directly, set `LVGL_DIR` to an LVGL checkout and run
 | Principle | What it means |
 |-----------|--------------|
 | **Figma = layout + style** | All geometry, colors, fonts come from Figma — nothing hardcoded in C |
-| **Naming = semantics** | Node name determines widget type; rename in Figma to change the generated widget |
+| **Naming = semantics** | Layer names (and visible fills) determine widget types; rename in Figma to change the generated widget |
 | **Struct mirrors hierarchy** | Generated struct matches Figma's layer tree exactly — named fields, no generic arrays |
 | **Output = portable C** | No dependencies beyond LVGL v9 |
 | **Initial state = Figma** | Generated structs carry Figma text and styles as the design-time default; firmware updates from there |
