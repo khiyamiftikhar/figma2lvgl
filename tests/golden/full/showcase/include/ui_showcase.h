@@ -1,0 +1,52 @@
+#ifndef UI_SHOWCASE_H
+#define UI_SHOWCASE_H
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+#include <stdint.h>
+#include "lvgl.h"
+
+// ------------------------------
+// LIFECYCLE
+// ------------------------------
+void ui_showcase_init(void);
+void ui_showcase_load(void);
+
+// ------------------------------
+// SETTERS
+// ------------------------------
+void ui_showcase_btn_ok_set_label(const char *text);
+void ui_showcase_btn_cancel_set_label(const char *text);
+void ui_showcase_battery_bar_set_value(int value, uint32_t duration_ms);
+void ui_showcase_slider_volume_set_value(int32_t value);
+void ui_showcase_slider_level_set_value(int32_t value);
+lv_obj_t *ui_showcase_get_list_devices(void);
+void ui_showcase_btn_shadow_set_label(const char *text);
+void ui_showcase_custom_font_set_text(const char *text);
+void ui_showcase_btn_icon_set_label(const char *text);
+void ui_showcase_panel_top_title_set_text(const char *text);
+void ui_showcase_panel_top_icon_star_display(void);
+void ui_showcase_panel_card_card_title_set_text(const char *text);
+void ui_showcase_panel_card_card_body_set_text(const char *text);
+void ui_showcase_panel_card_icon_heart_display(void);
+void ui_showcase_panel_row_btn_fill_a_set_label(const char *text);
+void ui_showcase_panel_row_btn_fill_b_set_label(const char *text);
+
+// ------------------------------
+// EVENT CALLBACKS
+// ------------------------------
+void ui_showcase_on_btn_ok_clicked(lv_event_t *e);
+void ui_showcase_on_btn_cancel_clicked(lv_event_t *e);
+void ui_showcase_on_btn_cancel_long_pressed(lv_event_t *e);
+void ui_showcase_on_slider_volume(lv_event_t *e);
+void ui_showcase_on_slider_level(lv_event_t *e);
+void ui_showcase_on_btn_shadow_clicked(lv_event_t *e);
+void ui_showcase_on_btn_icon_clicked(lv_event_t *e);
+void ui_showcase_on_btn_fill_a_clicked(lv_event_t *e);
+void ui_showcase_on_btn_fill_b_clicked(lv_event_t *e);
+
+#ifdef __cplusplus
+}
+#endif
+#endif

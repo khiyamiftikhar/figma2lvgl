@@ -17,7 +17,7 @@ from pathlib import Path
 
 import pytest
 
-from tests.golden_cases import CASES
+from tests.golden_cases import CASES, REPORT_ONLY
 from tests.runtime.harness import keep_artifacts, run_case
 from tests.runtime.snapshots import (SNAPSHOTS, changed_pixels, diff_rows, read_png,
                                      rgb565_to_rows, write_png)
@@ -68,7 +68,7 @@ def _render(case, lvgl, tmp_path, patch=None):
     return result
 
 
-@pytest.mark.parametrize("case", list(CASES))
+@pytest.mark.parametrize("case", [c for c in CASES if c not in REPORT_ONLY])
 def test_screens_match_references(case, lvgl, tmp_path):
     result = _render(case, lvgl, tmp_path)
     problems = compare(case, result, _artifacts(case))
@@ -76,7 +76,7 @@ def test_screens_match_references(case, lvgl, tmp_path):
 
 
 def test_no_references_for_unknown_designs():
-    stale = sorted(p.name for p in SNAPSHOTS.iterdir() if p.is_dir() and p.name not in CASES)
+    stale = sorted(p.name for p in SNAPSHOTS.iterdir() if p.is_dir() and p.name not in CASES or p.name in REPORT_ONLY)
     assert stale == [], f"reference folders without a design: {stale}"
 
 

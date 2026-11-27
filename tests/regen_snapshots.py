@@ -26,7 +26,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
-from tests.golden_cases import CASES  # noqa: E402
+from tests.golden_cases import CASES, REPORT_ONLY  # noqa: E402
 from tests.runtime.harness import run_case  # noqa: E402
 from tests.runtime.snapshots import (SNAPSHOTS, changed_pixels, diff_rows,  # noqa: E402
                                      read_png, rgb565_to_rows, write_png)
@@ -36,12 +36,12 @@ REVIEW = Path(__file__).resolve().parents[1] / "snapshot_review"
 
 def main(argv=None) -> int:
     parser = argparse.ArgumentParser(description=__doc__.split("\n\n")[0])
-    parser.add_argument("--case", action="append", choices=sorted(CASES),
+    parser.add_argument("--case", action="append", choices=sorted(set(CASES) - REPORT_ONLY),
                         help="design to regenerate (repeatable; default: all)")
     parser.add_argument("--screen", help="only this screen (snake name)")
     args = parser.parse_args(argv)
     lvgl = Path(os.environ["LVGL_DIR"])
-    cases = args.case or list(CASES)
+    cases = args.case or [c for c in CASES if c not in REPORT_ONLY]
     if REVIEW.exists():
         shutil.rmtree(REVIEW)
     summary = []

@@ -47,6 +47,8 @@ CASES = {
     "classify": (FIXTURES / "naming_classify.xml", EXAMPLE_DESIGN),
     "hostile": (FIXTURES / "hostile" / "hostile.xml", FIXTURES / "hostile"),
     "events": (FIXTURES / "events.xml", None),
+    "features": (FIXTURES / "features" / "features.xml", FIXTURES / "features"),
+    "showcase": (FIXTURES / "showcase" / "showcase.xml", FIXTURES / "features"),
 }
 
 

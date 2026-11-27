@@ -1,0 +1,1025 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?figml version="1.0"?>
+<page id="18:47" name="Page_3" type="PAGE">
+  <children>
+    <Component id="18:48" name="icon_star" expanded="true" maskType="ALPHA" x="0" y="-200" width="24" height="24" variantProperties="" type="COMPONENT">
+      <children>
+        <Vector id="18:49" name="shape" maskType="ALPHA" strokeAlign="CENTER" x="2" y="2" width="20" height="20" type="VECTOR">
+          <strokes>
+            <stroke blendMode="NORMAL" color="#000000" />
+          </strokes>
+          <fills>
+            <fill blendMode="NORMAL" color="#fbc02d" />
+          </fills>
+          <constraints horizontal="MIN" vertical="MIN" />
+        </Vector>
+      </children>
+      <constraints horizontal="MIN" vertical="MIN" />
+    </Component>
+    <Component id="18:50" name="icon_heart" expanded="true" maskType="ALPHA" x="60" y="-200" width="24" height="24" variantProperties="" type="COMPONENT">
+      <children>
+        <Vector id="18:51" name="shape" maskType="ALPHA" strokeAlign="CENTER" x="2" y="2" width="20.094863891601562" height="17.397258758544922" type="VECTOR">
+          <strokes>
+            <stroke blendMode="NORMAL" color="#000000" />
+          </strokes>
+          <fills>
+            <fill blendMode="NORMAL" color="#e53935" />
+          </fills>
+          <constraints horizontal="MIN" vertical="MIN" />
+        </Vector>
+      </children>
+      <constraints horizontal="MIN" vertical="MIN" />
+    </Component>
+    <Frame id="18:52" name="f_button_style" expanded="true" maskType="ALPHA" x="0" y="0" width="320" height="240" clipsContent="true" type="FRAME">
+      <children>
+        <Frame id="18:53" name="btn_square" expanded="true" maskType="ALPHA" x="10" y="10" width="90" height="40" clipsContent="true" type="FRAME">
+          <children>
+            <Text id="18:54" name="label" maskType="ALPHA" strokeAlign="OUTSIDE" x="20" y="12" width="50" height="17" fontSize="14" fontWeight="400" hyperlink="" characters="Square" type="TEXT" textAlignVertical="TOP" textAutoResize="WIDTH_AND_HEIGHT">
+              <fills>
+                <fill blendMode="NORMAL" color="#ffffff" />
+              </fills>
+              <constraints horizontal="MIN" vertical="MIN" />
+              <fontName family="Montserrat" style="Regular" />
+              <letterSpacing value="0" unit="PERCENT" />
+              <lineHeight unit="AUTO" />
+            </Text>
+          </children>
+          <fills>
+            <fill blendMode="NORMAL" color="#2196f3" />
+          </fills>
+          <constraints horizontal="MIN" vertical="MIN" />
+        </Frame>
+        <Frame id="18:55" name="btn_round" expanded="true" cornerRadius="8" maskType="ALPHA" x="110" y="10" width="90" height="40" clipsContent="true" type="FRAME">
+          <children>
+            <Text id="18:56" name="label" maskType="ALPHA" strokeAlign="OUTSIDE" x="21" y="12" width="48" height="17" fontSize="14" fontWeight="400" hyperlink="" characters="Round" type="TEXT" textAlignVertical="TOP" textAutoResize="WIDTH_AND_HEIGHT">
+              <fills>
+                <fill blendMode="NORMAL" color="#ffffff" />
+              </fills>
+              <constraints horizontal="MIN" vertical="MIN" />
+              <fontName family="Montserrat" style="Regular" />
+              <letterSpacing value="0" unit="PERCENT" />
+              <lineHeight unit="AUTO" />
+            </Text>
+          </children>
+          <fills>
+            <fill blendMode="NORMAL" color="#43a047" />
+          </fills>
+          <constraints horizontal="MIN" vertical="MIN" />
+        </Frame>
+        <Frame id="18:57" name="btn_pill" expanded="true" cornerRadius="20" maskType="ALPHA" x="210" y="10" width="100" height="40" clipsContent="true" type="FRAME">
+          <children>
+            <Text id="18:58" name="label" maskType="ALPHA" strokeAlign="OUTSIDE" x="39" y="12" width="22" height="17" fontSize="14" fontWeight="400" hyperlink="" characters="Pill" type="TEXT" textAlignVertical="TOP" textAutoResize="WIDTH_AND_HEIGHT">
+              <fills>
+                <fill blendMode="NORMAL" color="#ffffff" />
+              </fills>
+              <constraints horizontal="MIN" vertical="MIN" />
+              <fontName family="Montserrat" style="Regular" />
+              <letterSpacing value="0" unit="PERCENT" />
+              <lineHeight unit="AUTO" />
+            </Text>
+          </children>
+          <fills>
+            <fill blendMode="NORMAL" color="#8e24aa" />
+          </fills>
+          <constraints horizontal="MIN" vertical="MIN" />
+        </Frame>
+        <Frame id="18:59" name="btn_stroke" expanded="true" strokeWeight="2" maskType="ALPHA" x="10" y="70" width="90" height="40" clipsContent="true" type="FRAME">
+          <children>
+            <Text id="18:60" name="label" maskType="ALPHA" strokeAlign="OUTSIDE" x="22" y="12" width="46" height="17" fontSize="14" fontWeight="400" hyperlink="" characters="Stroke" type="TEXT" textAlignVertical="TOP" textAutoResize="WIDTH_AND_HEIGHT">
+              <fills>
+                <fill blendMode="NORMAL" color="#ffffff" />
+              </fills>
+              <constraints horizontal="MIN" vertical="MIN" />
+              <fontName family="Montserrat" style="Regular" />
+              <letterSpacing value="0" unit="PERCENT" />
+              <lineHeight unit="AUTO" />
+            </Text>
+          </children>
+          <strokes>
+            <stroke blendMode="NORMAL" color="#1e88e5" />
+          </strokes>
+          <fills>
+            <fill blendMode="NORMAL" color="#ffffff" />
+          </fills>
+          <constraints horizontal="MIN" vertical="MIN" />
+        </Frame>
+        <Frame id="18:61" name="btn_both" expanded="true" strokeWeight="3" cornerRadius="10" maskType="ALPHA" x="110" y="70" width="90" height="40" clipsContent="true" type="FRAME">
+          <children>
+            <Text id="18:62" name="label" maskType="ALPHA" strokeAlign="OUTSIDE" x="28" y="12" width="35" height="17" fontSize="14" fontWeight="400" hyperlink="" characters="Both" type="TEXT" textAlignVertical="TOP" textAutoResize="WIDTH_AND_HEIGHT">
+              <fills>
+                <fill blendMode="NORMAL" color="#ffffff" />
+              </fills>
+              <constraints horizontal="MIN" vertical="MIN" />
+              <fontName family="Montserrat" style="Regular" />
+              <letterSpacing value="0" unit="PERCENT" />
+              <lineHeight unit="AUTO" />
+            </Text>
+          </children>
+          <strokes>
+            <stroke blendMode="NORMAL" color="#5d4037" />
+          </strokes>
+          <fills>
+            <fill blendMode="NORMAL" color="#fb8c00" />
+          </fills>
+          <constraints horizontal="MIN" vertical="MIN" />
+        </Frame>
+        <Frame id="18:63" name="btn_thick" expanded="true" strokeWeight="6" cornerRadius="4" maskType="ALPHA" x="210" y="70" width="100" height="40" clipsContent="true" type="FRAME">
+          <children>
+            <Text id="18:64" name="label" maskType="ALPHA" strokeAlign="OUTSIDE" x="31" y="12" width="38" height="17" fontSize="14" fontWeight="400" hyperlink="" characters="Thick" type="TEXT" textAlignVertical="TOP" textAutoResize="WIDTH_AND_HEIGHT">
+              <fills>
+                <fill blendMode="NORMAL" color="#ffffff" />
+              </fills>
+              <constraints horizontal="MIN" vertical="MIN" />
+              <fontName family="Montserrat" style="Regular" />
+              <letterSpacing value="0" unit="PERCENT" />
+              <lineHeight unit="AUTO" />
+            </Text>
+          </children>
+          <strokes>
+            <stroke blendMode="NORMAL" color="#004d40" />
+          </strokes>
+          <fills>
+            <fill blendMode="NORMAL" color="#00897b" />
+          </fills>
+          <constraints horizontal="MIN" vertical="MIN" />
+        </Frame>
+      </children>
+      <fills>
+        <fill blendMode="NORMAL" color="#ffffff" />
+      </fills>
+      <constraints horizontal="MIN" vertical="MIN" />
+    </Frame>
+    <Frame id="18:65" name="f_button_events" expanded="true" maskType="ALPHA" x="360" y="0" width="320" height="240" clipsContent="true" type="FRAME">
+      <children>
+        <Frame id="18:66" name="btn_tap" expanded="true" maskType="ALPHA" x="10" y="10" width="140" height="40" clipsContent="true" type="FRAME">
+          <children>
+            <Text id="18:67" name="label" maskType="ALPHA" strokeAlign="OUTSIDE" x="57" y="12" width="26" height="17" fontSize="14" fontWeight="400" hyperlink="" characters="Tap" type="TEXT" textAlignVertical="TOP" textAutoResize="WIDTH_AND_HEIGHT">
+              <fills>
+                <fill blendMode="NORMAL" color="#ffffff" />
+              </fills>
+              <constraints horizontal="MIN" vertical="MIN" />
+              <fontName family="Montserrat" style="Regular" />
+              <letterSpacing value="0" unit="PERCENT" />
+              <lineHeight unit="AUTO" />
+            </Text>
+          </children>
+          <fills>
+            <fill blendMode="NORMAL" color="#2196f3" />
+          </fills>
+          <constraints horizontal="MIN" vertical="MIN" />
+        </Frame>
+        <Frame id="18:68" name="btn_hold_lp" expanded="true" maskType="ALPHA" x="170" y="10" width="140" height="40" clipsContent="true" type="FRAME">
+          <children>
+            <Text id="18:69" name="label" maskType="ALPHA" strokeAlign="OUTSIDE" x="53" y="12" width="34" height="17" fontSize="14" fontWeight="400" hyperlink="" characters="Hold" type="TEXT" textAlignVertical="TOP" textAutoResize="WIDTH_AND_HEIGHT">
+              <fills>
+                <fill blendMode="NORMAL" color="#ffffff" />
+              </fills>
+              <constraints horizontal="MIN" vertical="MIN" />
+              <fontName family="Montserrat" style="Regular" />
+              <letterSpacing value="0" unit="PERCENT" />
+              <lineHeight unit="AUTO" />
+            </Text>
+          </children>
+          <fills>
+            <fill blendMode="NORMAL" color="#2196f3" />
+          </fills>
+          <constraints horizontal="MIN" vertical="MIN" />
+        </Frame>
+        <Frame id="18:70" name="btn_repeat_lpr" expanded="true" maskType="ALPHA" x="10" y="70" width="140" height="40" clipsContent="true" type="FRAME">
+          <children>
+            <Text id="18:71" name="label" maskType="ALPHA" strokeAlign="OUTSIDE" x="45" y="12" width="51" height="17" fontSize="14" fontWeight="400" hyperlink="" characters="Repeat" type="TEXT" textAlignVertical="TOP" textAutoResize="WIDTH_AND_HEIGHT">
+              <fills>
+                <fill blendMode="NORMAL" color="#ffffff" />
+              </fills>
+              <constraints horizontal="MIN" vertical="MIN" />
+              <fontName family="Montserrat" style="Regular" />
+              <letterSpacing value="0" unit="PERCENT" />
+              <lineHeight unit="AUTO" />
+            </Text>
+          </children>
+          <fills>
+            <fill blendMode="NORMAL" color="#2196f3" />
+          </fills>
+          <constraints horizontal="MIN" vertical="MIN" />
+        </Frame>
+        <Frame id="18:72" name="btn_down_press" expanded="true" maskType="ALPHA" x="170" y="70" width="140" height="40" clipsContent="true" type="FRAME">
+          <children>
+            <Text id="18:73" name="label" maskType="ALPHA" strokeAlign="OUTSIDE" x="49" y="12" width="42" height="17" fontSize="14" fontWeight="400" hyperlink="" characters="Down" type="TEXT" textAlignVertical="TOP" textAutoResize="WIDTH_AND_HEIGHT">
+              <fills>
+                <fill blendMode="NORMAL" color="#ffffff" />
+              </fills>
+              <constraints horizontal="MIN" vertical="MIN" />
+              <fontName family="Montserrat" style="Regular" />
+              <letterSpacing value="0" unit="PERCENT" />
+              <lineHeight unit="AUTO" />
+            </Text>
+          </children>
+          <fills>
+            <fill blendMode="NORMAL" color="#2196f3" />
+          </fills>
+          <constraints horizontal="MIN" vertical="MIN" />
+        </Frame>
+        <Frame id="18:74" name="btn_up_release" expanded="true" maskType="ALPHA" x="10" y="130" width="140" height="40" clipsContent="true" type="FRAME">
+          <children>
+            <Text id="18:75" name="label" maskType="ALPHA" strokeAlign="OUTSIDE" x="60" y="12" width="21" height="17" fontSize="14" fontWeight="400" hyperlink="" characters="Up" type="TEXT" textAlignVertical="TOP" textAutoResize="WIDTH_AND_HEIGHT">
+              <fills>
+                <fill blendMode="NORMAL" color="#ffffff" />
+              </fills>
+              <constraints horizontal="MIN" vertical="MIN" />
+              <fontName family="Montserrat" style="Regular" />
+              <letterSpacing value="0" unit="PERCENT" />
+              <lineHeight unit="AUTO" />
+            </Text>
+          </children>
+          <fills>
+            <fill blendMode="NORMAL" color="#2196f3" />
+          </fills>
+          <constraints horizontal="MIN" vertical="MIN" />
+        </Frame>
+      </children>
+      <fills>
+        <fill blendMode="NORMAL" color="#ffffff" />
+      </fills>
+      <constraints horizontal="MIN" vertical="MIN" />
+    </Frame>
+    <Frame id="18:76" name="f_bars" expanded="true" maskType="ALPHA" x="720" y="0" width="320" height="240" clipsContent="true" type="FRAME">
+      <children>
+        <Rectangle id="18:77" name="level_bar" maskType="ALPHA" x="10" y="20" width="300" height="20" type="RECTANGLE">
+          <fills>
+            <fill blendMode="NORMAL" color="#4caf50" />
+          </fills>
+          <constraints horizontal="MIN" vertical="MIN" />
+        </Rectangle>
+        <Rectangle id="18:78" name="volume_bar_0_255" maskType="ALPHA" x="10" y="60" width="300" height="20" type="RECTANGLE">
+          <fills>
+            <fill blendMode="NORMAL" color="#2196f3" />
+          </fills>
+          <constraints horizontal="MIN" vertical="MIN" />
+        </Rectangle>
+        <Rectangle id="18:79" name="drain_bar_100_0" maskType="ALPHA" x="10" y="100" width="300" height="20" type="RECTANGLE">
+          <fills>
+            <fill blendMode="NORMAL" color="#ff9800" />
+          </fills>
+          <constraints horizontal="MIN" vertical="MIN" />
+        </Rectangle>
+        <Rectangle id="18:80" name="temp_bar_n20_50" maskType="ALPHA" x="10" y="140" width="300" height="20" type="RECTANGLE">
+          <fills>
+            <fill blendMode="NORMAL" color="#e91e63" />
+          </fills>
+          <constraints horizontal="MIN" vertical="MIN" />
+        </Rectangle>
+        <Rectangle id="18:81" name="tall_bar" maskType="ALPHA" x="10" y="180" width="20" height="50" type="RECTANGLE">
+          <fills>
+            <fill blendMode="NORMAL" color="#795548" />
+          </fills>
+          <constraints horizontal="MIN" vertical="MIN" />
+        </Rectangle>
+      </children>
+      <fills>
+        <fill blendMode="NORMAL" color="#ffffff" />
+      </fills>
+      <constraints horizontal="MIN" vertical="MIN" />
+    </Frame>
+    <Frame id="18:82" name="f_sliders" expanded="true" maskType="ALPHA" x="1080" y="0" width="320" height="240" clipsContent="true" type="FRAME">
+      <children>
+        <Rectangle id="18:83" name="slider_h" maskType="ALPHA" x="20" y="30" width="220" height="16" type="RECTANGLE">
+          <fills>
+            <fill blendMode="NORMAL" color="#9e9e9e" />
+          </fills>
+          <constraints horizontal="MIN" vertical="MIN" />
+        </Rectangle>
+        <Rectangle id="18:84" name="slider_h_0_10" maskType="ALPHA" x="20" y="80" width="220" height="16" type="RECTANGLE">
+          <fills>
+            <fill blendMode="NORMAL" color="#9e9e9e" />
+          </fills>
+          <constraints horizontal="MIN" vertical="MIN" />
+        </Rectangle>
+        <Rectangle id="18:85" name="slider_v" maskType="ALPHA" x="270" y="20" width="16" height="200" type="RECTANGLE">
+          <fills>
+            <fill blendMode="NORMAL" color="#9e9e9e" />
+          </fills>
+          <constraints horizontal="MIN" vertical="MIN" />
+        </Rectangle>
+      </children>
+      <fills>
+        <fill blendMode="NORMAL" color="#ffffff" />
+      </fills>
+      <constraints horizontal="MIN" vertical="MIN" />
+    </Frame>
+    <Frame id="18:86" name="f_nesting" expanded="true" maskType="ALPHA" x="1440" y="0" width="320" height="240" clipsContent="true" type="FRAME">
+      <children>
+        <Frame id="18:87" name="panel_outer" expanded="true" maskType="ALPHA" x="10" y="10" width="140" height="140" clipsContent="true" type="FRAME">
+          <children>
+            <Frame id="18:88" name="panel_middle" expanded="true" maskType="ALPHA" x="20" y="20" width="120" height="100" clipsContent="true" type="FRAME">
+              <children>
+                <Frame id="18:89" name="panel_inner" expanded="true" maskType="ALPHA" x="30" y="30" width="110" height="60" clipsContent="true" type="FRAME">
+                  <children>
+                    <Rectangle id="18:90" name="box_clipped" maskType="ALPHA" x="40" y="10" width="60" height="30" type="RECTANGLE">
+                      <fills>
+                        <fill blendMode="NORMAL" color="#0d47a1" />
+                      </fills>
+                      <constraints horizontal="MIN" vertical="MIN" />
+                    </Rectangle>
+                  </children>
+                  <fills>
+                    <fill blendMode="NORMAL" color="#1e88e5" />
+                  </fills>
+                  <constraints horizontal="MIN" vertical="MIN" />
+                </Frame>
+              </children>
+              <fills>
+                <fill blendMode="NORMAL" color="#90caf9" />
+              </fills>
+              <constraints horizontal="MIN" vertical="MIN" />
+            </Frame>
+          </children>
+          <fills>
+            <fill blendMode="NORMAL" color="#e3f2fd" />
+          </fills>
+          <constraints horizontal="MIN" vertical="MIN" />
+        </Frame>
+        <Frame id="18:91" name="panel_open" expanded="true" maskType="ALPHA" x="170" y="10" width="140" height="140" type="FRAME">
+          <children>
+            <Frame id="18:92" name="panel_open_mid" expanded="true" maskType="ALPHA" x="20" y="20" width="120" height="100" type="FRAME">
+              <children>
+                <Frame id="18:93" name="panel_open_inner" expanded="true" maskType="ALPHA" x="30" y="30" width="110" height="60" type="FRAME">
+                  <children>
+                    <Rectangle id="18:94" name="box_overflow" maskType="ALPHA" x="40" y="10" width="60" height="30" type="RECTANGLE">
+                      <fills>
+                        <fill blendMode="NORMAL" color="#e65100" />
+                      </fills>
+                      <constraints horizontal="MIN" vertical="MIN" />
+                    </Rectangle>
+                  </children>
+                  <fills>
+                    <fill blendMode="NORMAL" color="#fb8c00" />
+                  </fills>
+                  <constraints horizontal="MIN" vertical="MIN" />
+                </Frame>
+              </children>
+              <fills>
+                <fill blendMode="NORMAL" color="#ffcc80" />
+              </fills>
+              <constraints horizontal="MIN" vertical="MIN" />
+            </Frame>
+          </children>
+          <fills>
+            <fill blendMode="NORMAL" color="#fff3e0" />
+          </fills>
+          <constraints horizontal="MIN" vertical="MIN" />
+        </Frame>
+      </children>
+      <fills>
+        <fill blendMode="NORMAL" color="#ffffff" />
+      </fills>
+      <constraints horizontal="MIN" vertical="MIN" />
+    </Frame>
+    <Frame id="18:95" name="f_covering" expanded="true" maskType="ALPHA" x="0" y="520" width="320" height="240" clipsContent="true" type="FRAME">
+      <children>
+        <Frame id="18:96" name="btn_under_panel" expanded="true" maskType="ALPHA" x="20" y="30" width="120" height="50" clipsContent="true" type="FRAME">
+          <children>
+            <Text id="18:97" name="label" maskType="ALPHA" strokeAlign="OUTSIDE" x="38" y="17" width="45" height="17" fontSize="14" fontWeight="400" hyperlink="" characters="Under" type="TEXT" textAlignVertical="TOP" textAutoResize="WIDTH_AND_HEIGHT">
+              <fills>
+                <fill blendMode="NORMAL" color="#ffffff" />
+              </fills>
+              <constraints horizontal="MIN" vertical="MIN" />
+              <fontName family="Montserrat" style="Regular" />
+              <letterSpacing value="0" unit="PERCENT" />
+              <lineHeight unit="AUTO" />
+            </Text>
+          </children>
+          <fills>
+            <fill blendMode="NORMAL" color="#2196f3" />
+          </fills>
+          <constraints horizontal="MIN" vertical="MIN" />
+        </Frame>
+        <Frame id="18:98" name="panel_cover" expanded="true" maskType="ALPHA" x="10" y="20" width="100" height="70" clipsContent="true" type="FRAME">
+          <fills>
+            <fill blendMode="NORMAL" color="#bdbdbd" />
+          </fills>
+          <constraints horizontal="MIN" vertical="MIN" />
+        </Frame>
+        <Frame id="18:99" name="btn_under_button" expanded="true" maskType="ALPHA" x="180" y="30" width="120" height="50" clipsContent="true" type="FRAME">
+          <children>
+            <Text id="18:100" name="label" maskType="ALPHA" strokeAlign="OUTSIDE" x="38" y="17" width="45" height="17" fontSize="14" fontWeight="400" hyperlink="" characters="Under" type="TEXT" textAlignVertical="TOP" textAutoResize="WIDTH_AND_HEIGHT">
+              <fills>
+                <fill blendMode="NORMAL" color="#ffffff" />
+              </fills>
+              <constraints horizontal="MIN" vertical="MIN" />
+              <fontName family="Montserrat" style="Regular" />
+              <letterSpacing value="0" unit="PERCENT" />
+              <lineHeight unit="AUTO" />
+            </Text>
+          </children>
+          <fills>
+            <fill blendMode="NORMAL" color="#2196f3" />
+          </fills>
+          <constraints horizontal="MIN" vertical="MIN" />
+        </Frame>
+        <Frame id="18:101" name="btn_on_top" expanded="true" maskType="ALPHA" x="170" y="20" width="80" height="70" clipsContent="true" type="FRAME">
+          <children>
+            <Text id="18:102" name="label" maskType="ALPHA" strokeAlign="OUTSIDE" x="27" y="27" width="26" height="17" fontSize="14" fontWeight="400" hyperlink="" characters="Top" type="TEXT" textAlignVertical="TOP" textAutoResize="WIDTH_AND_HEIGHT">
+              <fills>
+                <fill blendMode="NORMAL" color="#ffffff" />
+              </fills>
+              <constraints horizontal="MIN" vertical="MIN" />
+              <fontName family="Montserrat" style="Regular" />
+              <letterSpacing value="0" unit="PERCENT" />
+              <lineHeight unit="AUTO" />
+            </Text>
+          </children>
+          <fills>
+            <fill blendMode="NORMAL" color="#e53935" />
+          </fills>
+          <constraints horizontal="MIN" vertical="MIN" />
+        </Frame>
+      </children>
+      <fills>
+        <fill blendMode="NORMAL" color="#ffffff" />
+      </fills>
+      <constraints horizontal="MIN" vertical="MIN" />
+    </Frame>
+    <Frame id="18:103" name="f_images" expanded="true" maskType="ALPHA" x="360" y="520" width="320" height="240" clipsContent="true" type="FRAME">
+      <children>
+        <icon_star id="18:104" name="icon_star" maskType="ALPHA" x="20" y="20" width="24" height="24" variantProperties="" type="INSTANCE">
+          <children>
+            <Vector id="I18:104;18:49" name="shape" maskType="ALPHA" strokeAlign="CENTER" x="2" y="2" width="20" height="20" type="VECTOR">
+              <strokes>
+                <stroke blendMode="NORMAL" color="#000000" />
+              </strokes>
+              <fills>
+                <fill blendMode="NORMAL" color="#fbc02d" />
+              </fills>
+              <constraints horizontal="MIN" vertical="MIN" />
+            </Vector>
+          </children>
+          <constraints horizontal="MIN" vertical="MIN" />
+          <mainComponent id="18:48" />
+        </icon_star>
+        <icon_star id="18:106" name="icon_star" maskType="ALPHA" x="60" y="20" width="24" height="24" variantProperties="" type="INSTANCE">
+          <children>
+            <Vector id="I18:106;18:49" name="shape" maskType="ALPHA" strokeAlign="CENTER" x="2" y="2" width="20" height="20" type="VECTOR">
+              <strokes>
+                <stroke blendMode="NORMAL" color="#000000" />
+              </strokes>
+              <fills>
+                <fill blendMode="NORMAL" color="#fbc02d" />
+              </fills>
+              <constraints horizontal="MIN" vertical="MIN" />
+            </Vector>
+          </children>
+          <constraints horizontal="MIN" vertical="MIN" />
+          <mainComponent id="18:48" />
+        </icon_star>
+        <icon_heart id="18:108" name="icon_heart" maskType="ALPHA" x="100" y="20" width="24" height="24" variantProperties="" type="INSTANCE">
+          <children>
+            <Vector id="I18:108;18:51" name="shape" maskType="ALPHA" strokeAlign="CENTER" x="2" y="2" width="20.094863891601562" height="17.397258758544922" type="VECTOR">
+              <strokes>
+                <stroke blendMode="NORMAL" color="#000000" />
+              </strokes>
+              <fills>
+                <fill blendMode="NORMAL" color="#e53935" />
+              </fills>
+              <constraints horizontal="MIN" vertical="MIN" />
+            </Vector>
+          </children>
+          <constraints horizontal="MIN" vertical="MIN" />
+          <mainComponent id="18:50" />
+        </icon_heart>
+        <Frame id="18:110" name="panel_icons" expanded="true" maskType="ALPHA" x="20" y="80" width="120" height="50" clipsContent="true" type="FRAME">
+          <children>
+            <icon_heart id="18:111" name="icon_heart" maskType="ALPHA" x="10" y="13" width="24" height="24" variantProperties="" type="INSTANCE">
+              <children>
+                <Vector id="I18:111;18:51" name="shape" maskType="ALPHA" strokeAlign="CENTER" x="2" y="2" width="20.094863891601562" height="17.397258758544922" type="VECTOR">
+                  <strokes>
+                    <stroke blendMode="NORMAL" color="#000000" />
+                  </strokes>
+                  <fills>
+                    <fill blendMode="NORMAL" color="#e53935" />
+                  </fills>
+                  <constraints horizontal="MIN" vertical="MIN" />
+                </Vector>
+              </children>
+              <constraints horizontal="MIN" vertical="MIN" />
+              <mainComponent id="18:50" />
+            </icon_heart>
+          </children>
+          <fills>
+            <fill blendMode="NORMAL" color="#f5f5f5" />
+          </fills>
+          <constraints horizontal="MIN" vertical="MIN" />
+        </Frame>
+      </children>
+      <fills>
+        <fill blendMode="NORMAL" color="#ffffff" />
+      </fills>
+      <constraints horizontal="MIN" vertical="MIN" />
+    </Frame>
+    <Frame id="18:113" name="f_text_sizes" expanded="true" maskType="ALPHA" x="720" y="520" width="320" height="500" clipsContent="true" type="FRAME">
+      <children>
+        <Text id="18:114" name="size_8" maskType="ALPHA" strokeAlign="OUTSIDE" x="6" y="4" width="19" height="10" fontSize="8" fontWeight="400" hyperlink="" characters="Ag 8" type="TEXT" textAlignVertical="TOP" textAutoResize="WIDTH_AND_HEIGHT">
+          <fills>
+            <fill blendMode="NORMAL" color="#212121" />
+          </fills>
+          <constraints horizontal="MIN" vertical="MIN" />
+          <fontName family="Montserrat" style="Regular" />
+          <letterSpacing value="0" unit="PERCENT" />
+          <lineHeight unit="AUTO" />
+        </Text>
+        <Text id="18:115" name="size_10" maskType="ALPHA" strokeAlign="OUTSIDE" x="6" y="16" width="27" height="12" fontSize="10" fontWeight="400" hyperlink="" characters="Ag 10" type="TEXT" textAlignVertical="TOP" textAutoResize="WIDTH_AND_HEIGHT">
+          <fills>
+            <fill blendMode="NORMAL" color="#212121" />
+          </fills>
+          <constraints horizontal="MIN" vertical="MIN" />
+          <fontName family="Montserrat" style="Regular" />
+          <letterSpacing value="0" unit="PERCENT" />
+          <lineHeight unit="AUTO" />
+        </Text>
+        <Text id="18:116" name="size_12" maskType="ALPHA" strokeAlign="OUTSIDE" x="6" y="30" width="32" height="15" fontSize="12" fontWeight="400" hyperlink="" characters="Ag 12" type="TEXT" textAlignVertical="TOP" textAutoResize="WIDTH_AND_HEIGHT">
+          <fills>
+            <fill blendMode="NORMAL" color="#212121" />
+          </fills>
+          <constraints horizontal="MIN" vertical="MIN" />
+          <fontName family="Montserrat" style="Regular" />
+          <letterSpacing value="0" unit="PERCENT" />
+          <lineHeight unit="AUTO" />
+        </Text>
+        <Text id="18:117" name="size_14" maskType="ALPHA" strokeAlign="OUTSIDE" x="6" y="47" width="38" height="17" fontSize="14" fontWeight="400" hyperlink="" characters="Ag 14" type="TEXT" textAlignVertical="TOP" textAutoResize="WIDTH_AND_HEIGHT">
+          <fills>
+            <fill blendMode="NORMAL" color="#212121" />
+          </fills>
+          <constraints horizontal="MIN" vertical="MIN" />
+          <fontName family="Montserrat" style="Regular" />
+          <letterSpacing value="0" unit="PERCENT" />
+          <lineHeight unit="AUTO" />
+        </Text>
+        <Text id="18:118" name="size_16" maskType="ALPHA" strokeAlign="OUTSIDE" x="6" y="66" width="43" height="20" fontSize="16" fontWeight="400" hyperlink="" characters="Ag 16" type="TEXT" textAlignVertical="TOP" textAutoResize="WIDTH_AND_HEIGHT">
+          <fills>
+            <fill blendMode="NORMAL" color="#212121" />
+          </fills>
+          <constraints horizontal="MIN" vertical="MIN" />
+          <fontName family="Montserrat" style="Regular" />
+          <letterSpacing value="0" unit="PERCENT" />
+          <lineHeight unit="AUTO" />
+        </Text>
+        <Text id="18:119" name="size_18" maskType="ALPHA" strokeAlign="OUTSIDE" x="6" y="88" width="48" height="22" fontSize="18" fontWeight="400" hyperlink="" characters="Ag 18" type="TEXT" textAlignVertical="TOP" textAutoResize="WIDTH_AND_HEIGHT">
+          <fills>
+            <fill blendMode="NORMAL" color="#212121" />
+          </fills>
+          <constraints horizontal="MIN" vertical="MIN" />
+          <fontName family="Montserrat" style="Regular" />
+          <letterSpacing value="0" unit="PERCENT" />
+          <lineHeight unit="AUTO" />
+        </Text>
+        <Text id="18:120" name="size_20" maskType="ALPHA" strokeAlign="OUTSIDE" x="6" y="112" width="58" height="24" fontSize="20" fontWeight="400" hyperlink="" characters="Ag 20" type="TEXT" textAlignVertical="TOP" textAutoResize="WIDTH_AND_HEIGHT">
+          <fills>
+            <fill blendMode="NORMAL" color="#212121" />
+          </fills>
+          <constraints horizontal="MIN" vertical="MIN" />
+          <fontName family="Montserrat" style="Regular" />
+          <letterSpacing value="0" unit="PERCENT" />
+          <lineHeight unit="AUTO" />
+        </Text>
+        <Text id="18:121" name="size_22" maskType="ALPHA" strokeAlign="OUTSIDE" x="6" y="138" width="62" height="27" fontSize="22" fontWeight="400" hyperlink="" characters="Ag 22" type="TEXT" textAlignVertical="TOP" textAutoResize="WIDTH_AND_HEIGHT">
+          <fills>
+            <fill blendMode="NORMAL" color="#212121" />
+          </fills>
+          <constraints horizontal="MIN" vertical="MIN" />
+          <fontName family="Montserrat" style="Regular" />
+          <letterSpacing value="0" unit="PERCENT" />
+          <lineHeight unit="AUTO" />
+        </Text>
+        <Text id="18:122" name="size_24" maskType="ALPHA" strokeAlign="OUTSIDE" x="6" y="167" width="69" height="29" fontSize="24" fontWeight="400" hyperlink="" characters="Ag 24" type="TEXT" textAlignVertical="TOP" textAutoResize="WIDTH_AND_HEIGHT">
+          <fills>
+            <fill blendMode="NORMAL" color="#212121" />
+          </fills>
+          <constraints horizontal="MIN" vertical="MIN" />
+          <fontName family="Montserrat" style="Regular" />
+          <letterSpacing value="0" unit="PERCENT" />
+          <lineHeight unit="AUTO" />
+        </Text>
+        <Text id="18:123" name="size_26" maskType="ALPHA" strokeAlign="OUTSIDE" x="6" y="198" width="74" height="32" fontSize="26" fontWeight="400" hyperlink="" characters="Ag 26" type="TEXT" textAlignVertical="TOP" textAutoResize="WIDTH_AND_HEIGHT">
+          <fills>
+            <fill blendMode="NORMAL" color="#212121" />
+          </fills>
+          <constraints horizontal="MIN" vertical="MIN" />
+          <fontName family="Montserrat" style="Regular" />
+          <letterSpacing value="0" unit="PERCENT" />
+          <lineHeight unit="AUTO" />
+        </Text>
+        <Text id="18:124" name="size_28" maskType="ALPHA" strokeAlign="OUTSIDE" x="6" y="232" width="81" height="34" fontSize="28" fontWeight="400" hyperlink="" characters="Ag 28" type="TEXT" textAlignVertical="TOP" textAutoResize="WIDTH_AND_HEIGHT">
+          <fills>
+            <fill blendMode="NORMAL" color="#212121" />
+          </fills>
+          <constraints horizontal="MIN" vertical="MIN" />
+          <fontName family="Montserrat" style="Regular" />
+          <letterSpacing value="0" unit="PERCENT" />
+          <lineHeight unit="AUTO" />
+        </Text>
+        <Text id="18:125" name="size_30" maskType="ALPHA" strokeAlign="OUTSIDE" x="6" y="268" width="87" height="37" fontSize="30" fontWeight="400" hyperlink="" characters="Ag 30" type="TEXT" textAlignVertical="TOP" textAutoResize="WIDTH_AND_HEIGHT">
+          <fills>
+            <fill blendMode="NORMAL" color="#212121" />
+          </fills>
+          <constraints horizontal="MIN" vertical="MIN" />
+          <fontName family="Montserrat" style="Regular" />
+          <letterSpacing value="0" unit="PERCENT" />
+          <lineHeight unit="AUTO" />
+        </Text>
+        <Text id="18:126" name="size_32" maskType="ALPHA" strokeAlign="OUTSIDE" x="166" y="4" width="90" height="39" fontSize="32" fontWeight="400" hyperlink="" characters="Ag 32" type="TEXT" textAlignVertical="TOP" textAutoResize="WIDTH_AND_HEIGHT">
+          <fills>
+            <fill blendMode="NORMAL" color="#212121" />
+          </fills>
+          <constraints horizontal="MIN" vertical="MIN" />
+          <fontName family="Montserrat" style="Regular" />
+          <letterSpacing value="0" unit="PERCENT" />
+          <lineHeight unit="AUTO" />
+        </Text>
+        <Text id="18:127" name="size_34" maskType="ALPHA" strokeAlign="OUTSIDE" x="166" y="45" width="99" height="41" fontSize="34" fontWeight="400" hyperlink="" characters="Ag 34" type="TEXT" textAlignVertical="TOP" textAutoResize="WIDTH_AND_HEIGHT">
+          <fills>
+            <fill blendMode="NORMAL" color="#212121" />
+          </fills>
+          <constraints horizontal="MIN" vertical="MIN" />
+          <fontName family="Montserrat" style="Regular" />
+          <letterSpacing value="0" unit="PERCENT" />
+          <lineHeight unit="AUTO" />
+        </Text>
+        <Text id="18:128" name="size_36" maskType="ALPHA" strokeAlign="OUTSIDE" x="166" y="88" width="102" height="44" fontSize="36" fontWeight="400" hyperlink="" characters="Ag 36" type="TEXT" textAlignVertical="TOP" textAutoResize="WIDTH_AND_HEIGHT">
+          <fills>
+            <fill blendMode="NORMAL" color="#212121" />
+          </fills>
+          <constraints horizontal="MIN" vertical="MIN" />
+          <fontName family="Montserrat" style="Regular" />
+          <letterSpacing value="0" unit="PERCENT" />
+          <lineHeight unit="AUTO" />
+        </Text>
+        <Text id="18:129" name="size_38" maskType="ALPHA" strokeAlign="OUTSIDE" x="166" y="134" width="109" height="46" fontSize="38" fontWeight="400" hyperlink="" characters="Ag 38" type="TEXT" textAlignVertical="TOP" textAutoResize="WIDTH_AND_HEIGHT">
+          <fills>
+            <fill blendMode="NORMAL" color="#212121" />
+          </fills>
+          <constraints horizontal="MIN" vertical="MIN" />
+          <fontName family="Montserrat" style="Regular" />
+          <letterSpacing value="0" unit="PERCENT" />
+          <lineHeight unit="AUTO" />
+        </Text>
+        <Text id="18:130" name="size_40" maskType="ALPHA" strokeAlign="OUTSIDE" x="166" y="182" width="120" height="49" fontSize="40" fontWeight="400" hyperlink="" characters="Ag 40" type="TEXT" textAlignVertical="TOP" textAutoResize="WIDTH_AND_HEIGHT">
+          <fills>
+            <fill blendMode="NORMAL" color="#212121" />
+          </fills>
+          <constraints horizontal="MIN" vertical="MIN" />
+          <fontName family="Montserrat" style="Regular" />
+          <letterSpacing value="0" unit="PERCENT" />
+          <lineHeight unit="AUTO" />
+        </Text>
+        <Text id="18:131" name="size_42" maskType="ALPHA" strokeAlign="OUTSIDE" x="166" y="233" width="122" height="51" fontSize="42" fontWeight="400" hyperlink="" characters="Ag 42" type="TEXT" textAlignVertical="TOP" textAutoResize="WIDTH_AND_HEIGHT">
+          <fills>
+            <fill blendMode="NORMAL" color="#212121" />
+          </fills>
+          <constraints horizontal="MIN" vertical="MIN" />
+          <fontName family="Montserrat" style="Regular" />
+          <letterSpacing value="0" unit="PERCENT" />
+          <lineHeight unit="AUTO" />
+        </Text>
+        <Text id="18:132" name="size_44" maskType="ALPHA" strokeAlign="OUTSIDE" x="166" y="286" width="132" height="54" fontSize="44" fontWeight="400" hyperlink="" characters="Ag 44" type="TEXT" textAlignVertical="TOP" textAutoResize="WIDTH_AND_HEIGHT">
+          <fills>
+            <fill blendMode="NORMAL" color="#212121" />
+          </fills>
+          <constraints horizontal="MIN" vertical="MIN" />
+          <fontName family="Montserrat" style="Regular" />
+          <letterSpacing value="0" unit="PERCENT" />
+          <lineHeight unit="AUTO" />
+        </Text>
+        <Text id="18:133" name="size_46" maskType="ALPHA" strokeAlign="OUTSIDE" x="166" y="342" width="135" height="56" fontSize="46" fontWeight="400" hyperlink="" characters="Ag 46" type="TEXT" textAlignVertical="TOP" textAutoResize="WIDTH_AND_HEIGHT">
+          <fills>
+            <fill blendMode="NORMAL" color="#212121" />
+          </fills>
+          <constraints horizontal="MIN" vertical="MIN" />
+          <fontName family="Montserrat" style="Regular" />
+          <letterSpacing value="0" unit="PERCENT" />
+          <lineHeight unit="AUTO" />
+        </Text>
+        <Text id="18:134" name="size_48" maskType="ALPHA" strokeAlign="OUTSIDE" x="166" y="400" width="143" height="59" fontSize="48" fontWeight="400" hyperlink="" characters="Ag 48" type="TEXT" textAlignVertical="TOP" textAutoResize="WIDTH_AND_HEIGHT">
+          <fills>
+            <fill blendMode="NORMAL" color="#212121" />
+          </fills>
+          <constraints horizontal="MIN" vertical="MIN" />
+          <fontName family="Montserrat" style="Regular" />
+          <letterSpacing value="0" unit="PERCENT" />
+          <lineHeight unit="AUTO" />
+        </Text>
+      </children>
+      <fills>
+        <fill blendMode="NORMAL" color="#ffffff" />
+      </fills>
+      <constraints horizontal="MIN" vertical="MIN" />
+    </Frame>
+    <Frame id="18:135" name="f_text_multiline" expanded="true" maskType="ALPHA" x="1080" y="520" width="320" height="240" clipsContent="true" type="FRAME">
+      <children>
+        <Text id="18:136" name="lines" maskType="ALPHA" strokeAlign="OUTSIDE" x="10" y="10" width="94" height="60" fontSize="16" fontWeight="400" hyperlink="" characters="First line
+Second line
+Third" type="TEXT" textAlignVertical="TOP" textAutoResize="WIDTH_AND_HEIGHT">
+          <fills>
+            <fill blendMode="NORMAL" color="#212121" />
+          </fills>
+          <constraints horizontal="MIN" vertical="MIN" />
+          <fontName family="Montserrat" style="Regular" />
+          <letterSpacing value="0" unit="PERCENT" />
+          <lineHeight unit="AUTO" />
+        </Text>
+        <Text id="18:137" name="wrapped" maskType="ALPHA" strokeAlign="OUTSIDE" x="10" y="100" width="180" height="51" fontSize="14" fontWeight="400" hyperlink="" characters="This sentence is long enough to wrap inside a fixed width box." type="TEXT" textAlignVertical="TOP" textAutoResize="HEIGHT">
+          <fills>
+            <fill blendMode="NORMAL" color="#212121" />
+          </fills>
+          <constraints horizontal="MIN" vertical="MIN" />
+          <fontName family="Montserrat" style="Regular" />
+          <letterSpacing value="0" unit="PERCENT" />
+          <lineHeight unit="AUTO" />
+        </Text>
+        <Text id="18:138" name="centered" maskType="ALPHA" strokeAlign="OUTSIDE" x="10" y="190" width="300" height="50" fontSize="18" fontWeight="400" hyperlink="" characters="Centered
+text" type="TEXT" textAlignHorizontal="CENTER" textAlignVertical="TOP">
+          <fills>
+            <fill blendMode="NORMAL" color="#212121" />
+          </fills>
+          <constraints horizontal="MIN" vertical="MIN" />
+          <fontName family="Montserrat" style="Regular" />
+          <letterSpacing value="0" unit="PERCENT" />
+          <lineHeight unit="AUTO" />
+        </Text>
+      </children>
+      <fills>
+        <fill blendMode="NORMAL" color="#ffffff" />
+      </fills>
+      <constraints horizontal="MIN" vertical="MIN" />
+    </Frame>
+    <Frame id="18:139" name="f_opacity" expanded="true" maskType="ALPHA" x="1440" y="520" width="320" height="240" clipsContent="true" type="FRAME">
+      <children>
+        <Frame id="18:140" name="panel_opa_0" expanded="true" opacity="0" maskType="ALPHA" x="10" y="10" width="90" height="60" clipsContent="true" type="FRAME">
+          <fills>
+            <fill blendMode="NORMAL" color="#3f51b5" />
+          </fills>
+          <constraints horizontal="MIN" vertical="MIN" />
+        </Frame>
+        <Frame id="18:141" name="panel_opa_50" expanded="true" opacity="0.5" maskType="ALPHA" x="115" y="10" width="90" height="60" clipsContent="true" type="FRAME">
+          <fills>
+            <fill blendMode="NORMAL" color="#3f51b5" />
+          </fills>
+          <constraints horizontal="MIN" vertical="MIN" />
+        </Frame>
+        <Frame id="18:142" name="panel_opa_100" expanded="true" maskType="ALPHA" x="220" y="10" width="90" height="60" clipsContent="true" type="FRAME">
+          <fills>
+            <fill blendMode="NORMAL" color="#3f51b5" />
+          </fills>
+          <constraints horizontal="MIN" vertical="MIN" />
+        </Frame>
+        <Frame id="18:143" name="btn_opa_50" expanded="true" opacity="0.5" maskType="ALPHA" x="10" y="90" width="140" height="40" clipsContent="true" type="FRAME">
+          <children>
+            <Text id="18:144" name="label" maskType="ALPHA" strokeAlign="OUTSIDE" x="56" y="12" width="29" height="17" fontSize="14" fontWeight="400" hyperlink="" characters="Half" type="TEXT" textAlignVertical="TOP" textAutoResize="WIDTH_AND_HEIGHT">
+              <fills>
+                <fill blendMode="NORMAL" color="#ffffff" />
+              </fills>
+              <constraints horizontal="MIN" vertical="MIN" />
+              <fontName family="Montserrat" style="Regular" />
+              <letterSpacing value="0" unit="PERCENT" />
+              <lineHeight unit="AUTO" />
+            </Text>
+          </children>
+          <fills>
+            <fill blendMode="NORMAL" color="#2196f3" />
+          </fills>
+          <constraints horizontal="MIN" vertical="MIN" />
+        </Frame>
+        <Text id="18:145" name="text_opa_50" opacity="0.5" maskType="ALPHA" strokeAlign="OUTSIDE" x="170" y="100" width="68" height="20" fontSize="16" fontWeight="400" hyperlink="" characters="Half text" type="TEXT" textAlignVertical="TOP" textAutoResize="WIDTH_AND_HEIGHT">
+          <fills>
+            <fill blendMode="NORMAL" color="#212121" />
+          </fills>
+          <constraints horizontal="MIN" vertical="MIN" />
+          <fontName family="Montserrat" style="Regular" />
+          <letterSpacing value="0" unit="PERCENT" />
+          <lineHeight unit="AUTO" />
+        </Text>
+        <Frame id="18:146" name="panel_fill_50" expanded="true" maskType="ALPHA" x="10" y="150" width="140" height="50" clipsContent="true" type="FRAME">
+          <fills>
+            <fill opacity="0.5" blendMode="NORMAL" color="#e91e63" />
+          </fills>
+          <constraints horizontal="MIN" vertical="MIN" />
+        </Frame>
+      </children>
+      <fills>
+        <fill blendMode="NORMAL" color="#ffffff" />
+      </fills>
+      <constraints horizontal="MIN" vertical="MIN" />
+    </Frame>
+    <Frame id="18:147" name="f_hidden" expanded="true" maskType="ALPHA" x="0" y="1040" width="320" height="240" clipsContent="true" type="FRAME">
+      <children>
+        <Frame id="18:148" name="panel_hidden" visible="false" expanded="true" maskType="ALPHA" x="10" y="10" width="200" height="120" clipsContent="true" type="FRAME">
+          <children>
+            <Frame id="18:149" name="btn_inside_hidden" expanded="true" maskType="ALPHA" x="10" y="10" width="120" height="40" clipsContent="true" type="FRAME">
+              <children>
+                <Text id="18:150" name="label" maskType="ALPHA" strokeAlign="OUTSIDE" x="34" y="12" width="53" height="17" fontSize="14" fontWeight="400" hyperlink="" characters="Hidden" type="TEXT" textAlignVertical="TOP" textAutoResize="WIDTH_AND_HEIGHT">
+                  <fills>
+                    <fill blendMode="NORMAL" color="#ffffff" />
+                  </fills>
+                  <constraints horizontal="MIN" vertical="MIN" />
+                  <fontName family="Montserrat" style="Regular" />
+                  <letterSpacing value="0" unit="PERCENT" />
+                  <lineHeight unit="AUTO" />
+                </Text>
+              </children>
+              <fills>
+                <fill blendMode="NORMAL" color="#2196f3" />
+              </fills>
+              <constraints horizontal="MIN" vertical="MIN" />
+            </Frame>
+            <Text id="18:151" name="text_inside_hidden" maskType="ALPHA" strokeAlign="OUTSIDE" x="10" y="70" width="74" height="17" fontSize="14" fontWeight="400" hyperlink="" characters="Not drawn" type="TEXT" textAlignVertical="TOP" textAutoResize="WIDTH_AND_HEIGHT">
+              <fills>
+                <fill blendMode="NORMAL" color="#212121" />
+              </fills>
+              <constraints horizontal="MIN" vertical="MIN" />
+              <fontName family="Montserrat" style="Regular" />
+              <letterSpacing value="0" unit="PERCENT" />
+              <lineHeight unit="AUTO" />
+            </Text>
+          </children>
+          <fills>
+            <fill blendMode="NORMAL" color="#ffcdd2" />
+          </fills>
+          <constraints horizontal="MIN" vertical="MIN" />
+        </Frame>
+        <Rectangle id="18:152" name="box_hidden" visible="false" maskType="ALPHA" x="220" y="10" width="60" height="60" type="RECTANGLE">
+          <fills>
+            <fill blendMode="NORMAL" color="#d32f2f" />
+          </fills>
+          <constraints horizontal="MIN" vertical="MIN" />
+        </Rectangle>
+        <Frame id="18:153" name="btn_visible" expanded="true" maskType="ALPHA" x="10" y="150" width="120" height="40" clipsContent="true" type="FRAME">
+          <children>
+            <Text id="18:154" name="label" maskType="ALPHA" strokeAlign="OUTSIDE" x="37" y="12" width="46" height="17" fontSize="14" fontWeight="400" hyperlink="" characters="Visible" type="TEXT" textAlignVertical="TOP" textAutoResize="WIDTH_AND_HEIGHT">
+              <fills>
+                <fill blendMode="NORMAL" color="#ffffff" />
+              </fills>
+              <constraints horizontal="MIN" vertical="MIN" />
+              <fontName family="Montserrat" style="Regular" />
+              <letterSpacing value="0" unit="PERCENT" />
+              <lineHeight unit="AUTO" />
+            </Text>
+          </children>
+          <fills>
+            <fill blendMode="NORMAL" color="#2196f3" />
+          </fills>
+          <constraints horizontal="MIN" vertical="MIN" />
+        </Frame>
+      </children>
+      <fills>
+        <fill blendMode="NORMAL" color="#ffffff" />
+      </fills>
+      <constraints horizontal="MIN" vertical="MIN" />
+    </Frame>
+    <Frame id="18:155" name="f_rotated" expanded="true" maskType="ALPHA" x="360" y="1040" width="320" height="240" clipsContent="true" type="FRAME">
+      <children>
+        <Rectangle id="18:156" name="box_rotated" maskType="ALPHA" x="60" y="40" width="120" height="40" rotation="30.00000044529205" type="RECTANGLE">
+          <fills>
+            <fill blendMode="NORMAL" color="#c0ca33" />
+          </fills>
+          <constraints horizontal="MIN" vertical="MIN" />
+        </Rectangle>
+        <Frame id="18:157" name="btn_rotated" expanded="true" maskType="ALPHA" x="160" y="140" width="120" height="40" rotation="-15.000000885528316" clipsContent="true" type="FRAME">
+          <children>
+            <Text id="18:158" name="label" maskType="ALPHA" strokeAlign="OUTSIDE" x="41" y="12" width="39" height="17" fontSize="14" fontWeight="400" hyperlink="" characters="Tilted" type="TEXT" textAlignVertical="TOP" textAutoResize="WIDTH_AND_HEIGHT">
+              <fills>
+                <fill blendMode="NORMAL" color="#ffffff" />
+              </fills>
+              <constraints horizontal="MIN" vertical="MIN" />
+              <fontName family="Montserrat" style="Regular" />
+              <letterSpacing value="0" unit="PERCENT" />
+              <lineHeight unit="AUTO" />
+            </Text>
+          </children>
+          <fills>
+            <fill blendMode="NORMAL" color="#2196f3" />
+          </fills>
+          <constraints horizontal="MIN" vertical="MIN" />
+        </Frame>
+      </children>
+      <fills>
+        <fill blendMode="NORMAL" color="#ffffff" />
+      </fills>
+      <constraints horizontal="MIN" vertical="MIN" />
+    </Frame>
+    <Frame id="18:159" name="f_list" expanded="true" maskType="ALPHA" x="720" y="1040" width="320" height="240" clipsContent="true" type="FRAME">
+      <children>
+        <Frame id="18:160" name="list_items" expanded="true" maskType="ALPHA" x="10" y="10" width="200" height="200" clipsContent="true" type="FRAME">
+          <children>
+            <Frame id="18:161" name="btn_row_example" expanded="true" maskType="ALPHA" x="10" y="10" width="180" height="40" clipsContent="true" type="FRAME">
+              <children>
+                <Text id="18:162" name="label" maskType="ALPHA" strokeAlign="OUTSIDE" x="75" y="12" width="31" height="17" fontSize="14" fontWeight="400" hyperlink="" characters="Row" type="TEXT" textAlignVertical="TOP" textAutoResize="WIDTH_AND_HEIGHT">
+                  <fills>
+                    <fill blendMode="NORMAL" color="#ffffff" />
+                  </fills>
+                  <constraints horizontal="MIN" vertical="MIN" />
+                  <fontName family="Montserrat" style="Regular" />
+                  <letterSpacing value="0" unit="PERCENT" />
+                  <lineHeight unit="AUTO" />
+                </Text>
+              </children>
+              <fills>
+                <fill blendMode="NORMAL" color="#2196f3" />
+              </fills>
+              <constraints horizontal="MIN" vertical="MIN" />
+            </Frame>
+            <Text id="18:163" name="row_hint" maskType="ALPHA" strokeAlign="OUTSIDE" x="10" y="60" width="102" height="15" fontSize="12" fontWeight="400" hyperlink="" characters="design-time only" type="TEXT" textAlignVertical="TOP" textAutoResize="WIDTH_AND_HEIGHT">
+              <fills>
+                <fill blendMode="NORMAL" color="#212121" />
+              </fills>
+              <constraints horizontal="MIN" vertical="MIN" />
+              <fontName family="Montserrat" style="Regular" />
+              <letterSpacing value="0" unit="PERCENT" />
+              <lineHeight unit="AUTO" />
+            </Text>
+          </children>
+          <fills>
+            <fill blendMode="NORMAL" color="#eceff1" />
+          </fills>
+          <constraints horizontal="MIN" vertical="MIN" />
+        </Frame>
+        <Frame id="18:164" name="grid_cells" expanded="true" maskType="ALPHA" x="220" y="10" width="90" height="200" clipsContent="true" type="FRAME">
+          <fills>
+            <fill blendMode="NORMAL" color="#e8eaf6" />
+          </fills>
+          <constraints horizontal="MIN" vertical="MIN" />
+        </Frame>
+      </children>
+      <fills>
+        <fill blendMode="NORMAL" color="#ffffff" />
+      </fills>
+      <constraints horizontal="MIN" vertical="MIN" />
+    </Frame>
+    <Frame id="18:165" name="f_tiny" expanded="true" maskType="ALPHA" x="1080" y="1040" width="320" height="240" clipsContent="true" type="FRAME">
+      <children>
+        <Rectangle id="18:166" name="btn_4x4" maskType="ALPHA" x="20" y="20" width="4" height="4" type="RECTANGLE">
+          <fills>
+            <fill blendMode="NORMAL" color="#d32f2f" />
+          </fills>
+          <constraints horizontal="MIN" vertical="MIN" />
+        </Rectangle>
+        <Rectangle id="18:167" name="btn_1x1" maskType="ALPHA" x="60" y="20" width="1" height="1" type="RECTANGLE">
+          <fills>
+            <fill blendMode="NORMAL" color="#d32f2f" />
+          </fills>
+          <constraints horizontal="MIN" vertical="MIN" />
+        </Rectangle>
+        <Rectangle id="18:168" name="slider_tiny" maskType="ALPHA" x="20" y="60" width="40" height="4" type="RECTANGLE">
+          <fills>
+            <fill blendMode="NORMAL" color="#9e9e9e" />
+          </fills>
+          <constraints horizontal="MIN" vertical="MIN" />
+        </Rectangle>
+      </children>
+      <fills>
+        <fill blendMode="NORMAL" color="#ffffff" />
+      </fills>
+      <constraints horizontal="MIN" vertical="MIN" />
+    </Frame>
+    <ComponentSet id="18:199" name="toggle" expanded="true" cornerRadius="5" maskType="ALPHA" x="200" y="-200" width="48" height="24" clipsContent="true" type="COMPONENT_SET">
+      <children>
+        <Component id="18:197" name="state_on" expanded="true" cornerRadius="12" maskType="ALPHA" x="0" y="0" width="48" height="24" componentPropertyDefinitions="" type="COMPONENT">
+          <fills>
+            <fill blendMode="NORMAL" color="#43a047" />
+          </fills>
+          <constraints horizontal="MIN" vertical="MIN" />
+          <variantProperties state="on" />
+        </Component>
+        <Component id="18:198" name="state_off" expanded="true" cornerRadius="12" maskType="ALPHA" x="0" y="0" width="48" height="24" componentPropertyDefinitions="" type="COMPONENT">
+          <fills>
+            <fill blendMode="NORMAL" color="#bdbdbd" />
+          </fills>
+          <constraints horizontal="MIN" vertical="MIN" />
+          <variantProperties state="off" />
+        </Component>
+      </children>
+      <dashPattern>
+        <dashPattern-item value="10" index="0" />
+        <dashPattern-item value="5" index="1" />
+      </dashPattern>
+      <constraints horizontal="MIN" vertical="MIN" />
+      <componentPropertyDefinitions>
+        <state type="VARIANT" defaultValue="on">
+          <variantOptions>
+            <variantOption value="on" index="0" />
+            <variantOption value="off" index="1" />
+          </variantOptions>
+        </state>
+      </componentPropertyDefinitions>
+      <defaultVariant id="18:197" />
+      <variantGroupProperties>
+        <state>
+          <values>
+            <value value="on" index="0" />
+            <value value="off" index="1" />
+          </values>
+        </state>
+      </variantGroupProperties>
+    </ComponentSet>
+  </children>
+  <backgrounds>
+    <background blendMode="NORMAL" color="#f5f5f5" />
+  </backgrounds>
+</page>

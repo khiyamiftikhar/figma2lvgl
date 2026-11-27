@@ -1,0 +1,361 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?figml version="1.0"?>
+<page id="18:47" name="Page_3" type="PAGE">
+  <children>
+    <Component id="18:48" name="icon_star" expanded="true" maskType="ALPHA" x="0" y="-200" width="24" height="24" variantProperties="" type="COMPONENT">
+      <children>
+        <Vector id="18:49" name="shape" maskType="ALPHA" strokeAlign="CENTER" x="2" y="2" width="20" height="20" type="VECTOR">
+          <strokes>
+            <stroke blendMode="NORMAL" color="#000000" />
+          </strokes>
+          <fills>
+            <fill blendMode="NORMAL" color="#fbc02d" />
+          </fills>
+          <constraints horizontal="MIN" vertical="MIN" />
+        </Vector>
+      </children>
+      <constraints horizontal="MIN" vertical="MIN" />
+    </Component>
+    <Component id="18:50" name="icon_heart" expanded="true" maskType="ALPHA" x="60" y="-200" width="24" height="24" variantProperties="" type="COMPONENT">
+      <children>
+        <Vector id="18:51" name="shape" maskType="ALPHA" strokeAlign="CENTER" x="2" y="2" width="20.094863891601562" height="17.397258758544922" type="VECTOR">
+          <strokes>
+            <stroke blendMode="NORMAL" color="#000000" />
+          </strokes>
+          <fills>
+            <fill blendMode="NORMAL" color="#e53935" />
+          </fills>
+          <constraints horizontal="MIN" vertical="MIN" />
+        </Vector>
+      </children>
+      <constraints horizontal="MIN" vertical="MIN" />
+    </Component>
+    <Frame id="18:169" name="showcase" expanded="true" maskType="ALPHA" x="0" y="1600" width="480" height="320" clipsContent="true" type="FRAME">
+      <children>
+        <Frame id="18:170" name="panel_top" expanded="true" maskType="ALPHA" x="0" y="0" width="480" height="40" clipsContent="true" type="FRAME">
+          <children>
+            <Text id="18:171" name="title" maskType="ALPHA" strokeAlign="OUTSIDE" x="12" y="10" width="81" height="20" fontSize="16" fontWeight="400" hyperlink="" characters="Showcase" type="TEXT" textAlignVertical="TOP" textAutoResize="WIDTH_AND_HEIGHT">
+              <fills>
+                <fill blendMode="NORMAL" color="#ffffff" />
+              </fills>
+              <constraints horizontal="MIN" vertical="MIN" />
+              <fontName family="Montserrat" style="Regular" />
+              <letterSpacing value="0" unit="PERCENT" />
+              <lineHeight unit="AUTO" />
+            </Text>
+            <icon_star id="18:172" name="icon_star" maskType="ALPHA" x="444" y="8" width="24" height="24" variantProperties="" type="INSTANCE">
+              <children>
+                <Vector id="I18:172;18:49" name="shape" maskType="ALPHA" strokeAlign="CENTER" x="2" y="2" width="20" height="20" type="VECTOR">
+                  <strokes>
+                    <stroke blendMode="NORMAL" color="#000000" />
+                  </strokes>
+                  <fills>
+                    <fill blendMode="NORMAL" color="#fbc02d" />
+                  </fills>
+                  <constraints horizontal="MIN" vertical="MIN" />
+                </Vector>
+              </children>
+              <constraints horizontal="MIN" vertical="MIN" />
+              <mainComponent id="18:48" />
+            </icon_star>
+          </children>
+          <fills>
+            <fill blendMode="NORMAL" color="#263238" />
+          </fills>
+          <constraints horizontal="MIN" vertical="MIN" />
+        </Frame>
+        <Frame id="18:174" name="btn_ok" expanded="true" cornerRadius="8" maskType="ALPHA" x="12" y="52" width="100" height="40" clipsContent="true" type="FRAME">
+          <children>
+            <Text id="18:175" name="label" maskType="ALPHA" strokeAlign="OUTSIDE" x="39" y="12" width="22" height="17" fontSize="14" fontWeight="400" hyperlink="" characters="OK" type="TEXT" textAlignVertical="TOP" textAutoResize="WIDTH_AND_HEIGHT">
+              <fills>
+                <fill blendMode="NORMAL" color="#ffffff" />
+              </fills>
+              <constraints horizontal="MIN" vertical="MIN" />
+              <fontName family="Montserrat" style="Regular" />
+              <letterSpacing value="0" unit="PERCENT" />
+              <lineHeight unit="AUTO" />
+            </Text>
+          </children>
+          <fills>
+            <fill blendMode="NORMAL" color="#43a047" />
+          </fills>
+          <constraints horizontal="MIN" vertical="MIN" />
+        </Frame>
+        <Frame id="18:176" name="btn_cancel_lp" expanded="true" strokeWeight="2" cornerRadius="8" maskType="ALPHA" x="122" y="52" width="100" height="40" clipsContent="true" type="FRAME">
+          <children>
+            <Text id="18:177" name="label" maskType="ALPHA" strokeAlign="OUTSIDE" x="26" y="12" width="48" height="17" fontSize="14" fontWeight="400" hyperlink="" characters="Cancel" type="TEXT" textAlignVertical="TOP" textAutoResize="WIDTH_AND_HEIGHT">
+              <fills>
+                <fill blendMode="NORMAL" color="#ffffff" />
+              </fills>
+              <constraints horizontal="MIN" vertical="MIN" />
+              <fontName family="Montserrat" style="Regular" />
+              <letterSpacing value="0" unit="PERCENT" />
+              <lineHeight unit="AUTO" />
+            </Text>
+          </children>
+          <strokes>
+            <stroke blendMode="NORMAL" color="#e53935" />
+          </strokes>
+          <fills>
+            <fill blendMode="NORMAL" color="#ffffff" />
+          </fills>
+          <constraints horizontal="MIN" vertical="MIN" />
+        </Frame>
+        <Rectangle id="18:178" name="battery_bar_0_100" maskType="ALPHA" x="12" y="104" width="210" height="16" type="RECTANGLE">
+          <fills>
+            <fill blendMode="NORMAL" color="#4caf50" />
+          </fills>
+          <constraints horizontal="MIN" vertical="MIN" />
+        </Rectangle>
+        <Rectangle id="18:179" name="slider_volume" maskType="ALPHA" x="12" y="132" width="210" height="16" type="RECTANGLE">
+          <fills>
+            <fill blendMode="NORMAL" color="#9e9e9e" />
+          </fills>
+          <constraints horizontal="MIN" vertical="MIN" />
+        </Rectangle>
+        <Rectangle id="18:180" name="slider_level" maskType="ALPHA" x="236" y="52" width="16" height="120" type="RECTANGLE">
+          <fills>
+            <fill blendMode="NORMAL" color="#9e9e9e" />
+          </fills>
+          <constraints horizontal="MIN" vertical="MIN" />
+        </Rectangle>
+        <Frame id="18:181" name="panel_card" expanded="true" cornerRadius="8" maskType="ALPHA" x="12" y="160" width="210" height="100" clipsContent="true" type="FRAME">
+          <children>
+            <Text id="18:182" name="card_title" maskType="ALPHA" strokeAlign="OUTSIDE" x="10" y="8" width="43" height="22" fontSize="18" fontWeight="400" hyperlink="" characters="Card" type="TEXT" textAlignVertical="TOP" textAutoResize="WIDTH_AND_HEIGHT">
+              <fills>
+                <fill blendMode="NORMAL" color="#212121" />
+              </fills>
+              <constraints horizontal="MIN" vertical="MIN" />
+              <fontName family="Montserrat" style="Regular" />
+              <letterSpacing value="0" unit="PERCENT" />
+              <lineHeight unit="AUTO" />
+            </Text>
+            <Text id="18:183" name="card_body" maskType="ALPHA" strokeAlign="OUTSIDE" x="10" y="36" width="70" height="30" fontSize="12" fontWeight="400" hyperlink="" characters="Two lines of
+body text" type="TEXT" textAlignVertical="TOP" textAutoResize="WIDTH_AND_HEIGHT">
+              <fills>
+                <fill blendMode="NORMAL" color="#212121" />
+              </fills>
+              <constraints horizontal="MIN" vertical="MIN" />
+              <fontName family="Montserrat" style="Regular" />
+              <letterSpacing value="0" unit="PERCENT" />
+              <lineHeight unit="AUTO" />
+            </Text>
+            <icon_heart id="18:184" name="icon_heart" maskType="ALPHA" x="176" y="8" width="24" height="24" variantProperties="" type="INSTANCE">
+              <children>
+                <Vector id="I18:184;18:51" name="shape" maskType="ALPHA" strokeAlign="CENTER" x="2" y="2" width="20.094863891601562" height="17.397258758544922" type="VECTOR">
+                  <strokes>
+                    <stroke blendMode="NORMAL" color="#000000" />
+                  </strokes>
+                  <fills>
+                    <fill blendMode="NORMAL" color="#e53935" />
+                  </fills>
+                  <constraints horizontal="MIN" vertical="MIN" />
+                </Vector>
+              </children>
+              <constraints horizontal="MIN" vertical="MIN" />
+              <mainComponent id="18:50" />
+            </icon_heart>
+          </children>
+          <fills>
+            <fill blendMode="NORMAL" color="#eceff1" />
+          </fills>
+          <constraints horizontal="MIN" vertical="MIN" />
+        </Frame>
+        <Frame id="18:186" name="list_devices" expanded="true" maskType="ALPHA" x="12" y="268" width="210" height="44" clipsContent="true" type="FRAME">
+          <fills>
+            <fill blendMode="NORMAL" color="#e0e0e0" />
+          </fills>
+          <constraints horizontal="MIN" vertical="MIN" />
+        </Frame>
+        <Frame id="18:187" name="panel_dim" expanded="true" opacity="0.5" maskType="ALPHA" x="236" y="180" width="40" height="40" clipsContent="true" type="FRAME">
+          <fills>
+            <fill blendMode="NORMAL" color="#3f51b5" />
+          </fills>
+          <constraints horizontal="MIN" vertical="MIN" />
+        </Frame>
+        <Frame id="18:188" name="panel_gradient" expanded="true" maskType="ALPHA" x="270" y="52" width="200" height="40" clipsContent="true" type="FRAME">
+          <fills>
+            <fill type="GRADIENT_LINEAR" blendMode="NORMAL">
+              <gradientTransform matrix="1,0,0,0,1,0" />
+              <gradientStops>
+                <gradientStop position="0" color="#2196f2" />
+                <gradientStop position="1" color="#e81f63" />
+              </gradientStops>
+            </fill>
+          </fills>
+          <constraints horizontal="MIN" vertical="MIN" />
+        </Frame>
+        <Frame id="18:189" name="btn_shadow" expanded="true" cornerRadius="8" maskType="ALPHA" x="270" y="100" width="200" height="40" clipsContent="true" type="FRAME">
+          <children>
+            <Text id="18:190" name="label" maskType="ALPHA" strokeAlign="OUTSIDE" x="72" y="12" width="57" height="17" fontSize="14" fontWeight="400" hyperlink="" characters="Shadow" type="TEXT" textAlignVertical="TOP" textAutoResize="WIDTH_AND_HEIGHT">
+              <fills>
+                <fill blendMode="NORMAL" color="#212121" />
+              </fills>
+              <constraints horizontal="MIN" vertical="MIN" />
+              <fontName family="Montserrat" style="Regular" />
+              <letterSpacing value="0" unit="PERCENT" />
+              <lineHeight unit="AUTO" />
+            </Text>
+          </children>
+          <fills>
+            <fill blendMode="NORMAL" color="#ffffff" />
+          </fills>
+          <effects>
+            <effect type="DROP_SHADOW" radius="6" spread="0" blendMode="NORMAL" showShadowBehindNode="true" color="#000000">
+              <offset x="0" y="3" />
+            </effect>
+          </effects>
+          <constraints horizontal="MIN" vertical="MIN" />
+        </Frame>
+        <Frame id="18:191" name="panel_row" expanded="true" maskType="ALPHA" x="270" y="150" width="200" height="44" layoutMode="HORIZONTAL" paddingLeft="6" paddingRight="6" paddingTop="6" paddingBottom="6" horizontalPadding="6" verticalPadding="6" primaryAxisSizingMode="FIXED" itemSpacing="6" clipsContent="true" type="FRAME">
+          <children>
+            <Frame id="18:192" name="btn_fill_a" expanded="true" maskType="ALPHA" x="6" y="6" width="91" height="32" layoutGrow="1" layoutSizingHorizontal="FILL" clipsContent="true" type="FRAME">
+              <children>
+                <Text id="18:193" name="label" maskType="ALPHA" strokeAlign="OUTSIDE" x="25" y="8" width="11" height="17" fontSize="14" fontWeight="400" hyperlink="" characters="A" type="TEXT" textAlignVertical="TOP" textAutoResize="WIDTH_AND_HEIGHT">
+                  <fills>
+                    <fill blendMode="NORMAL" color="#ffffff" />
+                  </fills>
+                  <constraints horizontal="MIN" vertical="MIN" />
+                  <fontName family="Montserrat" style="Regular" />
+                  <letterSpacing value="0" unit="PERCENT" />
+                  <lineHeight unit="AUTO" />
+                </Text>
+              </children>
+              <fills>
+                <fill blendMode="NORMAL" color="#ffb300" />
+              </fills>
+              <constraints horizontal="MIN" vertical="MIN" />
+            </Frame>
+            <Frame id="18:194" name="btn_fill_b" expanded="true" maskType="ALPHA" x="103" y="6" width="91" height="32" layoutGrow="1" layoutSizingHorizontal="FILL" clipsContent="true" type="FRAME">
+              <children>
+                <Text id="18:195" name="label" maskType="ALPHA" strokeAlign="OUTSIDE" x="25" y="8" width="11" height="17" fontSize="14" fontWeight="400" hyperlink="" characters="B" type="TEXT" textAlignVertical="TOP" textAutoResize="WIDTH_AND_HEIGHT">
+                  <fills>
+                    <fill blendMode="NORMAL" color="#ffffff" />
+                  </fills>
+                  <constraints horizontal="MIN" vertical="MIN" />
+                  <fontName family="Montserrat" style="Regular" />
+                  <letterSpacing value="0" unit="PERCENT" />
+                  <lineHeight unit="AUTO" />
+                </Text>
+              </children>
+              <fills>
+                <fill blendMode="NORMAL" color="#ffb300" />
+              </fills>
+              <constraints horizontal="MIN" vertical="MIN" />
+            </Frame>
+          </children>
+          <fills>
+            <fill blendMode="NORMAL" color="#fff8e1" />
+          </fills>
+          <constraints horizontal="MIN" vertical="MIN" />
+        </Frame>
+        <Text id="18:196" name="custom_font" maskType="ALPHA" strokeAlign="OUTSIDE" x="270" y="204" width="78" height="22" fontSize="18" fontWeight="400" hyperlink="" characters="Inter font" type="TEXT" textAlignVertical="TOP" textAutoResize="WIDTH_AND_HEIGHT">
+          <fills>
+            <fill blendMode="NORMAL" color="#212121" />
+          </fills>
+          <constraints horizontal="MIN" vertical="MIN" />
+          <fontName family="Inter" style="Regular" />
+          <letterSpacing value="0" unit="PERCENT" />
+          <lineHeight unit="AUTO" />
+        </Text>
+        <toggle_wifi id="18:200" name="toggle_wifi" cornerRadius="12" maskType="ALPHA" x="270" y="240" width="48" height="24" type="INSTANCE">
+          <fills>
+            <fill blendMode="NORMAL" color="#43a047" />
+          </fills>
+          <constraints horizontal="MIN" vertical="MIN" />
+          <variantProperties state="on" />
+          <mainComponent id="18:197" />
+          <componentProperties>
+            <state type="VARIANT" value="on" />
+          </componentProperties>
+          <overrides>
+            <override id="18:200">
+              <overriddenFields>
+                <overriddenField value="name" index="0" />
+              </overriddenFields>
+            </override>
+          </overrides>
+        </toggle_wifi>
+        <Frame id="18:201" name="btn_icon" expanded="true" cornerRadius="6" maskType="ALPHA" x="330" y="236" width="140" height="36" clipsContent="true" type="FRAME">
+          <children>
+            <icon_star id="18:202" name="icon_star" maskType="ALPHA" x="8" y="6" width="24" height="24" variantProperties="" type="INSTANCE">
+              <children>
+                <Vector id="I18:202;18:49" name="shape" maskType="ALPHA" strokeAlign="CENTER" x="2" y="2" width="20" height="20" type="VECTOR">
+                  <strokes>
+                    <stroke blendMode="NORMAL" color="#000000" />
+                  </strokes>
+                  <fills>
+                    <fill blendMode="NORMAL" color="#fbc02d" />
+                  </fills>
+                  <constraints horizontal="MIN" vertical="MIN" />
+                </Vector>
+              </children>
+              <constraints horizontal="MIN" vertical="MIN" />
+              <mainComponent id="18:48" />
+            </icon_star>
+            <Text id="18:204" name="label" maskType="ALPHA" strokeAlign="OUTSIDE" x="40" y="9" width="66" height="17" fontSize="14" fontWeight="400" hyperlink="" characters="Favourite" type="TEXT" textAlignVertical="TOP" textAutoResize="WIDTH_AND_HEIGHT">
+              <fills>
+                <fill blendMode="NORMAL" color="#ffffff" />
+              </fills>
+              <constraints horizontal="MIN" vertical="MIN" />
+              <fontName family="Montserrat" style="Regular" />
+              <letterSpacing value="0" unit="PERCENT" />
+              <lineHeight unit="AUTO" />
+            </Text>
+          </children>
+          <fills>
+            <fill blendMode="NORMAL" color="#1e88e5" />
+          </fills>
+          <constraints horizontal="MIN" vertical="MIN" />
+        </Frame>
+      </children>
+      <fills>
+        <fill blendMode="NORMAL" color="#fafafa" />
+      </fills>
+      <constraints horizontal="MIN" vertical="MIN" />
+    </Frame>
+    <ComponentSet id="18:199" name="toggle" expanded="true" cornerRadius="5" maskType="ALPHA" x="200" y="-200" width="48" height="24" clipsContent="true" type="COMPONENT_SET">
+      <children>
+        <Component id="18:197" name="state_on" expanded="true" cornerRadius="12" maskType="ALPHA" x="0" y="0" width="48" height="24" componentPropertyDefinitions="" type="COMPONENT">
+          <fills>
+            <fill blendMode="NORMAL" color="#43a047" />
+          </fills>
+          <constraints horizontal="MIN" vertical="MIN" />
+          <variantProperties state="on" />
+        </Component>
+        <Component id="18:198" name="state_off" expanded="true" cornerRadius="12" maskType="ALPHA" x="0" y="0" width="48" height="24" componentPropertyDefinitions="" type="COMPONENT">
+          <fills>
+            <fill blendMode="NORMAL" color="#bdbdbd" />
+          </fills>
+          <constraints horizontal="MIN" vertical="MIN" />
+          <variantProperties state="off" />
+        </Component>
+      </children>
+      <dashPattern>
+        <dashPattern-item value="10" index="0" />
+        <dashPattern-item value="5" index="1" />
+      </dashPattern>
+      <constraints horizontal="MIN" vertical="MIN" />
+      <componentPropertyDefinitions>
+        <state type="VARIANT" defaultValue="on">
+          <variantOptions>
+            <variantOption value="on" index="0" />
+            <variantOption value="off" index="1" />
+          </variantOptions>
+        </state>
+      </componentPropertyDefinitions>
+      <defaultVariant id="18:197" />
+      <variantGroupProperties>
+        <state>
+          <values>
+            <value value="on" index="0" />
+            <value value="off" index="1" />
+          </values>
+        </state>
+      </variantGroupProperties>
+    </ComponentSet>
+  </children>
+  <backgrounds>
+    <background blendMode="NORMAL" color="#f5f5f5" />
+  </backgrounds>
+</page>
