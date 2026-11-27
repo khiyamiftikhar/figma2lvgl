@@ -37,31 +37,36 @@ static struct {
 } s_f_button_events = {
     .btn_tap = {
         .style = {
-            .box = { .has_bg = true, .bg = 0x2196F3 }
+            .box = { .has_bg = true, .bg = 0x2196F3 },
+            .text = { .has_color = true, .color = 0xFFFFFF, .has_size = true, .size = 14 }
         },
         .label_text = "Tap",
     },
     .btn_hold = {
         .style = {
-            .box = { .has_bg = true, .bg = 0x2196F3 }
+            .box = { .has_bg = true, .bg = 0x2196F3 },
+            .text = { .has_color = true, .color = 0xFFFFFF, .has_size = true, .size = 14 }
         },
         .label_text = "Hold",
     },
     .btn_repeat = {
         .style = {
-            .box = { .has_bg = true, .bg = 0x2196F3 }
+            .box = { .has_bg = true, .bg = 0x2196F3 },
+            .text = { .has_color = true, .color = 0xFFFFFF, .has_size = true, .size = 14 }
         },
         .label_text = "Repeat",
     },
     .btn_down = {
         .style = {
-            .box = { .has_bg = true, .bg = 0x2196F3 }
+            .box = { .has_bg = true, .bg = 0x2196F3 },
+            .text = { .has_color = true, .color = 0xFFFFFF, .has_size = true, .size = 14 }
         },
         .label_text = "Down",
     },
     .btn_up = {
         .style = {
-            .box = { .has_bg = true, .bg = 0x2196F3 }
+            .box = { .has_bg = true, .bg = 0x2196F3 },
+            .text = { .has_color = true, .color = 0xFFFFFF, .has_size = true, .size = 14 }
         },
         .label_text = "Up",
     },
@@ -140,8 +145,8 @@ void ui_f_button_events_init(void)
         lv_obj_t *lbl = lv_label_create(s_f_button_events.btn_tap.lv_obj);
         lv_label_set_text(lbl, s_f_button_events.btn_tap.label_text);
         lv_obj_center(lbl);
-        /* text color/font applied to the label directly, not the container */
-        ui_apply_style(lbl, UI_CHILD_LABEL, &s_f_button_events.btn_tap.style);
+        /* the Figma Text layer's colour/font/alignment; not the button's box */
+        ui_apply_text_style(lbl, &s_f_button_events.btn_tap.style);
     }
     lv_obj_add_event_cb(s_f_button_events.btn_tap.lv_obj, ui_f_button_events_on_btn_tap_clicked,
                         LV_EVENT_CLICKED, NULL);
@@ -155,8 +160,8 @@ void ui_f_button_events_init(void)
         lv_obj_t *lbl = lv_label_create(s_f_button_events.btn_hold.lv_obj);
         lv_label_set_text(lbl, s_f_button_events.btn_hold.label_text);
         lv_obj_center(lbl);
-        /* text color/font applied to the label directly, not the container */
-        ui_apply_style(lbl, UI_CHILD_LABEL, &s_f_button_events.btn_hold.style);
+        /* the Figma Text layer's colour/font/alignment; not the button's box */
+        ui_apply_text_style(lbl, &s_f_button_events.btn_hold.style);
     }
     lv_obj_add_event_cb(s_f_button_events.btn_hold.lv_obj, ui_f_button_events_on_btn_hold_clicked,
                         LV_EVENT_CLICKED, NULL);
@@ -172,8 +177,8 @@ void ui_f_button_events_init(void)
         lv_obj_t *lbl = lv_label_create(s_f_button_events.btn_repeat.lv_obj);
         lv_label_set_text(lbl, s_f_button_events.btn_repeat.label_text);
         lv_obj_center(lbl);
-        /* text color/font applied to the label directly, not the container */
-        ui_apply_style(lbl, UI_CHILD_LABEL, &s_f_button_events.btn_repeat.style);
+        /* the Figma Text layer's colour/font/alignment; not the button's box */
+        ui_apply_text_style(lbl, &s_f_button_events.btn_repeat.style);
     }
     lv_obj_add_event_cb(s_f_button_events.btn_repeat.lv_obj, ui_f_button_events_on_btn_repeat_clicked,
                         LV_EVENT_CLICKED, NULL);
@@ -189,8 +194,8 @@ void ui_f_button_events_init(void)
         lv_obj_t *lbl = lv_label_create(s_f_button_events.btn_down.lv_obj);
         lv_label_set_text(lbl, s_f_button_events.btn_down.label_text);
         lv_obj_center(lbl);
-        /* text color/font applied to the label directly, not the container */
-        ui_apply_style(lbl, UI_CHILD_LABEL, &s_f_button_events.btn_down.style);
+        /* the Figma Text layer's colour/font/alignment; not the button's box */
+        ui_apply_text_style(lbl, &s_f_button_events.btn_down.style);
     }
     lv_obj_add_event_cb(s_f_button_events.btn_down.lv_obj, ui_f_button_events_on_btn_down_clicked,
                         LV_EVENT_CLICKED, NULL);
@@ -206,8 +211,8 @@ void ui_f_button_events_init(void)
         lv_obj_t *lbl = lv_label_create(s_f_button_events.btn_up.lv_obj);
         lv_label_set_text(lbl, s_f_button_events.btn_up.label_text);
         lv_obj_center(lbl);
-        /* text color/font applied to the label directly, not the container */
-        ui_apply_style(lbl, UI_CHILD_LABEL, &s_f_button_events.btn_up.style);
+        /* the Figma Text layer's colour/font/alignment; not the button's box */
+        ui_apply_text_style(lbl, &s_f_button_events.btn_up.style);
     }
     lv_obj_add_event_cb(s_f_button_events.btn_up.lv_obj, ui_f_button_events_on_btn_up_clicked,
                         LV_EVENT_CLICKED, NULL);

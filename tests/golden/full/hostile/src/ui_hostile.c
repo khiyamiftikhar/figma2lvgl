@@ -720,8 +720,8 @@ void ui_hostile_init(void)
         lv_obj_t *lbl = lv_label_create(s_hostile.panel_a.btn_ok.lv_obj);
         lv_label_set_text(lbl, s_hostile.panel_a.btn_ok.label_text);
         lv_obj_center(lbl);
-        /* text color/font applied to the label directly, not the container */
-        ui_apply_style(lbl, UI_CHILD_LABEL, &s_hostile.panel_a.btn_ok.style);
+        /* the Figma Text layer's colour/font/alignment; not the button's box */
+        ui_apply_text_style(lbl, &s_hostile.panel_a.btn_ok.style);
     }
     lv_obj_add_event_cb(s_hostile.panel_a.btn_ok.lv_obj, ui_hostile_on_panel_a_btn_ok_clicked,
                         LV_EVENT_CLICKED, NULL);
@@ -751,8 +751,8 @@ void ui_hostile_init(void)
         lv_obj_t *lbl = lv_label_create(s_hostile.panel_b.btn_ok.lv_obj);
         lv_label_set_text(lbl, s_hostile.panel_b.btn_ok.label_text);
         lv_obj_center(lbl);
-        /* text color/font applied to the label directly, not the container */
-        ui_apply_style(lbl, UI_CHILD_LABEL, &s_hostile.panel_b.btn_ok.style);
+        /* the Figma Text layer's colour/font/alignment; not the button's box */
+        ui_apply_text_style(lbl, &s_hostile.panel_b.btn_ok.style);
     }
     lv_obj_add_event_cb(s_hostile.panel_b.btn_ok.lv_obj, ui_hostile_on_panel_b_btn_ok_clicked,
                         LV_EVENT_CLICKED, NULL);
@@ -812,8 +812,8 @@ void ui_hostile_init(void)
         lv_obj_t *lbl = lv_label_create(s_hostile.x.panel_c.btn_go.lv_obj);
         lv_label_set_text(lbl, s_hostile.x.panel_c.btn_go.label_text);
         lv_obj_center(lbl);
-        /* text color/font applied to the label directly, not the container */
-        ui_apply_style(lbl, UI_CHILD_LABEL, &s_hostile.x.panel_c.btn_go.style);
+        /* the Figma Text layer's colour/font/alignment; not the button's box */
+        ui_apply_text_style(lbl, &s_hostile.x.panel_c.btn_go.style);
     }
     lv_obj_add_event_cb(s_hostile.x.panel_c.btn_go.lv_obj, ui_hostile_on_x_panel_c_btn_go_clicked,
                         LV_EVENT_CLICKED, NULL);
@@ -827,8 +827,8 @@ void ui_hostile_init(void)
         lv_obj_t *lbl = lv_label_create(s_hostile.y.panel_c.btn_go.lv_obj);
         lv_label_set_text(lbl, s_hostile.y.panel_c.btn_go.label_text);
         lv_obj_center(lbl);
-        /* text color/font applied to the label directly, not the container */
-        ui_apply_style(lbl, UI_CHILD_LABEL, &s_hostile.y.panel_c.btn_go.style);
+        /* the Figma Text layer's colour/font/alignment; not the button's box */
+        ui_apply_text_style(lbl, &s_hostile.y.panel_c.btn_go.style);
     }
     lv_obj_add_event_cb(s_hostile.y.panel_c.btn_go.lv_obj, ui_hostile_on_y_panel_c_btn_go_clicked,
                         LV_EVENT_CLICKED, NULL);

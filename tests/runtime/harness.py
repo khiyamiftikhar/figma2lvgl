@@ -28,12 +28,12 @@ import shutil
 import subprocess
 import sys
 import tempfile
-import xml.etree.ElementTree as ET
 from dataclasses import dataclass, field
 from pathlib import Path
 
 from figma2lvgl.core.figma_parser import parse_design
 from figma2lvgl.core.widget_type import WidgetType as T
+from figma2lvgl.core.xml_input import read_design
 from tests.golden_cases import CASES, generate
 from tests.runtime.lvgl_lib import (ASAN_OPTIONS, DEFINES, LV_CONF_DIR, SAN_FLAGS,
                                     UBSAN_OPTIONS, build_library)
@@ -99,7 +99,7 @@ def _c_string(s: str) -> str:
 
 
 def _frame_sizes(xml: Path) -> list:
-    root = ET.parse(xml).getroot()
+    root = read_design(xml)
     frames = [root] if root.tag == "Frame" else root.find("children").findall("Frame")
     return frames, [(int(float(f.attrib.get("width", 320))),
                      int(float(f.attrib.get("height", 480)))) for f in frames]

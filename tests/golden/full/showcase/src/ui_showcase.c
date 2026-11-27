@@ -131,13 +131,15 @@ static struct {
     },
     .btn_ok = {
         .style = {
-            .box = { .has_bg = true, .bg = 0x43A047, .has_radius = true, .radius = 8 }
+            .box = { .has_bg = true, .bg = 0x43A047, .has_radius = true, .radius = 8 },
+            .text = { .has_color = true, .color = 0xFFFFFF, .has_size = true, .size = 14 }
         },
         .label_text = "OK",
     },
     .btn_cancel = {
         .style = {
-            .box = { .has_bg = true, .bg = 0xFFFFFF, .has_border_color = true, .border_color = 0xE53935, .has_border_width = true, .border_width = 2, .has_radius = true, .radius = 8 }
+            .box = { .has_bg = true, .bg = 0xFFFFFF, .has_border_color = true, .border_color = 0xE53935, .has_border_width = true, .border_width = 2, .has_radius = true, .radius = 8 },
+            .text = { .has_color = true, .color = 0xFFFFFF, .has_size = true, .size = 14 }
         },
         .label_text = "Cancel",
     },
@@ -179,7 +181,7 @@ static struct {
             .style = {
                 .text = { .has_color = true, .color = 0x212121, .has_size = true, .size = 12 }
             },
-            .text = "Two lines of body text",
+            .text = "Two lines of\nbody text",
         },
         .icon_heart = {
             .style = { .box = {0}, .text = {0}, .effects = {0} },
@@ -201,7 +203,8 @@ static struct {
     },
     .btn_shadow = {
         .style = {
-            .box = { .has_bg = true, .bg = 0xFFFFFF, .has_radius = true, .radius = 8 }
+            .box = { .has_bg = true, .bg = 0xFFFFFF, .has_radius = true, .radius = 8 },
+            .text = { .has_color = true, .color = 0x212121, .has_size = true, .size = 14 }
         },
         .label_text = "Shadow",
     },
@@ -211,13 +214,15 @@ static struct {
         },
         .btn_fill_a = {
             .style = {
-                .box = { .has_bg = true, .bg = 0xFFB300 }
+                .box = { .has_bg = true, .bg = 0xFFB300 },
+                .text = { .has_color = true, .color = 0xFFFFFF, .has_size = true, .size = 14 }
             },
             .label_text = "A",
         },
         .btn_fill_b = {
             .style = {
-                .box = { .has_bg = true, .bg = 0xFFB300 }
+                .box = { .has_bg = true, .bg = 0xFFB300 },
+                .text = { .has_color = true, .color = 0xFFFFFF, .has_size = true, .size = 14 }
             },
             .label_text = "B",
         },
@@ -230,7 +235,8 @@ static struct {
     },
     .btn_icon = {
         .style = {
-            .box = { .has_bg = true, .bg = 0x1E88E5, .has_radius = true, .radius = 6 }
+            .box = { .has_bg = true, .bg = 0x1E88E5, .has_radius = true, .radius = 6 },
+            .text = { .has_color = true, .color = 0xFFFFFF, .has_size = true, .size = 14 }
         },
         .label_text = "Favourite",
     },
@@ -402,8 +408,8 @@ void ui_showcase_init(void)
         lv_obj_t *lbl = lv_label_create(s_showcase.btn_ok.lv_obj);
         lv_label_set_text(lbl, s_showcase.btn_ok.label_text);
         lv_obj_center(lbl);
-        /* text color/font applied to the label directly, not the container */
-        ui_apply_style(lbl, UI_CHILD_LABEL, &s_showcase.btn_ok.style);
+        /* the Figma Text layer's colour/font/alignment; not the button's box */
+        ui_apply_text_style(lbl, &s_showcase.btn_ok.style);
     }
     lv_obj_add_event_cb(s_showcase.btn_ok.lv_obj, ui_showcase_on_btn_ok_clicked,
                         LV_EVENT_CLICKED, NULL);
@@ -417,8 +423,8 @@ void ui_showcase_init(void)
         lv_obj_t *lbl = lv_label_create(s_showcase.btn_cancel.lv_obj);
         lv_label_set_text(lbl, s_showcase.btn_cancel.label_text);
         lv_obj_center(lbl);
-        /* text color/font applied to the label directly, not the container */
-        ui_apply_style(lbl, UI_CHILD_LABEL, &s_showcase.btn_cancel.style);
+        /* the Figma Text layer's colour/font/alignment; not the button's box */
+        ui_apply_text_style(lbl, &s_showcase.btn_cancel.style);
     }
     lv_obj_add_event_cb(s_showcase.btn_cancel.lv_obj, ui_showcase_on_btn_cancel_clicked,
                         LV_EVENT_CLICKED, NULL);
@@ -498,8 +504,8 @@ void ui_showcase_init(void)
         lv_obj_t *lbl = lv_label_create(s_showcase.btn_shadow.lv_obj);
         lv_label_set_text(lbl, s_showcase.btn_shadow.label_text);
         lv_obj_center(lbl);
-        /* text color/font applied to the label directly, not the container */
-        ui_apply_style(lbl, UI_CHILD_LABEL, &s_showcase.btn_shadow.style);
+        /* the Figma Text layer's colour/font/alignment; not the button's box */
+        ui_apply_text_style(lbl, &s_showcase.btn_shadow.style);
     }
     lv_obj_add_event_cb(s_showcase.btn_shadow.lv_obj, ui_showcase_on_btn_shadow_clicked,
                         LV_EVENT_CLICKED, NULL);
@@ -531,8 +537,8 @@ void ui_showcase_init(void)
         lv_obj_t *lbl = lv_label_create(s_showcase.btn_icon.lv_obj);
         lv_label_set_text(lbl, s_showcase.btn_icon.label_text);
         lv_obj_center(lbl);
-        /* text color/font applied to the label directly, not the container */
-        ui_apply_style(lbl, UI_CHILD_LABEL, &s_showcase.btn_icon.style);
+        /* the Figma Text layer's colour/font/alignment; not the button's box */
+        ui_apply_text_style(lbl, &s_showcase.btn_icon.style);
     }
     lv_obj_add_event_cb(s_showcase.btn_icon.lv_obj, ui_showcase_on_btn_icon_clicked,
                         LV_EVENT_CLICKED, NULL);
@@ -586,8 +592,8 @@ void ui_showcase_init(void)
         lv_obj_t *lbl = lv_label_create(s_showcase.panel_row.btn_fill_a.lv_obj);
         lv_label_set_text(lbl, s_showcase.panel_row.btn_fill_a.label_text);
         lv_obj_center(lbl);
-        /* text color/font applied to the label directly, not the container */
-        ui_apply_style(lbl, UI_CHILD_LABEL, &s_showcase.panel_row.btn_fill_a.style);
+        /* the Figma Text layer's colour/font/alignment; not the button's box */
+        ui_apply_text_style(lbl, &s_showcase.panel_row.btn_fill_a.style);
     }
     lv_obj_add_event_cb(s_showcase.panel_row.btn_fill_a.lv_obj, ui_showcase_on_btn_fill_a_clicked,
                         LV_EVENT_CLICKED, NULL);
@@ -601,8 +607,8 @@ void ui_showcase_init(void)
         lv_obj_t *lbl = lv_label_create(s_showcase.panel_row.btn_fill_b.lv_obj);
         lv_label_set_text(lbl, s_showcase.panel_row.btn_fill_b.label_text);
         lv_obj_center(lbl);
-        /* text color/font applied to the label directly, not the container */
-        ui_apply_style(lbl, UI_CHILD_LABEL, &s_showcase.panel_row.btn_fill_b.style);
+        /* the Figma Text layer's colour/font/alignment; not the button's box */
+        ui_apply_text_style(lbl, &s_showcase.panel_row.btn_fill_b.style);
     }
     lv_obj_add_event_cb(s_showcase.panel_row.btn_fill_b.lv_obj, ui_showcase_on_btn_fill_b_clicked,
                         LV_EVENT_CLICKED, NULL);

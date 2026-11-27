@@ -44,7 +44,8 @@ static struct {
     },
     .btn_ok = {
         .style = {
-            .box = { .has_bg = true, .bg = 0x2196F3, .has_radius = true, .radius = 8 }
+            .box = { .has_bg = true, .bg = 0x2196F3, .has_radius = true, .radius = 8 },
+            .text = { .has_color = true, .color = 0xFFFFFF }
         },
         .label_text = "Ok",
     },
@@ -139,8 +140,8 @@ void ui_testscreen_init(void)
         lv_obj_t *lbl = lv_label_create(s_testscreen.btn_ok.lv_obj);
         lv_label_set_text(lbl, s_testscreen.btn_ok.label_text);
         lv_obj_center(lbl);
-        /* text color/font applied to the label directly, not the container */
-        ui_apply_style(lbl, UI_CHILD_LABEL, &s_testscreen.btn_ok.style);
+        /* the Figma Text layer's colour/font/alignment; not the button's box */
+        ui_apply_text_style(lbl, &s_testscreen.btn_ok.style);
     }
     lv_obj_add_event_cb(s_testscreen.btn_ok.lv_obj, ui_testscreen_on_btn_ok_clicked,
                         LV_EVENT_CLICKED, NULL);

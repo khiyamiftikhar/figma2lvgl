@@ -31,7 +31,8 @@ static struct {
 } s_f_covering = {
     .btn_under_panel = {
         .style = {
-            .box = { .has_bg = true, .bg = 0x2196F3 }
+            .box = { .has_bg = true, .bg = 0x2196F3 },
+            .text = { .has_color = true, .color = 0xFFFFFF, .has_size = true, .size = 14 }
         },
         .label_text = "Under",
     },
@@ -42,13 +43,15 @@ static struct {
     },
     .btn_under_button = {
         .style = {
-            .box = { .has_bg = true, .bg = 0x2196F3 }
+            .box = { .has_bg = true, .bg = 0x2196F3 },
+            .text = { .has_color = true, .color = 0xFFFFFF, .has_size = true, .size = 14 }
         },
         .label_text = "Under",
     },
     .btn_on_top = {
         .style = {
-            .box = { .has_bg = true, .bg = 0xE53935 }
+            .box = { .has_bg = true, .bg = 0xE53935 },
+            .text = { .has_color = true, .color = 0xFFFFFF, .has_size = true, .size = 14 }
         },
         .label_text = "Top",
     },
@@ -113,8 +116,8 @@ void ui_f_covering_init(void)
         lv_obj_t *lbl = lv_label_create(s_f_covering.btn_under_panel.lv_obj);
         lv_label_set_text(lbl, s_f_covering.btn_under_panel.label_text);
         lv_obj_center(lbl);
-        /* text color/font applied to the label directly, not the container */
-        ui_apply_style(lbl, UI_CHILD_LABEL, &s_f_covering.btn_under_panel.style);
+        /* the Figma Text layer's colour/font/alignment; not the button's box */
+        ui_apply_text_style(lbl, &s_f_covering.btn_under_panel.style);
     }
     lv_obj_add_event_cb(s_f_covering.btn_under_panel.lv_obj, ui_f_covering_on_btn_under_panel_clicked,
                         LV_EVENT_CLICKED, NULL);
@@ -138,8 +141,8 @@ void ui_f_covering_init(void)
         lv_obj_t *lbl = lv_label_create(s_f_covering.btn_under_button.lv_obj);
         lv_label_set_text(lbl, s_f_covering.btn_under_button.label_text);
         lv_obj_center(lbl);
-        /* text color/font applied to the label directly, not the container */
-        ui_apply_style(lbl, UI_CHILD_LABEL, &s_f_covering.btn_under_button.style);
+        /* the Figma Text layer's colour/font/alignment; not the button's box */
+        ui_apply_text_style(lbl, &s_f_covering.btn_under_button.style);
     }
     lv_obj_add_event_cb(s_f_covering.btn_under_button.lv_obj, ui_f_covering_on_btn_under_button_clicked,
                         LV_EVENT_CLICKED, NULL);
@@ -153,8 +156,8 @@ void ui_f_covering_init(void)
         lv_obj_t *lbl = lv_label_create(s_f_covering.btn_on_top.lv_obj);
         lv_label_set_text(lbl, s_f_covering.btn_on_top.label_text);
         lv_obj_center(lbl);
-        /* text color/font applied to the label directly, not the container */
-        ui_apply_style(lbl, UI_CHILD_LABEL, &s_f_covering.btn_on_top.style);
+        /* the Figma Text layer's colour/font/alignment; not the button's box */
+        ui_apply_text_style(lbl, &s_f_covering.btn_on_top.style);
     }
     lv_obj_add_event_cb(s_f_covering.btn_on_top.lv_obj, ui_f_covering_on_btn_on_top_clicked,
                         LV_EVENT_CLICKED, NULL);

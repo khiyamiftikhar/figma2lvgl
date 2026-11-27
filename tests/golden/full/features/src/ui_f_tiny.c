@@ -107,8 +107,8 @@ void ui_f_tiny_init(void)
         lv_obj_t *lbl = lv_label_create(s_f_tiny.btn_4x4.lv_obj);
         lv_label_set_text(lbl, s_f_tiny.btn_4x4.label_text);
         lv_obj_center(lbl);
-        /* text color/font applied to the label directly, not the container */
-        ui_apply_style(lbl, UI_CHILD_LABEL, &s_f_tiny.btn_4x4.style);
+        /* the Figma Text layer's colour/font/alignment; not the button's box */
+        ui_apply_text_style(lbl, &s_f_tiny.btn_4x4.style);
     }
     lv_obj_add_event_cb(s_f_tiny.btn_4x4.lv_obj, ui_f_tiny_on_btn_4x4_clicked,
                         LV_EVENT_CLICKED, NULL);
@@ -122,8 +122,8 @@ void ui_f_tiny_init(void)
         lv_obj_t *lbl = lv_label_create(s_f_tiny.btn_1x1.lv_obj);
         lv_label_set_text(lbl, s_f_tiny.btn_1x1.label_text);
         lv_obj_center(lbl);
-        /* text color/font applied to the label directly, not the container */
-        ui_apply_style(lbl, UI_CHILD_LABEL, &s_f_tiny.btn_1x1.style);
+        /* the Figma Text layer's colour/font/alignment; not the button's box */
+        ui_apply_text_style(lbl, &s_f_tiny.btn_1x1.style);
     }
     lv_obj_add_event_cb(s_f_tiny.btn_1x1.lv_obj, ui_f_tiny_on_btn_1x1_clicked,
                         LV_EVENT_CLICKED, NULL);
