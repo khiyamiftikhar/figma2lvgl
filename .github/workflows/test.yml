@@ -105,7 +105,7 @@ jobs:
         with:
           python-version: ${{ matrix.python }}
       - run: pip install -e . pytest hypothesis
-      - run: pytest -q --ignore=tests/compile
+      - run: pytest -q --ignore=tests/compile --ignore=tests/runtime
         env:
           # Naming property tests (tests/conftest.py): 50 examples on a
           # feature push, 200 on PRs/main/tags, random seed nightly.
@@ -124,7 +124,7 @@ jobs:
         with:
           python-version: "3.13"
       - run: pip install -e . pytest hypothesis
-      - run: pytest -q --ignore=tests/compile
+      - run: pytest -q --ignore=tests/compile --ignore=tests/runtime
         env:
           HYPOTHESIS_PROFILE: ${{ github.event_name == 'schedule' && 'nightly' || (needs.plan.outputs.full == 'true' && 'full' || 'ci') }}
 
@@ -160,6 +160,55 @@ jobs:
           FIGMA2LVGL_CC: gcc
           # Compiled property tests run with full and nightly only.
           HYPOTHESIS_PROFILE: ${{ github.event_name == 'schedule' && 'nightly' || (needs.plan.outputs.full == 'true' && 'full' || 'ci') }}
+
+  runtime:
+    name: Run-time (L9, sanitizers, LVGL 9.3.0)
+    needs: plan
+    if: needs.plan.outputs.code == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: LVGL at the pinned tag and commit
+        uses: actions/checkout@v4
+        with:
+          repository: lvgl/lvgl
+          ref: ${{ env.LVGL_TAG }}
+          path: _lvgl
+      - name: Verify LVGL commit
+        shell: bash
+        run: |
+          head=$(git -C _lvgl rev-parse HEAD)
+          [ "$head" = "$LVGL_COMMIT" ] || { echo "LVGL $LVGL_TAG is $head, expected $LVGL_COMMIT"; exit 1; }
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+      - id: gcc
+        run: echo "version=$(gcc -dumpfullversion)" >> "$GITHUB_OUTPUT"
+      # The sanitizer build of LVGL, cached only as a speed-up (doc 12,
+      # section 2): the nightly run skips the cache and rebuilds it.
+      - name: Cached sanitizer build of LVGL
+        if: github.event_name != 'schedule'
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/figma2lvgl/runtime
+          key: lvgl-san-${{ runner.os }}-gcc${{ steps.gcc.outputs.version }}-${{ env.LVGL_COMMIT }}-${{ hashFiles('tests/lvgl/lv_conf.h', 'tests/runtime/lvgl_lib.py') }}
+      - run: pip install -e . pytest pypng lz4
+      - name: Run generated designs under the sanitizers
+        run: pytest -q tests/runtime -rA
+        env:
+          LVGL_DIR: ${{ github.workspace }}/_lvgl
+          FIGMA2LVGL_REQUIRE_RUNTIME: "1"
+          FIGMA2LVGL_RUNTIME_ARTIFACTS: ${{ github.workspace }}/runtime-artifacts
+          FIGMA2LVGL_RUNTIME_NO_CACHE: ${{ github.event_name == 'schedule' && '1' || '0' }}
+      - name: Keep the failing programs and their output
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: runtime-artifacts
+          path: runtime-artifacts
+          if-no-files-found: ignore
 
   compile-msvc:
     name: Compile (MSVC, LVGL 9.3.0)
@@ -269,7 +318,7 @@ jobs:
     # that ran succeeded and none was cancelled.
     name: CI result
     if: always()
-    needs: [plan, pytest, pytest-windows, compile-gcc, compile-msvc, wheel, example-ui, espidf]
+    needs: [plan, pytest, pytest-windows, compile-gcc, runtime, compile-msvc, wheel, example-ui, espidf]
     runs-on: ubuntu-latest
     steps:
       - name: Check job results

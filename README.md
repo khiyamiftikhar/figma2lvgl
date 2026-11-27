@@ -471,6 +471,7 @@ nox                  # tests, compile, wheel
 nox -s tests         # parser and generator tests
 nox -s compile       # generated output compiled as C and C++ against LVGL 9.3
 nox -s wheel         # build the wheel, install it offline, run it with no network
+nox -s runtime       # generated designs run under LVGL with sanitizers (gcc, Linux)
 nox -s compile_msvc  # the compile check with MSVC (Visual Studio Developer prompt)
 nox -s espidf        # build the ESP-IDF example (ESP-IDF terminal)
 ```
@@ -478,6 +479,13 @@ nox -s espidf        # build the ESP-IDF example (ESP-IDF terminal)
 The compile session fetches LVGL v9.3.0 once into `.nox/`. To run the
 compile tests directly, set `LVGL_DIR` to an LVGL checkout and run
 `pytest tests/compile`.
+
+The run-time tests (`tests/runtime/`) build each test design into a C
+program with LVGL, compiled with AddressSanitizer and UndefinedBehavior-
+Sanitizer, and check every setter's result. The sanitizer build of LVGL is
+cached in `~/.cache/figma2lvgl/runtime`. To debug one design or screen:
+`LVGL_DIR=... python -m tests.runtime.harness example --screen home`, which
+keeps the C program and its output in the folder it prints.
 
 The naming property tests use Hypothesis profiles: `ci` (50 examples, the
 default), `full` (200, compiled) and `nightly` (200, random seed). Pick one
