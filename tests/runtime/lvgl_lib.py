@@ -44,10 +44,10 @@ def _source_id(lvgl: Path) -> str:
     return "tree-" + h.hexdigest()
 
 
-def cache_key(lvgl: Path) -> str:
+def cache_key(lvgl: Path, flags=SAN_FLAGS) -> str:
     h = hashlib.sha256()
     for part in (_source_id(lvgl), (LV_CONF_DIR / "lv_conf.h").read_text("utf-8"),
-                 gcc_version(), " ".join(SAN_FLAGS + DEFINES)):
+                 gcc_version(), " ".join(list(flags) + DEFINES)):
         h.update(part.encode())
         h.update(b"\0")
     return h.hexdigest()[:16]
@@ -58,9 +58,10 @@ def cache_dir() -> Path:
                                Path.home() / ".cache" / "figma2lvgl" / "runtime"))
 
 
-def build_library(lvgl: Path) -> Path:
-    """Path to liblvgl-<key>.a, building it if needed."""
-    lib = cache_dir() / f"liblvgl-{cache_key(lvgl)}.a"
+def build_library(lvgl: Path, flags=SAN_FLAGS) -> Path:
+    """Path to liblvgl-<key>.a, building it if needed. Other flags than the
+    sanitizer set are for measurements (tests/runtime/measure_determinism.py)."""
+    lib = cache_dir() / f"liblvgl-{cache_key(lvgl, flags)}.a"
     if lib.is_file() and os.environ.get("FIGMA2LVGL_RUNTIME_NO_CACHE") != "1":
         return lib
     lib.parent.mkdir(parents=True, exist_ok=True)
@@ -71,7 +72,7 @@ def build_library(lvgl: Path) -> Path:
         def compile_one(i_src):
             i, src = i_src
             obj = tmp / f"{i:04d}_{src.stem}.o"
-            subprocess.run(["gcc", "-c", *SAN_FLAGS, *DEFINES, "-w",
+            subprocess.run(["gcc", "-c", *flags, *DEFINES, "-w",
                             f"-I{LV_CONF_DIR}", f"-I{lvgl}", str(src), "-o", str(obj)],
                            check=True, capture_output=True)
             return obj
