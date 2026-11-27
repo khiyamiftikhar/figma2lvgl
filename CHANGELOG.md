@@ -1,5 +1,55 @@
 # Changelog
 
+## [0.6.0] - 2026-11-27
+
+Generated code is now run, drawn and touched on every PR (design repo,
+`docs/design/12_runtime_harness_contract.md`). No generated name, field or
+function changes from 0.5.0. Fixes for what that found change how some
+text looks.
+
+### Fixed
+- **Button text** no longer gets the button's box style: a button with a
+  stroke drew a second border around its text, and a 50 % button's text was
+  drawn at 25 %. Button text now takes the colour, size and alignment of
+  its Figma Text layer, which were ignored (text was always LVGL's white
+  14 px). New internal function `ui_apply_text_style()` in `ui_style.c`.
+- **Font sizes 8 and 26–48** drew at 14: only 10–24 were mapped. Every
+  even Montserrat size from 8 to 48 is mapped now, each when enabled in
+  `lv_conf.h`.
+- **Multi-line text.** Line breaks in Figma text arrived as spaces (the
+  exporter writes them raw inside an XML attribute, which XML turns into
+  spaces); they are kept now. Fixed-width text ("Auto height", "Fixed
+  size") wraps. Horizontal alignment is read.
+- **Text truncation** to the 29-byte label buffer counted `\n` as two
+  characters and measured characters instead of UTF-8 bytes, so non-ASCII
+  text could overflow and a cut could split an escape. It now fits the
+  bytes and never splits a character or an escape.
+
+### Tests
+- **L9, run:** every test design is built into a program with LVGL 9.3
+  under AddressSanitizer, UndefinedBehaviorSanitizer and LeakSanitizer;
+  every setter is called with edge values and checked.
+- **L10, look:** every screen is rendered and compared pixel for pixel
+  with a reviewed reference image (`tests/snapshots/`). Renders were
+  measured identical across optimization levels and gcc 11.4/13.3, so the
+  comparison is exact. `tests/regen_snapshots.py` regenerates selectively,
+  with images to review.
+- **L11, touch:** a virtual pointer taps, holds and drags every button and
+  slider and checks which callbacks run, in which order, and that no
+  widget is covered by another.
+- **Feature fixtures and showcase** (`tests/fixtures/features/`,
+  `tests/fixtures/showcase/`), built by a Figma plugin, with Figma's own
+  PNGs. CI prints how much of each is generated and how close it looks.
+- CI runs the run-time job on ubuntu-24.04 and ubuntu-22.04.
+
+### Known
+Found by the new tests, for later releases (design repo,
+`docs/planning/01_findings_2026-11.md`): the screen's fill is ignored
+(N22); buttons, lists, bars and sliders keep parts of LVGL's theme (N29–N31);
+images only show after `…_display()` (N32) and lose transparency (N35); a
+frame exported on its own is read as a page (N33); label text is limited to
+29 bytes (N34); a long press also calls `clicked` (N25).
+
 ## [0.5.0] - 2026-11-27
 
 One rule set, in `figma2lvgl/core/naming.py`, now decides what each Figma

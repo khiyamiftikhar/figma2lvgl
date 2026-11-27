@@ -350,16 +350,21 @@ Styles applied in Figma are extracted and baked into the generated C struct.
 | Fill opacity | All widgets | `lv_obj_set_style_bg_opa` |
 | Text color | Labels, button labels | `lv_obj_set_style_text_color` |
 | Font size | Labels, button labels | `lv_obj_set_style_text_font` |
+| Text alignment (left, center, right) | Labels, button labels | `lv_obj_set_style_text_align` |
 | Corner radius | All widgets | `lv_obj_set_style_radius` |
 | Stroke color | All widgets | `lv_obj_set_style_border_color` |
 | Stroke weight | All widgets | `lv_obj_set_style_border_width` |
 | Opacity | All widgets | `lv_obj_set_style_opa` |
 
-> **Button text styles** are applied to the internal label child, not the
-> button container — avoids relying on LVGL's style inheritance.
+> **Button text** takes the colour, size and alignment of the button's first
+> Text layer in Figma, applied to LVGL's label inside the button. The
+> button's own fill, stroke, radius and opacity stay on the button.
 
-> **Text alignment** is not extracted — FigML does not export horizontal
-> text alignment. LVGL's default (left) applies.
+> **Line breaks and wrapping:** line breaks in Figma text are kept. Text with
+> a fixed width in Figma ("Auto height" or "Fixed size") wraps at that width;
+> "Auto width" text doesn't. Label text is limited to 29 bytes
+> (`UI_MAX_STRING_LENGTH` 30); longer text is cut, with a whole character
+> and escape at the end.
 
 > **Multiple fills** — only the first visible fill is used. If you layer
 > fills in Figma, set a single solid fill for the widget color.
@@ -367,7 +372,8 @@ Styles applied in Figma are extracted and baked into the generated C struct.
 #### Font Sizes
 
 Figma font sizes are mapped to LVGL Montserrat fonts.
-Supported: `10, 12, 14, 16, 18, 20, 22, 24`. Any other size falls back to `LV_FONT_DEFAULT`.
+Supported: every even size from `8` to `48`. Any other size, or a size not
+enabled in `lv_conf.h`, falls back to `LV_FONT_DEFAULT`.
 
 Enable only what your design uses in `lv_conf.h`:
 ```c
@@ -493,6 +499,21 @@ an intended change to how screens look, regenerate the references with
 `LVGL_DIR=... python tests/regen_snapshots.py` (narrow it with `--case` and
 `--screen`); it lists added, changed and removed screens and writes old, new
 and difference images to `snapshot_review/` to check before committing.
+
+When a reference doesn't match on CI, the failure names the screen and the
+number of changed pixels, and the job's `runtime-artifacts-<runner>`
+artifact holds three images per screen under `<design>/snapshots/`:
+`<screen>.new.png` (what the code draws now), `<screen>.ref.png` (the
+committed reference) and `<screen>.diff.png` (changed pixels in red over a
+faded reference). If the change is intended, regenerate and commit the
+references; if not, the red pixels show where to look.
+
+`tests/fixtures/features/` holds one small Figma frame per feature (built by
+`tools/figma_fixture_plugin/round3/`) with Figma's own PNG of each frame,
+and `tests/fixtures/showcase/` a screen with everything, including features
+not supported yet. CI prints, per frame, how many layers were generated and
+how close LVGL's render is to Figma's PNG (`tests/runtime/test_showcase.py`;
+information only, never a failure).
 
 The naming property tests use Hypothesis profiles: `ci` (50 examples, the
 default), `full` (200, compiled) and `nightly` (200, random seed). Pick one
