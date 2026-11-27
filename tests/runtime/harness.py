@@ -62,6 +62,7 @@ class Result:
     values: dict = field(default_factory=dict)          # (screen, member) -> slider value
     drag_values: dict = field(default_factory=dict)     # (screen, step) -> values during a drag
     model: list = field(default_factory=list)           # parsed screens
+    snapshots: dict = field(default_factory=dict)       # screen -> (w, h, path)
 
     @property
     def reached(self) -> list:
@@ -342,10 +343,21 @@ static void slider_drag(lv_obj_t *s, int reversed)
     drag(s, p0, p1);
 }
 
+/* L10: the rendered frame, as raw RGB565 (doc 12, section 5). */
+static void snapshot(const char *screen, const char *path, int w, int h);
+
 static char long_text[2 * UI_MAX_STRING_LENGTH + 1];
 static const char *texts[4] = { "x", "", long_text, "Gr\xc3\xbc\xc3\x9f" "e \xe2\x9c\x93" };
 %(decls)s
 static uint16_t framebuffer[%(max_pixels)d];
+static void snapshot(const char *screen, const char *path, int w, int h)
+{
+    FILE *f = fopen(path, "wb");
+    if (!f) fail("can't write %%s", path);
+    fwrite(framebuffer, sizeof framebuffer[0], (size_t)(w * h), f);
+    fclose(f);
+    printf("SNAP %%s %%d %%d %%s\n", screen, w, h, path);
+}
 
 int main(void)
 {
@@ -397,13 +409,20 @@ def write_program(case: str, ui_src: Path, xml: Path, out: Path,
             stubs.append(f'void {cb}(lv_event_t *e) {{ (void)e; printf("CB {cb}\\n"); }}')
     for s, (w, h) in pairs:
         body += [f"    lv_display_set_resolution(disp, {w}, {h});",
+                 "    lv_display_set_buffers(disp, framebuffer, NULL, sizeof framebuffer, LV_DISPLAY_RENDER_MODE_FULL);",
                  f'    step("{s.snake}", "init");', f"    {s.symbols['init']}();",
                  f'    step("{s.snake}", "load");', f"    {s.symbols['load']}();",
                  "    cycles(20);"]
         widgets = _widgets(s)
         body += [f'    positions("{s.snake}", "{".".join(m)}", {p}.lv_obj);'
                  for _n, p, m in widgets]
-        if mode == "touch":
+        if mode == "render":
+            # L10 (doc 12, section 5): settle animations, draw, dump RGB565.
+            snap = (out / "snapshots" / f"{s.snake}.rgb565").as_posix()
+            body += [f'    step("{s.snake}", "render");', "    cycles(100);",
+                     "    lv_refr_now(disp);",
+                     f'    snapshot("{s.snake}", "{snap}", {w}, {h});']
+        elif mode == "touch":
             body += [f'    add_name({p}.lv_obj, "{".".join(m)}");' for _n, p, m in widgets]
             for node, path, member in widgets:
                 body += _touch_block(s, node, path, member)
@@ -425,7 +444,7 @@ def write_program(case: str, ui_src: Path, xml: Path, out: Path,
     return program, [s.snake for s, _ in pairs], expected, [s for s, _ in pairs]
 
 
-def build(program: Path, ui_src: Path, lvgl: Path, lib: Path) -> Path:
+def build(program: Path, ui_src: Path, lvgl: Path, lib: Path, flags=SAN_FLAGS) -> Path:
     exe = program.with_suffix("")
     sources = [program, ui_src / "priv_src" / "ui_style.c",
                *(p for p in sorted((ui_src / "priv_src").glob("*.c")) if p.name != "ui_style.c")]
@@ -433,7 +452,7 @@ def build(program: Path, ui_src: Path, lvgl: Path, lib: Path) -> Path:
     # default, and a private LVGL function must fail locally too. (No -w: it
     # would cancel this -Werror. Default warnings only print; the compile
     # tests check the generated code's warnings.)
-    cmd = ["gcc", *SAN_FLAGS, *DEFINES, "-std=gnu99",
+    cmd = ["gcc", *flags, *DEFINES, "-std=gnu99",
            "-Werror=implicit-function-declaration",
            f"-I{LV_CONF_DIR}", f"-I{lvgl}", f"-I{ui_src / 'include'}",
            f"-I{ui_src / 'priv_include'}", *map(str, sources), str(lib), "-lm", "-o", str(exe)]
@@ -471,13 +490,16 @@ def parse_output(result: Result) -> Result:
             result.positions[(screen, member)] = (int(x), int(y), vis == "1")
         elif line.startswith("SETTERS "):
             result.setters_called = int(line.split()[1])
+        elif line.startswith("SNAP "):
+            _, screen, w, h, path = line.split(" ", 4)
+            result.snapshots[screen] = (int(w), int(h), Path(path))
         elif line == "DONE":
             result.done = True
     return result
 
 
 def run_case(case: str, lvgl: Path, work: Path, only_screen: str | None = None,
-             patch=None, mode: str = "run") -> Result:
+             patch=None, mode: str = "run", flags=SAN_FLAGS) -> Result:
     """Generate, build and run one design of tests/golden_cases.py.
 
     patch: optional function called with the ui_src folder before building,
@@ -487,8 +509,9 @@ def run_case(case: str, lvgl: Path, work: Path, only_screen: str | None = None,
     ui_src = generate(case, work / "gen")
     if patch is not None:
         patch(ui_src)
+    (work / "snapshots").mkdir(parents=True, exist_ok=True)
     program, screens, expected, model = write_program(case, ui_src, xml, work, only_screen, mode)
-    exe = build(program, ui_src, lvgl, build_library(lvgl))
+    exe = build(program, ui_src, lvgl, build_library(lvgl, flags), flags)
     env = dict(os.environ, ASAN_OPTIONS=ASAN_OPTIONS, UBSAN_OPTIONS=UBSAN_OPTIONS)
     proc = subprocess.run([str(exe)], capture_output=True, text=True, env=env, timeout=300)
     (work / "output.txt").write_text(proc.stdout + "\n--- stderr ---\n" + proc.stderr,

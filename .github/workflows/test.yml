@@ -162,10 +162,16 @@ jobs:
           HYPOTHESIS_PROFILE: ${{ github.event_name == 'schedule' && 'nightly' || (needs.plan.outputs.full == 'true' && 'full' || 'ci') }}
 
   runtime:
-    name: Run-time (L9, sanitizers, LVGL 9.3.0)
+    name: Run-time (L9-L11, sanitizers, LVGL 9.3.0, ${{ matrix.os }})
     needs: plan
     if: needs.plan.outputs.code == 'true'
-    runs-on: ubuntu-latest
+    # Two runner images (two gcc versions): the L10 references must match
+    # exactly on both (doc 12, section 5, Q11).
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-24.04, ubuntu-22.04]
+    runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v4
         with:
@@ -193,7 +199,7 @@ jobs:
         uses: actions/cache@v4
         with:
           path: ~/.cache/figma2lvgl/runtime
-          key: lvgl-san-${{ runner.os }}-gcc${{ steps.gcc.outputs.version }}-${{ env.LVGL_COMMIT }}-${{ hashFiles('tests/lvgl/lv_conf.h', 'tests/runtime/lvgl_lib.py') }}
+          key: lvgl-san-${{ matrix.os }}-gcc${{ steps.gcc.outputs.version }}-${{ env.LVGL_COMMIT }}-${{ hashFiles('tests/lvgl/lv_conf.h', 'tests/runtime/lvgl_lib.py') }}
       - run: pip install -e . pytest pypng lz4
       - name: Run generated designs under the sanitizers
         run: pytest -q tests/runtime -rA
@@ -206,7 +212,7 @@ jobs:
         if: failure()
         uses: actions/upload-artifact@v4
         with:
-          name: runtime-artifacts
+          name: runtime-artifacts-${{ matrix.os }}
           path: runtime-artifacts
           if-no-files-found: ignore
 

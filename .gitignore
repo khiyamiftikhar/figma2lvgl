@@ -29,3 +29,4 @@ ui_src/
 figma2lvgl/_version.py
 .nox/
 .hypothesis/
+snapshot_review/

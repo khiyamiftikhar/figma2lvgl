@@ -487,6 +487,13 @@ cached in `~/.cache/figma2lvgl/runtime`. To debug one design or screen:
 `LVGL_DIR=... python -m tests.runtime.harness example --screen home`, which
 keeps the C program and its output in the folder it prints.
 
+They also render every screen and compare it, pixel for pixel, with its
+reviewed reference image in `tests/snapshots/<design>/<screen>.png`. After
+an intended change to how screens look, regenerate the references with
+`LVGL_DIR=... python tests/regen_snapshots.py` (narrow it with `--case` and
+`--screen`); it lists added, changed and removed screens and writes old, new
+and difference images to `snapshot_review/` to check before committing.
+
 The naming property tests use Hypothesis profiles: `ci` (50 examples, the
 default), `full` (200, compiled) and `nightly` (200, random seed). Pick one
 with `HYPOTHESIS_PROFILE=full`. After an intended change to the generated
