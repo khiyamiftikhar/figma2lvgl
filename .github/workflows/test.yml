@@ -104,8 +104,12 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python }}
-      - run: pip install -e . pytest
+      - run: pip install -e . pytest hypothesis
       - run: pytest -q --ignore=tests/compile
+        env:
+          # Naming property tests (tests/conftest.py): 50 examples on a
+          # feature push, 200 on PRs/main/tags, random seed nightly.
+          HYPOTHESIS_PROFILE: ${{ github.event_name == 'schedule' && 'nightly' || (needs.plan.outputs.full == 'true' && 'full' || 'ci') }}
 
   pytest-windows:
     name: pytest (Windows, Python 3.13)
@@ -119,8 +123,10 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.13"
-      - run: pip install -e . pytest
+      - run: pip install -e . pytest hypothesis
       - run: pytest -q --ignore=tests/compile
+        env:
+          HYPOTHESIS_PROFILE: ${{ github.event_name == 'schedule' && 'nightly' || (needs.plan.outputs.full == 'true' && 'full' || 'ci') }}
 
   compile-gcc:
     name: Compile (gcc/g++, LVGL 9.3.0)
@@ -145,13 +151,15 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.13"
-      - run: pip install -e . pytest pypng lz4
+      - run: pip install -e . pytest pypng lz4 hypothesis
       - name: Compile generated output
         run: pytest -q tests/compile -rA
         env:
           LVGL_DIR: ${{ github.workspace }}/_lvgl
           FIGMA2LVGL_REQUIRE_COMPILE: "1"
           FIGMA2LVGL_CC: gcc
+          # Compiled property tests run with full and nightly only.
+          HYPOTHESIS_PROFILE: ${{ github.event_name == 'schedule' && 'nightly' || (needs.plan.outputs.full == 'true' && 'full' || 'ci') }}
 
   compile-msvc:
     name: Compile (MSVC, LVGL 9.3.0)

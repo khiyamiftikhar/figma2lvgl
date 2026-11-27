@@ -192,6 +192,7 @@ class ParsedNode:
         self.event_modifiers = event_modifiers if event_modifiers is not None else []
         self.clips           = clips
         self.layer:        str = id          # Figma layer name, for messages
+        self.natural_id:   str = id          # member name before fixes/suffixes
         self.asset_name:   str | None = None # IMAGE: symbol and PNG stem (4.4)
         self.component_id: str | None = None # IMAGE: mainComponent id
         self.symbols:      dict = {}         # external symbols (assign_design_symbols)
@@ -389,6 +390,7 @@ def _parse_children(parent_xml, screen_name: str, depth: int, counters,
                                and child_xml.attrib.get("clipsContent", "").lower() == "true"),
         ))
         result[-1].layer        = name
+        result[-1].natural_id   = normalize_id(info.base.lower())  # before any fix
         result[-1].asset_name   = asset
         result[-1].component_id = component_id
 
