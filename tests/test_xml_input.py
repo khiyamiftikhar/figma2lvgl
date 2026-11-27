@@ -7,11 +7,12 @@ from figma2lvgl.core.xml_input import protect_attribute_whitespace, read_design
 
 def test_newlines_in_attributes_are_kept(tmp_path):
     xml = tmp_path / "d.xml"
-    xml.write_text('<?xml version="1.0" encoding="UTF-8"?>\n<page>\n'
-                   '  <Text name="t" characters="First\nSecond\r\n\tThird"/>\n</page>\n',
-                   encoding="utf-8")
+    # Bytes, so the line endings are exactly these on every OS; CRLF reads
+    # as LF, as XML itself does.
+    xml.write_bytes(b'<?xml version="1.0" encoding="UTF-8"?>\r\n<page>\r\n'
+                    b'  <Text name="t" characters="First\nSecond\r\n\tThird"/>\n</page>\n')
     root = read_design(xml)
-    assert root.find("Text").get("characters") == "First\nSecond\r\n\tThird"
+    assert root.find("Text").get("characters") == "First\nSecond\n\tThird"
 
 
 def test_only_attribute_values_change():
