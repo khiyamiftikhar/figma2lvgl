@@ -1,0 +1,8 @@
+{
+  "name": "figma2lvgl fixture round 3",
+  "id": "figma2lvgl-fixture-round-3",
+  "api": "1.0.0",
+  "main": "code.js",
+  "editorType": ["figma"],
+  "documentAccess": "dynamic-page"
+}

@@ -8,6 +8,9 @@ where Figma itself places every node. Used to make the coordinate fixtures in
 - `round2/`: nested groups and frames, auto-layout, filled frame, `panel`
   group, component instance, non-clipping frame, rotation. Also writes the
   XML positions the rule predicts, before export.
+- `round3/`: the v0.6.0 feature fixtures (one small `f_…` frame per
+  construct) and the 480×320 `showcase` (design doc 12, section 7); see
+  `tests/fixtures/features/README.md` for what to export.
 
 To run one (Figma desktop app): Plugins → Development → Import plugin from
 manifest, pick its `manifest.json`, run it on an empty page, copy the report
