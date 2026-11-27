@@ -24,9 +24,9 @@ How the files were made from the export:
   1x PNG is cropped from the 2x page export and averaged over 2×2 pixels.
   The separate 2x export of `showcase`, treated the same way, matches its
   crop exactly (no pixel differs by more than 10 in any channel).
-- The icon PNGs are the 2x exports (48×48), opaque. Generated code only
-  shows images after `…_display()`, so they don't appear in the L10
-  references.
+- The icon PNGs are Figma's own 1x exports (24×24, with transparency),
+  sent separately on 2026-11-27. Generated code only shows images after
+  `…_display()`, so they don't appear in the L10 references.
 
 What the tests check:
 
