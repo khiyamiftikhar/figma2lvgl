@@ -429,10 +429,11 @@ def build(program: Path, ui_src: Path, lvgl: Path, lib: Path) -> Path:
     exe = program.with_suffix("")
     sources = [program, ui_src / "priv_src" / "ui_style.c",
                *(p for p in sorted((ui_src / "priv_src").glob("*.c")) if p.name != "ui_style.c")]
-    # -w hides the generated code's warnings (the compile tests cover them),
-    # but a missing declaration stays an error everywhere: gcc 14 makes it one
-    # by default, and a private LVGL function must fail locally too.
-    cmd = ["gcc", *SAN_FLAGS, *DEFINES, "-std=gnu99", "-w",
+    # A missing declaration is an error everywhere: gcc 14 makes it one by
+    # default, and a private LVGL function must fail locally too. (No -w: it
+    # would cancel this -Werror. Default warnings only print; the compile
+    # tests check the generated code's warnings.)
+    cmd = ["gcc", *SAN_FLAGS, *DEFINES, "-std=gnu99",
            "-Werror=implicit-function-declaration",
            f"-I{LV_CONF_DIR}", f"-I{lvgl}", f"-I{ui_src / 'include'}",
            f"-I{ui_src / 'priv_include'}", *map(str, sources), str(lib), "-lm", "-o", str(exe)]
