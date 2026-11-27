@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- L11 fixture (design doc 12, section 6): one button per event suffix,
+     sliders horizontal, vertical and reversed, a button under a filled panel
+     (pressable: panels aren't clickable) and a button under another button
+     (covered). Expected results: tests/runtime/test_l11.py. -->
+<page id="0:1" name="Page_1" type="PAGE">
+  <children>
+    <Frame name="events" x="0" y="0" width="320" height="480" clipsContent="true" type="FRAME">
+      <children>
+        <Rectangle name="btn_plain" x="10" y="10" width="90" height="40" type="RECTANGLE"><fills><fill color="#2196f3"/></fills></Rectangle>
+        <Rectangle name="btn_a_press" x="110" y="10" width="90" height="40" type="RECTANGLE"><fills><fill color="#2196f3"/></fills></Rectangle>
+        <Rectangle name="btn_b_release" x="210" y="10" width="90" height="40" type="RECTANGLE"><fills><fill color="#2196f3"/></fills></Rectangle>
+        <Rectangle name="btn_c_lp" x="10" y="60" width="90" height="40" type="RECTANGLE"><fills><fill color="#2196f3"/></fills></Rectangle>
+        <Rectangle name="btn_d_lpr" x="110" y="60" width="90" height="40" type="RECTANGLE"><fills><fill color="#2196f3"/></fills></Rectangle>
+        <Rectangle name="slider_h" x="10" y="120" width="200" height="20" type="RECTANGLE"><fills><fill color="#9e9e9e"/></fills></Rectangle>
+        <Rectangle name="slider_v" x="250" y="120" width="20" height="200" type="RECTANGLE"><fills><fill color="#9e9e9e"/></fills></Rectangle>
+        <Rectangle name="slider_rev_100_0" x="10" y="160" width="200" height="20" type="RECTANGLE"><fills><fill color="#9e9e9e"/></fills></Rectangle>
+        <Rectangle name="slider_vrev_50_n50" x="290" y="120" width="20" height="200" type="RECTANGLE"><fills><fill color="#9e9e9e"/></fills></Rectangle>
+        <Rectangle name="btn_under_panel" x="10" y="220" width="90" height="40" type="RECTANGLE"><fills><fill color="#2196f3"/></fills></Rectangle>
+        <Frame name="panel_over" x="0" y="210" width="120" height="60" type="FRAME"><fills><fill color="#cccccc"/></fills></Frame>
+        <Rectangle name="btn_under_button" x="130" y="220" width="90" height="40" type="RECTANGLE"><fills><fill color="#2196f3"/></fills></Rectangle>
+        <Rectangle name="btn_over_button" x="120" y="210" width="110" height="60" type="RECTANGLE"><fills><fill color="#e53935"/></fills></Rectangle>
+      </children>
+      <fills><fill color="#ffffff"/></fills>
+    </Frame>
+  </children>
+</page>
