@@ -279,9 +279,13 @@ static int test_point(lv_obj_t *w, lv_point_t *pt)
     lv_obj_get_coords(w, &a);
     for (lv_obj_t *p = lv_obj_get_parent(w); p; p = lv_obj_get_parent(p)) {
         if (lv_obj_has_flag(p, LV_OBJ_FLAG_OVERFLOW_VISIBLE)) continue;
-        lv_area_t pa;
+        lv_area_t pa;   /* intersect by hand: lv_area_intersect is private in 9.3 */
         lv_obj_get_coords(p, &pa);
-        if (!lv_area_intersect(&a, &a, &pa)) return 0;
+        if (pa.x1 > a.x1) a.x1 = pa.x1;
+        if (pa.y1 > a.y1) a.y1 = pa.y1;
+        if (pa.x2 < a.x2) a.x2 = pa.x2;
+        if (pa.y2 < a.y2) a.y2 = pa.y2;
+        if (a.x1 > a.x2 || a.y1 > a.y2) return 0;
     }
     pt->x = (a.x1 + a.x2) / 2;
     pt->y = (a.y1 + a.y2) / 2;
@@ -425,7 +429,11 @@ def build(program: Path, ui_src: Path, lvgl: Path, lib: Path) -> Path:
     exe = program.with_suffix("")
     sources = [program, ui_src / "priv_src" / "ui_style.c",
                *(p for p in sorted((ui_src / "priv_src").glob("*.c")) if p.name != "ui_style.c")]
+    # -w hides the generated code's warnings (the compile tests cover them),
+    # but a missing declaration stays an error everywhere: gcc 14 makes it one
+    # by default, and a private LVGL function must fail locally too.
     cmd = ["gcc", *SAN_FLAGS, *DEFINES, "-std=gnu99", "-w",
+           "-Werror=implicit-function-declaration",
            f"-I{LV_CONF_DIR}", f"-I{lvgl}", f"-I{ui_src / 'include'}",
            f"-I{ui_src / 'priv_include'}", *map(str, sources), str(lib), "-lm", "-o", str(exe)]
     (program.parent / "build_command.txt").write_text(" ".join(cmd) + "\n", encoding="utf-8")
