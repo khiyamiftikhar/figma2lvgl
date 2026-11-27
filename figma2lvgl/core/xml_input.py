@@ -71,3 +71,19 @@ def read_design(path) -> ET.Element:
     except UnicodeDecodeError:
         return ET.parse(path).getroot()    # another encoding: parse as is
     return ET.fromstring(protect_attribute_whitespace(text))
+
+
+def screen_frames(root: ET.Element) -> list | None:
+    """The screen frames of a design, in XML order.
+
+    A page export (`<page>` with frames under `<children>`) gives each
+    top-level Frame. A frame exported on its own has the frame itself as
+    the root (`<frame type="FRAME">`): that frame is the one screen, not its
+    children (N33). None if the page has no `<children>` at all.
+    """
+    if root.tag.lower() == "frame" or root.get("type") == "FRAME":
+        return [root]
+    children = root.find("children")
+    if children is None:
+        return None
+    return children.findall("Frame")

@@ -12,7 +12,7 @@ import argparse
 import logging
 from pathlib import Path
 
-from figma2lvgl.core.xml_input import read_design
+from figma2lvgl.core.xml_input import read_design, screen_frames
 from figma2lvgl.core.figma_parser import parse_design
 from figma2lvgl.core import naming
 from figma2lvgl.core.naming import NamingError
@@ -390,12 +390,11 @@ def main(argv=None):
         logger.error("Failed to parse XML: %s", e)
         sys.exit(1)
 
-    page_children = root.find("children")
-    if page_children is None:
+    frames = screen_frames(root)   # a page's frames, or a frame exported alone
+    if frames is None:
         logger.error("No <children> element found in XML.")
         sys.exit(1)
 
-    frames = page_children.findall("Frame")
     if not frames:
         logger.error("No <Frame> nodes found in XML.")
         sys.exit(1)
