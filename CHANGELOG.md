@@ -1,5 +1,103 @@
 # Changelog
 
+## [0.5.0] - 2026-11-27
+
+One rule set, in `figma2lvgl/core/naming.py`, now decides what each Figma
+layer becomes and what it is called (design repo,
+`docs/design/10_identifier_and_classification_contract.md`). Every name it
+changes or fixes is reported as a warning naming the Figma layer.
+
+### Breaking
+
+Names and widgets change only in these cases. A design that compiled with
+0.4.6 and hits none of them gets the same names. "0.4.6 → 0.5.0" pairs below
+are real output of both versions.
+
+- **Containers without a visible fill or stroke are dropped**, even with a
+  meaningful name; their children move up to the parent. 0.4.6 kept any
+  renamed container as a panel. Name it `panel_…` to keep it.
+  `Content` → `btn_ok`: `ui_home_content_btn_ok_set_label()` →
+  `ui_home_btn_ok_set_label()`.
+- **Keywords are whole words.** `toolbar_bg`: a bar
+  (`ui_home_toolbar_bg_set_value()`) → a panel (no setter). `silicone_pad`: an
+  image → skipped. Keywords also work with any separator now, not only `_`,
+  and alone: `Btn OK`, `btn-ok`, `BtnOk`, `btn`: skipped → button
+  (`ui_home_btn_ok_set_label()`). `volume-slider` → slider.
+- **Sliders named `<name>_slider_<min>_<max>`** were skipped (the `_slider`
+  check ran before the range was removed): `brightness_slider_0_255` →
+  slider 0..255, `ui_home_brightness_slider_set_value()`.
+- **Bar ranges are removed from the name**, like slider ranges:
+  `ui_home_battery_bar_0_100_set_value()` → `ui_home_battery_bar_set_value()`.
+- **Repeated names** are numbered per parent: three `title` layers gave
+  `title`, `title_0`, `title_0` (didn't compile) → `title`, `title_2`,
+  `title_3`. The same name in two different panels is no longer renamed:
+  `ui_home_panel_b_btn_go_1_set_label()` → `ui_home_panel_b_btn_go_set_label()`.
+  Their callbacks name the parent instead:
+  `ui_home_on_btn_go_1_clicked()` → `ui_home_on_panel_b_btn_go_clicked()`
+  (and `ui_home_on_btn_go_clicked()` → `ui_home_on_panel_a_btn_go_clicked()`).
+- **Event suffixes apply to buttons only**, and never take the whole name:
+  label `time_click`: `ui_home_time_set_text()` →
+  `ui_home_time_click_set_text()`. Button `btn_press`: field `btn` with a
+  press callback → field `btn_press`, click callback
+  (`ui_home_on_btn_pressed()` → `ui_home_on_btn_press_clicked()`).
+- **Setters use the full path.** 0.4.6 kept the last three levels, so deep
+  widgets could collide: `ui_home_b_c_deep_set_text()` →
+  `ui_home_a_b_c_deep_set_text()`. Widgets three levels deep or less are
+  unchanged.
+- **Image files are named after the layer**, so repeated image layers share
+  one PNG: a second `icon_wifi` needed `icon_wifi_0.png` → uses
+  `icon_wifi.png`.
+- **Names unusable in C are fixed with a type prefix** (0.4.6 generated
+  invalid C): `2nd row` → `label_2nd_row`, `default` → `label_default`,
+  `style` → `label_style`, `lv_logo` → `image_lv_logo`, `★` → `label_1`.
+- **Screens:** two frames that give the same screen name (`Home` and `home`)
+  are an error; 0.4.6 silently overwrote one with the other. A screen named
+  `style`, `defs` or `config` is renamed (`ui_style_2.c`): 0.4.6 wrote
+  `ui_style.c`, which replaced figma2lvgl's own file and broke the build.
+- **Panels look like the Figma layer.** They start without LVGL's theme
+  style: 0.4.6 drew every panel with a white background, a 2 px border and
+  about 13 px padding, which also moved every child by about 15 px. A frame
+  without "Clip content" no longer clips its children.
+- **Widgets inside Groups and dropped frames are placed where Figma shows
+  them.** In 0.4.6 a Group's children were offset twice and usually clipped
+  away: in the coordinate fixture, three of four nested buttons weren't drawn
+  at all (`tests/fixtures/coords/README.md`).
+- **Hidden layers are not generated**, with everything inside them.
+- **Leaf Rectangles and Frames with a fill or stroke** become empty panels
+  (coloured boxes); 0.4.6 skipped them.
+
+### Added
+- Errors for designs that can't be generated correctly, before anything is
+  written: two screens with one name, image layers with one name but
+  different components, a range outside int32, a PNG named like one of
+  figma2lvgl's files.
+- A check of the planned output: every function, header guard and file
+  (case-insensitively) must be generated once.
+- Warnings for every renamed or fixed name, ignored keyword, skipped layer,
+  image that can't be verified as the same picture, and rotated layer.
+
+### Changed
+- Internal names follow the C rules too: `_bar_anim_exec_cb` →
+  `bar_anim_exec_cb` (file-static, not part of the API).
+- ESP-IDF example: touch X was mirrored since driver 2.0.0; "Mirror touch X"
+  and "Mirror touch Y" are now settings in the example's menu. README notes
+  that touch isn't calibrated near the screen edges.
+- README: the free LVGL library is all you need (not LVGL Pro); "Upgrading
+  from 0.4.x"; the naming rules rewritten.
+
+### Tests
+- `tests/test_naming.py`: every table of the naming contract.
+- `tests/golden/full/`: the complete output of eight designs, compared file by
+  file.
+- `tests/fixtures/coords/`: two exports built by Figma plugins
+  (`tools/figma_fixture_plugin/`) with Figma's own positions; checked in
+  Python and by running the generated code under LVGL 9.3.
+- `tests/fixtures/naming_classify.xml`, `tests/fixtures/hostile/`: every
+  classification rule, and names built to break naming, compiled as C and
+  C++.
+- Property tests (Hypothesis): random designs keep every naming invariant;
+  compiled on PRs, main and tags; random seed nightly.
+
 ## [0.4.6] - 2026-11-26
 
 ### Fixed
