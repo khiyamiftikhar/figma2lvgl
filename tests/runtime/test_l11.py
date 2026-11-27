@@ -17,14 +17,16 @@ after a long press too (finding N25, asserted as today's behaviour).
 import pytest
 
 from figma2lvgl.core.widget_type import WidgetType as T
-from tests.golden_cases import CASES
+from tests.golden_cases import CASES, REPORT_ONLY
 from tests.runtime.harness import keep_artifacts, run_case
 
-# The events fixture's own cases: one button under another must be reported
-# covered by exactly that button; the button under a filled panel must not
-# (panels aren't clickable, so LVGL's hit test looks through them).
+# The events fixture's and the f_covering frame's own cases: one button
+# under another must be reported covered by exactly that button; the button
+# under a filled panel must not (panels aren't clickable, so LVGL's hit test
+# looks through them).
 EXPECTED_COVERED = {
     "events": [("events", "btn_under_button", "btn_over_button")],
+    "features": [("f_covering", "btn_under_button", "btn_on_top")],
 }
 
 
@@ -109,7 +111,7 @@ def touch_failures(result, case) -> list:
     return failures
 
 
-@pytest.mark.parametrize("case", list(CASES))
+@pytest.mark.parametrize("case", [c for c in CASES if c not in REPORT_ONLY])
 def test_presses_call_the_right_callbacks(case, lvgl, tmp_path):
     result = run_case(case, lvgl, tmp_path, mode="touch")
     if result.returncode != 0 or not result.done:

@@ -24,7 +24,14 @@ CASES = {
     "classify": (FIXTURES / "naming_classify.xml", EXAMPLE_DESIGN),
     "hostile": (FIXTURES / "hostile" / "hostile.xml", FIXTURES / "hostile"),
     "events": (FIXTURES / "events.xml", None),
+    "features": (FIXTURES / "features" / "features.xml", FIXTURES / "features"),
+    "showcase": (FIXTURES / "showcase" / "showcase.xml", FIXTURES / "features"),
 }
+
+# Run (L9) but neither pinned by references (L10) nor pressed (L11): the
+# showcase holds constructs not supported yet; its look is only reported
+# against Figma's PNG (design doc 12, section 7).
+REPORT_ONLY = {"showcase"}
 
 
 def generate(case: str, out: Path) -> Path:
