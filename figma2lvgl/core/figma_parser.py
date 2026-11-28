@@ -197,6 +197,7 @@ class ParsedNode:
         self.children        = children if children is not None else []
         self.event_modifiers = event_modifiers if event_modifiers is not None else []
         self.clips           = clips
+        self.design_text     = None   # labels and buttons: Figma's text, uncut
         self.layer:        str = id          # Figma layer name, for messages
         self.natural_id:   str = id          # member name before fixes/suffixes
         self.asset_name:   str | None = None # IMAGE: symbol and PNG stem (4.4)
@@ -361,6 +362,7 @@ def _parse_children(parent_xml, screen_name: str, depth: int, counters,
 
         style        = parse_style(child_xml, wtype)
         text_content = ""
+        design_text  = None     # Figma's text, uncut (tests compare with it)
         slider_min, slider_max = 0, 100
         bar_min, bar_max = 0, 100
         children = []
@@ -368,9 +370,13 @@ def _parse_children(parent_xml, screen_name: str, depth: int, counters,
         if wtype == WidgetType.LABEL:
             raw_text     = child_xml.attrib.get("characters", "")
             text_content = sanitize_c_string(raw_text, UI_MAX_STRING_LENGTH)
+            design_text  = raw_text
 
         elif wtype == WidgetType.BUTTON:
             text_content = _find_button_label(child_xml)
+            label_raw = _find_button_text_node(child_xml)
+            label_raw = label_raw.attrib.get("characters", "") if label_raw is not None else ""
+            design_text = label_raw or text_content
             # No recursion — button label is an LVGL internal detail. Its
             # text style is the Figma Text layer's (colour, size, alignment).
             label_xml = _find_button_text_node(child_xml)
@@ -409,6 +415,7 @@ def _parse_children(parent_xml, screen_name: str, depth: int, counters,
                                and _is_frame_like(child_xml)
                                and child_xml.attrib.get("clipsContent", "").lower() == "true"),
         ))
+        result[-1].design_text = design_text
         result[-1].layer        = name
         result[-1].natural_id   = normalize_id(info.base.lower())  # before any fix
         result[-1].asset_name   = asset

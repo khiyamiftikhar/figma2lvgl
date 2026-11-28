@@ -12,6 +12,18 @@
 #define LV_USE_STDLIB_STRING  LV_STDLIB_CLIB
 #define LV_USE_STDLIB_SPRINTF LV_STDLIB_CLIB
 
+/* An LVGL assert prints a marker line and aborts, so a test fails with a
+ * clear message instead of hanging in LVGL's default handler, while(1)
+ * (design doc 11 rev 5). */
+#define LV_ASSERT_HANDLER_INCLUDE "lv_test_assert.h"
+#define LV_ASSERT_HANDLER { printf("ASSERT %s:%d\n", __FILE__, __LINE__); fflush(stdout); abort(); }
+
+/* Warnings and errors go to a callback the lifecycle tests register (doc 11
+ * rule 2: a refused deinit logs a warning). Nothing is printed without one. */
+#define LV_USE_LOG 1
+#define LV_LOG_LEVEL LV_LOG_LEVEL_WARN
+#define LV_LOG_PRINTF 0
+
 /* Every Montserrat size LVGL ships, so every font branch in
  * static_src/ui_style.c is compiled. */
 #define LV_FONT_MONTSERRAT_8 1

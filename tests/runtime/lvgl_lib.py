@@ -47,6 +47,7 @@ def _source_id(lvgl: Path) -> str:
 def cache_key(lvgl: Path, flags=SAN_FLAGS) -> str:
     h = hashlib.sha256()
     for part in (_source_id(lvgl), (LV_CONF_DIR / "lv_conf.h").read_text("utf-8"),
+                 (LV_CONF_DIR / "lv_test_assert.h").read_text("utf-8"),
                  gcc_version(), " ".join(list(flags) + DEFINES)):
         h.update(part.encode())
         h.update(b"\0")
