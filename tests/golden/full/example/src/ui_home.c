@@ -239,7 +239,7 @@ void ui_home_init(void)
         ui_apply_text_style(lbl, &s_home.btn_test.style);
     }
     lv_obj_add_event_cb(s_home.btn_test.lv_obj, ui_home_on_btn_test_clicked,
-                        LV_EVENT_CLICKED, NULL);
+                        LV_EVENT_SHORT_CLICKED, NULL);
     lv_obj_add_event_cb(s_home.btn_test.lv_obj, ui_home_on_btn_test_long_pressed,
                         LV_EVENT_LONG_PRESSED, NULL);
     ui_apply_style(s_home.btn_test.lv_obj, UI_CHILD_BUTTON, &s_home.btn_test.style);

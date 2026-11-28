@@ -509,8 +509,14 @@ SETTER_OPS = {
 
 def button_events(node) -> list[tuple[str, str]]:
     """(LVGL event, callback event name) for a button: clicked always, plus
-    the event of an explicit suffix."""
-    events = [("LV_EVENT_CLICKED", "clicked")]
+    the event of an explicit suffix.
+
+    A button with a long-press suffix (_lp, _lpr) gets its clicked callback
+    on LV_EVENT_SHORT_CLICKED, which LVGL sends only when no long press
+    happened: a hold calls the long-press callback, not clicked too (Q15,
+    design doc 11 rev 5). Other buttons keep LV_EVENT_CLICKED."""
+    long_press = bool({"lp", "lpr"} & set(node.event_modifiers))
+    events = [("LV_EVENT_SHORT_CLICKED" if long_press else "LV_EVENT_CLICKED", "clicked")]
     for key in node.event_modifiers:
         lv, name = naming.EVENTS[key]
         if lv != "LV_EVENT_CLICKED":

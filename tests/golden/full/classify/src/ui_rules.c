@@ -878,7 +878,7 @@ void ui_rules_init(void)
         ui_apply_text_style(lbl, &s_rules.btn_save.style);
     }
     lv_obj_add_event_cb(s_rules.btn_save.lv_obj, ui_rules_on_btn_save_clicked,
-                        LV_EVENT_CLICKED, NULL);
+                        LV_EVENT_SHORT_CLICKED, NULL);
     lv_obj_add_event_cb(s_rules.btn_save.lv_obj, ui_rules_on_btn_save_long_pressed,
                         LV_EVENT_LONG_PRESSED, NULL);
     ui_apply_style(s_rules.btn_save.lv_obj, UI_CHILD_BUTTON, &s_rules.btn_save.style);
