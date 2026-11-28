@@ -1,11 +1,11 @@
 """Screen lifecycle (design doc 11, rev 6), on every test design.
 
-v0.7.0 PR 1: the cases run on the code as it is (0.6.0's lifecycle) and
-fail where doc 11 says it is wrong. Each such failure is listed in
-EXPECTED_ON_0_6 with the specific check it must fail on: a failure that
-doesn't match, a crash, a sanitizer report, an LVGL assert or a timeout
-fails the test, and so does an expected failure that doesn't happen. PR 2
-(the lifecycle) empties the table, PR 4 (images) removes the last entry.
+v0.7.0 PR 1 ran the cases on 0.6.0's code, where each failed at a listed
+check; PR 2 built the lifecycle and emptied that list except for what a
+later PR builds (image hide, PR 4). A listed failure must happen at its
+specific check: a failure that doesn't match, a crash, a sanitizer report,
+an LVGL assert or a timeout fails the test, and so does an expected
+failure that doesn't happen.
 """
 
 import re
@@ -16,25 +16,10 @@ import pytest
 from tests.golden_cases import CASES
 from tests.runtime import lifecycle as L
 
-# case -> what the failing check must say, on 0.6.0's code.
-NO_DEINIT = r"no ui_\w+_deinit\(\)"
+# case -> what the failing check must say on the code as it is. v0.7.0 PR 2
+# built the lifecycle; image hide() comes with PR 4 (Q16).
 EXPECTED_ON_0_6 = {
-    "init_twice": r"second init built a new screen \(pointers changed\)$",
-    "setters_before_init": r"expected .* \(value set before init\)$",
-    "deinit_active": NO_DEINIT,
-    "deinit_inactive": NO_DEINIT,
-    "full_cycle": NO_DEINIT,
-    "cycles_100": NO_DEINIT,
-    "setters_after_deinit": NO_DEINIT,
-    "slider_readback": NO_DEINIT,
-    "bar_target": NO_DEINIT,
-    "image_matrix": NO_DEINIT,
-    # 0.6.0: setters don't store into the struct, button label_text is a
-    # pointer, and design text is cut at 29 bytes.
-    "text_exact": (r"(after a text longer than its buffer is|the text field is a pointer"
-                   r"|design text after init is)"),
-    "length64": r"buffer is \d+ bytes with UI_MAX_STRING_LENGTH=64$",
-    "debug": NO_DEINIT,
+    "image_matrix": r"no ui_\w+_hide\(\)",
 }
 
 _built: dict = {}
@@ -59,7 +44,7 @@ def judge(out: L.Outcome, expected: dict) -> None:
         return
     pattern = expected.get(out.case)
     if pattern and out.clean_failure and re.search(pattern, out.failure):
-        pytest.xfail(f"0.6.0: {out.failure}")
+        pytest.xfail(f"not built yet: {out.failure}")
     pytest.fail(out.describe())
 
 
@@ -126,3 +111,53 @@ def test_an_lvgl_assert_ends_the_program(lvgl, tmp_path):
                          patch=_patch_init("    lv_obj_set_pos(NULL, 0, 0);\n"))
     out = L.run("golden", "init_twice", exe)
     assert "ASSERT " in out.stdout and not out.timed_out and not out.clean_failure, out.describe()
+
+
+# Each check catches the bug it is for: the generated code broken on purpose,
+# one way per mechanism (design doc 11 rev 5 test requirements).
+
+def _sub(rel: str, old: str, new: str):
+    def patch(ui_src):
+        f = ui_src / rel
+        text = f.read_text(encoding="utf-8")
+        assert old in text, (rel, old)
+        f.write_text(text.replace(old, new, 1), encoding="utf-8")
+    return patch
+
+
+MUTANTS = [
+    ("golden", "init_twice", _sub("src/ui_testscreen.c",
+        "    if (s_testscreen.lv_screen)\n        return;\n    s_testscreen.lv_screen = lv_obj_create(NULL);",
+        "    s_testscreen.lv_screen = lv_obj_create(NULL);"),
+     r"second init built a new screen"),
+    ("golden", "deinit_active", _sub("src/ui_testscreen.c",
+        "    if (lv_screen_active() == s_testscreen.lv_screen) {",
+        "    if (0) {"),
+     r"deinit of the active screen changed"),
+    ("golden", "deinit_inactive", _sub("src/ui_testscreen.c",
+        "    s_testscreen.battery_bar.lv_obj = NULL;\n", ""),
+     r"a pointer isn't NULL after deinit"),
+    ("golden", "full_cycle", _sub("src/ui_testscreen.c",
+        "    ui_copy_text(s_testscreen.panel_top.time.text, sizeof s_testscreen.panel_top.time.text, text);\n", ""),
+     r"panel_top.time is .* \(value kept across deinit and init\)$"),
+    ("events", "slider_readback", _sub("src/ui_events.c",
+        "    s_events.slider_h.value = lv_slider_get_value(s_events.slider_h.lv_obj);\n", ""),
+     r"slider_h value after deinit and init \(dragged\) is"),
+    ("golden", "bar_target", _sub("src/ui_testscreen.c",
+        "    s_testscreen.battery_bar.value = value;   /* the target: what a rebuild shows */\n", ""),
+     r"battery_bar value after deinit mid-animation \(target\) is"),
+    ("golden", "setters_before_init", _sub("src/ui_testscreen.c",
+        "    ui_copy_text(s_testscreen.btn_ok.label_text, sizeof s_testscreen.btn_ok.label_text, text);\n", ""),
+     r"btn_ok label is .* \(value set before init\)$"),
+    ("golden", "text_exact", _sub("priv_src/ui_style.c",
+        "            n = start;", "            (void)start;"),
+     r"(cut UTF-8 character|invalid UTF-8|longer than its buffer)"),
+]
+
+
+@pytest.mark.parametrize("design,case,patch,expected", MUTANTS,
+                         ids=[f"{d}-{c}" for d, c, _p, _e in MUTANTS])
+def test_each_check_catches_its_bug(design, case, patch, expected, lvgl, tmp_path):
+    exe = L.build_design(design, lvgl, tmp_path, L.CASE_VARIANT.get(case, "base"), patch=patch)
+    out = L.run(design, case, exe)
+    assert out.clean_failure and re.search(expected, out.failure), out.describe()

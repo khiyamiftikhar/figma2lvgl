@@ -33,16 +33,17 @@ def test_design_runs_clean(case, lvgl, tmp_path):
 def _break_label_setter(ui_src):
     c = ui_src / "src" / "ui_testscreen.c"
     text = c.read_text(encoding="utf-8")
-    assert "lv_label_set_text(s_testscreen.panel_top.time.lv_obj, text);" in text
-    c.write_text(text.replace("lv_label_set_text(s_testscreen.panel_top.time.lv_obj, text);",
-                              "(void)text;", 1), encoding="utf-8")
+    # The setter's line (the SETTERS section comes before init in the file).
+    line = "lv_label_set_text(s_testscreen.panel_top.time.lv_obj, s_testscreen.panel_top.time.text);"
+    assert line in text
+    c.write_text(text.replace(line, "(void)text;", 1), encoding="utf-8")
 
 
 def _overflow_label_setter(ui_src):
     c = ui_src / "src" / "ui_testscreen.c"
     text = c.read_text(encoding="utf-8")
     c.write_text(text.replace(
-        "lv_label_set_text(s_testscreen.panel_top.time.lv_obj, text);",
+        "lv_label_set_text(s_testscreen.panel_top.time.lv_obj, s_testscreen.panel_top.time.text);",
         "{ static char buf[8]; strcpy(buf, text); lv_label_set_text(s_testscreen.panel_top.time.lv_obj, buf); }",
         1).replace('#include "ui_testscreen.h"', '#include <string.h>\n#include "ui_testscreen.h"', 1),
         encoding="utf-8")

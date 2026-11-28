@@ -129,7 +129,7 @@ def _widget_block(screen, node, path, member) -> tuple[list, int]:
         for i in range(4):
             step(f"set_text #{i}")
             lines += [f"    {sym['set_text']}(texts[{i}]); setters_called_once(&called_{id(node)});",
-                      f'    check_text("{name}", lv_label_get_text({path}.lv_obj), texts[{i}]);']
+                      f'    check_text("{name}", lv_label_get_text({path}.lv_obj), cut(texts[{i}], sizeof {path}.text));']
     elif wt == T.BUTTON:
         setters = 1
         for i in range(4):
@@ -137,7 +137,7 @@ def _widget_block(screen, node, path, member) -> tuple[list, int]:
             lines += [f"    {sym['set_label']}(texts[{i}]); setters_called_once(&called_{id(node)});",
                       f"    {{ lv_obj_t *l = lv_obj_get_child({path}.lv_obj, 0);",
                       f'      if (!l) fail("{name}: button has no label child");',
-                      f'      check_text("{name} label", lv_label_get_text(l), texts[{i}]); }}']
+                      f'      check_text("{name} label", lv_label_get_text(l), cut(texts[{i}], sizeof {path}.label_text)); }}']
     elif wt in (T.BAR, T.SLIDER):
         setters = 1
         a, b = ((node.bar_min, node.bar_max) if wt == T.BAR
@@ -246,6 +246,19 @@ static void check_text(const char *what, const char *got, const char *want)
 }
 static void check_int(const char *what, int32_t got, int32_t want)
 { if (got != want) fail("%%s is %%ld, expected %%ld", what, (long)got, (long)want); }
+/* What a setter stores (design doc 11 rev 5, Q17): the text cut to fit a
+ * buffer of size bytes, at a whole UTF-8 character. */
+static const char *cut(const char *text, size_t size)
+{
+    static char buf[4 * UI_MAX_STRING_LENGTH + 256];
+    size_t n = strlen(text);
+    if (n > size - 1) {
+        n = size - 1;
+        while (n > 0 && ((unsigned char)text[n] & 0xC0) == 0x80) n--;
+    }
+    memcpy(buf, text, n); buf[n] = 0;
+    return buf;
+}
 static int32_t clamp(int32_t v, int32_t a, int32_t b)
 { int32_t lo = a < b ? a : b, hi = a < b ? b : a; return v < lo ? lo : v > hi ? hi : v; }
 static int setters_called;

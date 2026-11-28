@@ -106,14 +106,20 @@ static struct {
 // ------------------------------
 void ui_f_nesting_load(void)
 {
+    if (!s_f_nesting.lv_screen) {
+        UI_LIFECYCLE_WARN("ui_f_nesting_load: screen not built");
+        return;
+    }
     lv_scr_load(s_f_nesting.lv_screen);
 }
 
 // ------------------------------
-// SCREEN INIT
+// SCREEN INIT (builds from the struct's values; no-op if built)
 // ------------------------------
 void ui_f_nesting_init(void)
 {
+    if (s_f_nesting.lv_screen)
+        return;
     s_f_nesting.lv_screen = lv_obj_create(NULL);
 
     /* panel_outer (panel) */
@@ -200,4 +206,27 @@ void ui_f_nesting_init(void)
     lv_obj_add_flag(s_f_nesting.panel_open.panel_open_mid.panel_open_inner.box_overflow.lv_obj, LV_OBJ_FLAG_OVERFLOW_VISIBLE);
     lv_obj_set_style_bg_opa(s_f_nesting.panel_open.panel_open_mid.panel_open_inner.box_overflow.lv_obj, LV_OPA_COVER, LV_PART_MAIN);
     ui_apply_style(s_f_nesting.panel_open.panel_open_mid.panel_open_inner.box_overflow.lv_obj, UI_CHILD_PANEL, &s_f_nesting.panel_open.panel_open_mid.panel_open_inner.box_overflow.style);
+}
+
+// ------------------------------
+// SCREEN DEINIT (refused for the active screen; values kept)
+// ------------------------------
+void ui_f_nesting_deinit(void)
+{
+    if (!s_f_nesting.lv_screen)
+        return;
+    if (lv_screen_active() == s_f_nesting.lv_screen) {
+        UI_LIFECYCLE_WARN("ui_f_nesting_deinit: refused, it is the active screen; load another first");
+        return;
+    }
+    lv_obj_delete(s_f_nesting.lv_screen);   /* frees every child, callback and animation */
+    s_f_nesting.lv_screen = NULL;
+    s_f_nesting.panel_outer.lv_obj = NULL;
+    s_f_nesting.panel_open.lv_obj = NULL;
+    s_f_nesting.panel_outer.panel_middle.lv_obj = NULL;
+    s_f_nesting.panel_open.panel_open_mid.lv_obj = NULL;
+    s_f_nesting.panel_outer.panel_middle.panel_inner.lv_obj = NULL;
+    s_f_nesting.panel_open.panel_open_mid.panel_open_inner.lv_obj = NULL;
+    s_f_nesting.panel_outer.panel_middle.panel_inner.box_clipped.lv_obj = NULL;
+    s_f_nesting.panel_open.panel_open_mid.panel_open_inner.box_overflow.lv_obj = NULL;
 }

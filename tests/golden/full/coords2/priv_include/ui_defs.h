@@ -30,6 +30,14 @@ extern "C" {
 //   Bare-metal Makefile: add -Iui_src/priv_include to CFLAGS.
 #include "ui_config.h"
 
+// Warnings for calls on a screen that isn't built (design doc 11, rule 5):
+// only with -DUI_LIFECYCLE_DEBUG; otherwise no log call at all.
+#ifdef UI_LIFECYCLE_DEBUG
+#define UI_LIFECYCLE_WARN(...) LV_LOG_WARN(__VA_ARGS__)
+#else
+#define UI_LIFECYCLE_WARN(...) do { } while (0)
+#endif
+
 
 // ── Widget type enum ──────────────────────────────────────────────────────────
 // Used by ui_apply_style() to apply type-specific style properties.

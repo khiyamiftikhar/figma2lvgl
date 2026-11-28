@@ -107,7 +107,11 @@ static void bar_anim_exec_cb(void *obj, int32_t v)
 // ------------------------------
 void ui_f_bars_level_bar_set_value(int value, uint32_t duration_ms)
 {
-    if (!s_f_bars.level_bar.lv_obj) return;
+    s_f_bars.level_bar.value = value;   /* the target: what a rebuild shows */
+    if (!s_f_bars.level_bar.lv_obj) {
+        UI_LIFECYCLE_WARN("ui_f_bars_level_bar_set_value: screen not built; value stored");
+        return;
+    }
     if (duration_ms == 0) {
         lv_bar_set_value(s_f_bars.level_bar.lv_obj, value, LV_ANIM_OFF);
         return;
@@ -123,7 +127,11 @@ void ui_f_bars_level_bar_set_value(int value, uint32_t duration_ms)
 
 void ui_f_bars_volume_bar_set_value(int value, uint32_t duration_ms)
 {
-    if (!s_f_bars.volume_bar.lv_obj) return;
+    s_f_bars.volume_bar.value = value;   /* the target: what a rebuild shows */
+    if (!s_f_bars.volume_bar.lv_obj) {
+        UI_LIFECYCLE_WARN("ui_f_bars_volume_bar_set_value: screen not built; value stored");
+        return;
+    }
     if (duration_ms == 0) {
         lv_bar_set_value(s_f_bars.volume_bar.lv_obj, value, LV_ANIM_OFF);
         return;
@@ -139,7 +147,11 @@ void ui_f_bars_volume_bar_set_value(int value, uint32_t duration_ms)
 
 void ui_f_bars_drain_bar_set_value(int value, uint32_t duration_ms)
 {
-    if (!s_f_bars.drain_bar.lv_obj) return;
+    s_f_bars.drain_bar.value = value;   /* the target: what a rebuild shows */
+    if (!s_f_bars.drain_bar.lv_obj) {
+        UI_LIFECYCLE_WARN("ui_f_bars_drain_bar_set_value: screen not built; value stored");
+        return;
+    }
     if (duration_ms == 0) {
         lv_bar_set_value(s_f_bars.drain_bar.lv_obj, value, LV_ANIM_OFF);
         return;
@@ -155,7 +167,11 @@ void ui_f_bars_drain_bar_set_value(int value, uint32_t duration_ms)
 
 void ui_f_bars_temp_bar_set_value(int value, uint32_t duration_ms)
 {
-    if (!s_f_bars.temp_bar.lv_obj) return;
+    s_f_bars.temp_bar.value = value;   /* the target: what a rebuild shows */
+    if (!s_f_bars.temp_bar.lv_obj) {
+        UI_LIFECYCLE_WARN("ui_f_bars_temp_bar_set_value: screen not built; value stored");
+        return;
+    }
     if (duration_ms == 0) {
         lv_bar_set_value(s_f_bars.temp_bar.lv_obj, value, LV_ANIM_OFF);
         return;
@@ -171,7 +187,11 @@ void ui_f_bars_temp_bar_set_value(int value, uint32_t duration_ms)
 
 void ui_f_bars_tall_bar_set_value(int value, uint32_t duration_ms)
 {
-    if (!s_f_bars.tall_bar.lv_obj) return;
+    s_f_bars.tall_bar.value = value;   /* the target: what a rebuild shows */
+    if (!s_f_bars.tall_bar.lv_obj) {
+        UI_LIFECYCLE_WARN("ui_f_bars_tall_bar_set_value: screen not built; value stored");
+        return;
+    }
     if (duration_ms == 0) {
         lv_bar_set_value(s_f_bars.tall_bar.lv_obj, value, LV_ANIM_OFF);
         return;
@@ -190,14 +210,20 @@ void ui_f_bars_tall_bar_set_value(int value, uint32_t duration_ms)
 // ------------------------------
 void ui_f_bars_load(void)
 {
+    if (!s_f_bars.lv_screen) {
+        UI_LIFECYCLE_WARN("ui_f_bars_load: screen not built");
+        return;
+    }
     lv_scr_load(s_f_bars.lv_screen);
 }
 
 // ------------------------------
-// SCREEN INIT
+// SCREEN INIT (builds from the struct's values; no-op if built)
 // ------------------------------
 void ui_f_bars_init(void)
 {
+    if (s_f_bars.lv_screen)
+        return;
     s_f_bars.lv_screen = lv_obj_create(NULL);
 
     /* level_bar (bar) */
@@ -239,4 +265,24 @@ void ui_f_bars_init(void)
     lv_bar_set_range(s_f_bars.tall_bar.lv_obj, s_f_bars.tall_bar.min, s_f_bars.tall_bar.max);
     lv_bar_set_value(s_f_bars.tall_bar.lv_obj, s_f_bars.tall_bar.value, LV_ANIM_OFF);
     ui_apply_style(s_f_bars.tall_bar.lv_obj, UI_CHILD_BAR, &s_f_bars.tall_bar.style);
+}
+
+// ------------------------------
+// SCREEN DEINIT (refused for the active screen; values kept)
+// ------------------------------
+void ui_f_bars_deinit(void)
+{
+    if (!s_f_bars.lv_screen)
+        return;
+    if (lv_screen_active() == s_f_bars.lv_screen) {
+        UI_LIFECYCLE_WARN("ui_f_bars_deinit: refused, it is the active screen; load another first");
+        return;
+    }
+    lv_obj_delete(s_f_bars.lv_screen);   /* frees every child, callback and animation */
+    s_f_bars.lv_screen = NULL;
+    s_f_bars.level_bar.lv_obj = NULL;
+    s_f_bars.volume_bar.lv_obj = NULL;
+    s_f_bars.drain_bar.lv_obj = NULL;
+    s_f_bars.temp_bar.lv_obj = NULL;
+    s_f_bars.tall_bar.lv_obj = NULL;
 }

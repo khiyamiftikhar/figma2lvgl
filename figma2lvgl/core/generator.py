@@ -10,6 +10,7 @@ from figma2lvgl.core.figma_parser import ParsedScreen, assign_design_symbols
 from figma2lvgl.core.node_emitter import emit_screen_struct_type
 from figma2lvgl.core.init_emitter import emit_init_body
 from figma2lvgl.core.setter_emitter import collect_setters_and_callbacks
+from figma2lvgl.core.widget_type import WidgetType
 
 
 _BAR_ANIM_CB = """\
@@ -35,6 +36,14 @@ def generate_screen(screen: ParsedScreen) -> tuple[str, str, str, str]:
     c_fname = f"ui_{snake}.c"
     init_fn = screen.symbols["init"]
     load_fn = screen.symbols["load"]
+    deinit_fn = screen.symbols["deinit"]
+    nodes = screen.all_nodes_bfs()
+    # deinit: read back what the user can change (slider values), delete
+    # the hierarchy, reset every pointer (design doc 11, rules 1 and 3).
+    readback = "".join(f"    {path}.value = lv_slider_get_value({path}.lv_obj);\n"
+                       for node, path, _parent in nodes
+                       if node.widget_type == WidgetType.SLIDER)
+    resets = "".join(f"    {path}.lv_obj = NULL;\n" for _node, path, _parent in nodes)
 
     # ── Pass 1: struct type + initializer ────────────────────────────────────
     struct_block = emit_screen_struct_type(screen)
@@ -58,6 +67,9 @@ def generate_screen(screen: ParsedScreen) -> tuple[str, str, str, str]:
         sv         = sv,
         init_fn    = init_fn,
         init_body  = init_body,
+        deinit_fn  = deinit_fn,
+        readback   = readback,
+        resets     = resets,
     )
 
     # ── Assemble .h ───────────────────────────────────────────────────────────
@@ -65,6 +77,7 @@ def generate_screen(screen: ParsedScreen) -> tuple[str, str, str, str]:
         guard       = guard,
         init_fn     = init_fn,
         load_fn     = load_fn,
+        deinit_fn   = deinit_fn,
         setters     = sc["prototypes"],
         cb_decls    = sc["cb_declarations"],
     )
@@ -108,18 +121,39 @@ _C_LAYOUT = """\
 // ------------------------------
 void {load_fn}(void)
 {{
+    if (!{sv}.lv_screen) {{
+        UI_LIFECYCLE_WARN("{load_fn}: screen not built");
+        return;
+    }}
     lv_scr_load({sv}.lv_screen);
 }}
 
 // ------------------------------
-// SCREEN INIT
+// SCREEN INIT (builds from the struct's values; no-op if built)
 // ------------------------------
 void {init_fn}(void)
 {{
+    if ({sv}.lv_screen)
+        return;
     {sv}.lv_screen = lv_obj_create(NULL);
 
 {init_body}
 }}
+
+// ------------------------------
+// SCREEN DEINIT (refused for the active screen; values kept)
+// ------------------------------
+void {deinit_fn}(void)
+{{
+    if (!{sv}.lv_screen)
+        return;
+    if (lv_screen_active() == {sv}.lv_screen) {{
+        UI_LIFECYCLE_WARN("{deinit_fn}: refused, it is the active screen; load another first");
+        return;
+    }}
+{readback}    lv_obj_delete({sv}.lv_screen);   /* frees every child, callback and animation */
+    {sv}.lv_screen = NULL;
+{resets}}}
 """
 
 _H_LAYOUT = """\
@@ -134,9 +168,22 @@ extern "C" {{
 
 // ------------------------------
 // LIFECYCLE
+// The screen's values live in RAM whether or not it is built: setters store
+// them, init builds the screen from them, deinit frees the LVGL objects and
+// keeps them. Call these from the thread that runs LVGL, or with LVGL locked.
 // ------------------------------
+
+/* Builds the screen from its values. Does nothing if it is already built. */
 void {init_fn}(void);
+
+/* Makes it the active screen. Does nothing if it isn't built. */
 void {load_fn}(void);
+
+/* Frees the screen's LVGL objects; its values are kept for the next init.
+ * Load another screen first: it does nothing if this is the active screen.
+ * Pointers from the accessors, and anything the application added to the
+ * screen's objects (children, styles), are gone afterwards. */
+void {deinit_fn}(void);
 
 // ------------------------------
 // SETTERS

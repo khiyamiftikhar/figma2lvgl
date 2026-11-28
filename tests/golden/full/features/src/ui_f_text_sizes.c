@@ -12,107 +12,107 @@ static struct {
     struct {
         lv_obj_t   *lv_obj;
         ui_style_t  style;
-        char        text[UI_MAX_STRING_LENGTH];
+        char        text[UI_TEXT_SIZE(5)];
     } size_8;
     struct {
         lv_obj_t   *lv_obj;
         ui_style_t  style;
-        char        text[UI_MAX_STRING_LENGTH];
+        char        text[UI_TEXT_SIZE(6)];
     } size_10;
     struct {
         lv_obj_t   *lv_obj;
         ui_style_t  style;
-        char        text[UI_MAX_STRING_LENGTH];
+        char        text[UI_TEXT_SIZE(6)];
     } size_12;
     struct {
         lv_obj_t   *lv_obj;
         ui_style_t  style;
-        char        text[UI_MAX_STRING_LENGTH];
+        char        text[UI_TEXT_SIZE(6)];
     } size_14;
     struct {
         lv_obj_t   *lv_obj;
         ui_style_t  style;
-        char        text[UI_MAX_STRING_LENGTH];
+        char        text[UI_TEXT_SIZE(6)];
     } size_16;
     struct {
         lv_obj_t   *lv_obj;
         ui_style_t  style;
-        char        text[UI_MAX_STRING_LENGTH];
+        char        text[UI_TEXT_SIZE(6)];
     } size_18;
     struct {
         lv_obj_t   *lv_obj;
         ui_style_t  style;
-        char        text[UI_MAX_STRING_LENGTH];
+        char        text[UI_TEXT_SIZE(6)];
     } size_20;
     struct {
         lv_obj_t   *lv_obj;
         ui_style_t  style;
-        char        text[UI_MAX_STRING_LENGTH];
+        char        text[UI_TEXT_SIZE(6)];
     } size_22;
     struct {
         lv_obj_t   *lv_obj;
         ui_style_t  style;
-        char        text[UI_MAX_STRING_LENGTH];
+        char        text[UI_TEXT_SIZE(6)];
     } size_24;
     struct {
         lv_obj_t   *lv_obj;
         ui_style_t  style;
-        char        text[UI_MAX_STRING_LENGTH];
+        char        text[UI_TEXT_SIZE(6)];
     } size_26;
     struct {
         lv_obj_t   *lv_obj;
         ui_style_t  style;
-        char        text[UI_MAX_STRING_LENGTH];
+        char        text[UI_TEXT_SIZE(6)];
     } size_28;
     struct {
         lv_obj_t   *lv_obj;
         ui_style_t  style;
-        char        text[UI_MAX_STRING_LENGTH];
+        char        text[UI_TEXT_SIZE(6)];
     } size_30;
     struct {
         lv_obj_t   *lv_obj;
         ui_style_t  style;
-        char        text[UI_MAX_STRING_LENGTH];
+        char        text[UI_TEXT_SIZE(6)];
     } size_32;
     struct {
         lv_obj_t   *lv_obj;
         ui_style_t  style;
-        char        text[UI_MAX_STRING_LENGTH];
+        char        text[UI_TEXT_SIZE(6)];
     } size_34;
     struct {
         lv_obj_t   *lv_obj;
         ui_style_t  style;
-        char        text[UI_MAX_STRING_LENGTH];
+        char        text[UI_TEXT_SIZE(6)];
     } size_36;
     struct {
         lv_obj_t   *lv_obj;
         ui_style_t  style;
-        char        text[UI_MAX_STRING_LENGTH];
+        char        text[UI_TEXT_SIZE(6)];
     } size_38;
     struct {
         lv_obj_t   *lv_obj;
         ui_style_t  style;
-        char        text[UI_MAX_STRING_LENGTH];
+        char        text[UI_TEXT_SIZE(6)];
     } size_40;
     struct {
         lv_obj_t   *lv_obj;
         ui_style_t  style;
-        char        text[UI_MAX_STRING_LENGTH];
+        char        text[UI_TEXT_SIZE(6)];
     } size_42;
     struct {
         lv_obj_t   *lv_obj;
         ui_style_t  style;
-        char        text[UI_MAX_STRING_LENGTH];
+        char        text[UI_TEXT_SIZE(6)];
     } size_44;
     struct {
         lv_obj_t   *lv_obj;
         ui_style_t  style;
-        char        text[UI_MAX_STRING_LENGTH];
+        char        text[UI_TEXT_SIZE(6)];
     } size_46;
     struct {
         lv_obj_t   *lv_obj;
         ui_style_t  style;
-        char        text[UI_MAX_STRING_LENGTH];
+        char        text[UI_TEXT_SIZE(6)];
     } size_48;
 } s_f_text_sizes = {
     .size_8 = {
@@ -260,128 +260,212 @@ static struct {
 // ------------------------------
 void ui_f_text_sizes_size_8_set_text(const char *text)
 {
-    if (s_f_text_sizes.size_8.lv_obj)
-        lv_label_set_text(s_f_text_sizes.size_8.lv_obj, text);
+    ui_copy_text(s_f_text_sizes.size_8.text, sizeof s_f_text_sizes.size_8.text, text);
+    if (!s_f_text_sizes.size_8.lv_obj) {
+        UI_LIFECYCLE_WARN("ui_f_text_sizes_size_8_set_text: screen not built; value stored");
+        return;
+    }
+    lv_label_set_text(s_f_text_sizes.size_8.lv_obj, s_f_text_sizes.size_8.text);
 }
 
 void ui_f_text_sizes_size_10_set_text(const char *text)
 {
-    if (s_f_text_sizes.size_10.lv_obj)
-        lv_label_set_text(s_f_text_sizes.size_10.lv_obj, text);
+    ui_copy_text(s_f_text_sizes.size_10.text, sizeof s_f_text_sizes.size_10.text, text);
+    if (!s_f_text_sizes.size_10.lv_obj) {
+        UI_LIFECYCLE_WARN("ui_f_text_sizes_size_10_set_text: screen not built; value stored");
+        return;
+    }
+    lv_label_set_text(s_f_text_sizes.size_10.lv_obj, s_f_text_sizes.size_10.text);
 }
 
 void ui_f_text_sizes_size_12_set_text(const char *text)
 {
-    if (s_f_text_sizes.size_12.lv_obj)
-        lv_label_set_text(s_f_text_sizes.size_12.lv_obj, text);
+    ui_copy_text(s_f_text_sizes.size_12.text, sizeof s_f_text_sizes.size_12.text, text);
+    if (!s_f_text_sizes.size_12.lv_obj) {
+        UI_LIFECYCLE_WARN("ui_f_text_sizes_size_12_set_text: screen not built; value stored");
+        return;
+    }
+    lv_label_set_text(s_f_text_sizes.size_12.lv_obj, s_f_text_sizes.size_12.text);
 }
 
 void ui_f_text_sizes_size_14_set_text(const char *text)
 {
-    if (s_f_text_sizes.size_14.lv_obj)
-        lv_label_set_text(s_f_text_sizes.size_14.lv_obj, text);
+    ui_copy_text(s_f_text_sizes.size_14.text, sizeof s_f_text_sizes.size_14.text, text);
+    if (!s_f_text_sizes.size_14.lv_obj) {
+        UI_LIFECYCLE_WARN("ui_f_text_sizes_size_14_set_text: screen not built; value stored");
+        return;
+    }
+    lv_label_set_text(s_f_text_sizes.size_14.lv_obj, s_f_text_sizes.size_14.text);
 }
 
 void ui_f_text_sizes_size_16_set_text(const char *text)
 {
-    if (s_f_text_sizes.size_16.lv_obj)
-        lv_label_set_text(s_f_text_sizes.size_16.lv_obj, text);
+    ui_copy_text(s_f_text_sizes.size_16.text, sizeof s_f_text_sizes.size_16.text, text);
+    if (!s_f_text_sizes.size_16.lv_obj) {
+        UI_LIFECYCLE_WARN("ui_f_text_sizes_size_16_set_text: screen not built; value stored");
+        return;
+    }
+    lv_label_set_text(s_f_text_sizes.size_16.lv_obj, s_f_text_sizes.size_16.text);
 }
 
 void ui_f_text_sizes_size_18_set_text(const char *text)
 {
-    if (s_f_text_sizes.size_18.lv_obj)
-        lv_label_set_text(s_f_text_sizes.size_18.lv_obj, text);
+    ui_copy_text(s_f_text_sizes.size_18.text, sizeof s_f_text_sizes.size_18.text, text);
+    if (!s_f_text_sizes.size_18.lv_obj) {
+        UI_LIFECYCLE_WARN("ui_f_text_sizes_size_18_set_text: screen not built; value stored");
+        return;
+    }
+    lv_label_set_text(s_f_text_sizes.size_18.lv_obj, s_f_text_sizes.size_18.text);
 }
 
 void ui_f_text_sizes_size_20_set_text(const char *text)
 {
-    if (s_f_text_sizes.size_20.lv_obj)
-        lv_label_set_text(s_f_text_sizes.size_20.lv_obj, text);
+    ui_copy_text(s_f_text_sizes.size_20.text, sizeof s_f_text_sizes.size_20.text, text);
+    if (!s_f_text_sizes.size_20.lv_obj) {
+        UI_LIFECYCLE_WARN("ui_f_text_sizes_size_20_set_text: screen not built; value stored");
+        return;
+    }
+    lv_label_set_text(s_f_text_sizes.size_20.lv_obj, s_f_text_sizes.size_20.text);
 }
 
 void ui_f_text_sizes_size_22_set_text(const char *text)
 {
-    if (s_f_text_sizes.size_22.lv_obj)
-        lv_label_set_text(s_f_text_sizes.size_22.lv_obj, text);
+    ui_copy_text(s_f_text_sizes.size_22.text, sizeof s_f_text_sizes.size_22.text, text);
+    if (!s_f_text_sizes.size_22.lv_obj) {
+        UI_LIFECYCLE_WARN("ui_f_text_sizes_size_22_set_text: screen not built; value stored");
+        return;
+    }
+    lv_label_set_text(s_f_text_sizes.size_22.lv_obj, s_f_text_sizes.size_22.text);
 }
 
 void ui_f_text_sizes_size_24_set_text(const char *text)
 {
-    if (s_f_text_sizes.size_24.lv_obj)
-        lv_label_set_text(s_f_text_sizes.size_24.lv_obj, text);
+    ui_copy_text(s_f_text_sizes.size_24.text, sizeof s_f_text_sizes.size_24.text, text);
+    if (!s_f_text_sizes.size_24.lv_obj) {
+        UI_LIFECYCLE_WARN("ui_f_text_sizes_size_24_set_text: screen not built; value stored");
+        return;
+    }
+    lv_label_set_text(s_f_text_sizes.size_24.lv_obj, s_f_text_sizes.size_24.text);
 }
 
 void ui_f_text_sizes_size_26_set_text(const char *text)
 {
-    if (s_f_text_sizes.size_26.lv_obj)
-        lv_label_set_text(s_f_text_sizes.size_26.lv_obj, text);
+    ui_copy_text(s_f_text_sizes.size_26.text, sizeof s_f_text_sizes.size_26.text, text);
+    if (!s_f_text_sizes.size_26.lv_obj) {
+        UI_LIFECYCLE_WARN("ui_f_text_sizes_size_26_set_text: screen not built; value stored");
+        return;
+    }
+    lv_label_set_text(s_f_text_sizes.size_26.lv_obj, s_f_text_sizes.size_26.text);
 }
 
 void ui_f_text_sizes_size_28_set_text(const char *text)
 {
-    if (s_f_text_sizes.size_28.lv_obj)
-        lv_label_set_text(s_f_text_sizes.size_28.lv_obj, text);
+    ui_copy_text(s_f_text_sizes.size_28.text, sizeof s_f_text_sizes.size_28.text, text);
+    if (!s_f_text_sizes.size_28.lv_obj) {
+        UI_LIFECYCLE_WARN("ui_f_text_sizes_size_28_set_text: screen not built; value stored");
+        return;
+    }
+    lv_label_set_text(s_f_text_sizes.size_28.lv_obj, s_f_text_sizes.size_28.text);
 }
 
 void ui_f_text_sizes_size_30_set_text(const char *text)
 {
-    if (s_f_text_sizes.size_30.lv_obj)
-        lv_label_set_text(s_f_text_sizes.size_30.lv_obj, text);
+    ui_copy_text(s_f_text_sizes.size_30.text, sizeof s_f_text_sizes.size_30.text, text);
+    if (!s_f_text_sizes.size_30.lv_obj) {
+        UI_LIFECYCLE_WARN("ui_f_text_sizes_size_30_set_text: screen not built; value stored");
+        return;
+    }
+    lv_label_set_text(s_f_text_sizes.size_30.lv_obj, s_f_text_sizes.size_30.text);
 }
 
 void ui_f_text_sizes_size_32_set_text(const char *text)
 {
-    if (s_f_text_sizes.size_32.lv_obj)
-        lv_label_set_text(s_f_text_sizes.size_32.lv_obj, text);
+    ui_copy_text(s_f_text_sizes.size_32.text, sizeof s_f_text_sizes.size_32.text, text);
+    if (!s_f_text_sizes.size_32.lv_obj) {
+        UI_LIFECYCLE_WARN("ui_f_text_sizes_size_32_set_text: screen not built; value stored");
+        return;
+    }
+    lv_label_set_text(s_f_text_sizes.size_32.lv_obj, s_f_text_sizes.size_32.text);
 }
 
 void ui_f_text_sizes_size_34_set_text(const char *text)
 {
-    if (s_f_text_sizes.size_34.lv_obj)
-        lv_label_set_text(s_f_text_sizes.size_34.lv_obj, text);
+    ui_copy_text(s_f_text_sizes.size_34.text, sizeof s_f_text_sizes.size_34.text, text);
+    if (!s_f_text_sizes.size_34.lv_obj) {
+        UI_LIFECYCLE_WARN("ui_f_text_sizes_size_34_set_text: screen not built; value stored");
+        return;
+    }
+    lv_label_set_text(s_f_text_sizes.size_34.lv_obj, s_f_text_sizes.size_34.text);
 }
 
 void ui_f_text_sizes_size_36_set_text(const char *text)
 {
-    if (s_f_text_sizes.size_36.lv_obj)
-        lv_label_set_text(s_f_text_sizes.size_36.lv_obj, text);
+    ui_copy_text(s_f_text_sizes.size_36.text, sizeof s_f_text_sizes.size_36.text, text);
+    if (!s_f_text_sizes.size_36.lv_obj) {
+        UI_LIFECYCLE_WARN("ui_f_text_sizes_size_36_set_text: screen not built; value stored");
+        return;
+    }
+    lv_label_set_text(s_f_text_sizes.size_36.lv_obj, s_f_text_sizes.size_36.text);
 }
 
 void ui_f_text_sizes_size_38_set_text(const char *text)
 {
-    if (s_f_text_sizes.size_38.lv_obj)
-        lv_label_set_text(s_f_text_sizes.size_38.lv_obj, text);
+    ui_copy_text(s_f_text_sizes.size_38.text, sizeof s_f_text_sizes.size_38.text, text);
+    if (!s_f_text_sizes.size_38.lv_obj) {
+        UI_LIFECYCLE_WARN("ui_f_text_sizes_size_38_set_text: screen not built; value stored");
+        return;
+    }
+    lv_label_set_text(s_f_text_sizes.size_38.lv_obj, s_f_text_sizes.size_38.text);
 }
 
 void ui_f_text_sizes_size_40_set_text(const char *text)
 {
-    if (s_f_text_sizes.size_40.lv_obj)
-        lv_label_set_text(s_f_text_sizes.size_40.lv_obj, text);
+    ui_copy_text(s_f_text_sizes.size_40.text, sizeof s_f_text_sizes.size_40.text, text);
+    if (!s_f_text_sizes.size_40.lv_obj) {
+        UI_LIFECYCLE_WARN("ui_f_text_sizes_size_40_set_text: screen not built; value stored");
+        return;
+    }
+    lv_label_set_text(s_f_text_sizes.size_40.lv_obj, s_f_text_sizes.size_40.text);
 }
 
 void ui_f_text_sizes_size_42_set_text(const char *text)
 {
-    if (s_f_text_sizes.size_42.lv_obj)
-        lv_label_set_text(s_f_text_sizes.size_42.lv_obj, text);
+    ui_copy_text(s_f_text_sizes.size_42.text, sizeof s_f_text_sizes.size_42.text, text);
+    if (!s_f_text_sizes.size_42.lv_obj) {
+        UI_LIFECYCLE_WARN("ui_f_text_sizes_size_42_set_text: screen not built; value stored");
+        return;
+    }
+    lv_label_set_text(s_f_text_sizes.size_42.lv_obj, s_f_text_sizes.size_42.text);
 }
 
 void ui_f_text_sizes_size_44_set_text(const char *text)
 {
-    if (s_f_text_sizes.size_44.lv_obj)
-        lv_label_set_text(s_f_text_sizes.size_44.lv_obj, text);
+    ui_copy_text(s_f_text_sizes.size_44.text, sizeof s_f_text_sizes.size_44.text, text);
+    if (!s_f_text_sizes.size_44.lv_obj) {
+        UI_LIFECYCLE_WARN("ui_f_text_sizes_size_44_set_text: screen not built; value stored");
+        return;
+    }
+    lv_label_set_text(s_f_text_sizes.size_44.lv_obj, s_f_text_sizes.size_44.text);
 }
 
 void ui_f_text_sizes_size_46_set_text(const char *text)
 {
-    if (s_f_text_sizes.size_46.lv_obj)
-        lv_label_set_text(s_f_text_sizes.size_46.lv_obj, text);
+    ui_copy_text(s_f_text_sizes.size_46.text, sizeof s_f_text_sizes.size_46.text, text);
+    if (!s_f_text_sizes.size_46.lv_obj) {
+        UI_LIFECYCLE_WARN("ui_f_text_sizes_size_46_set_text: screen not built; value stored");
+        return;
+    }
+    lv_label_set_text(s_f_text_sizes.size_46.lv_obj, s_f_text_sizes.size_46.text);
 }
 
 void ui_f_text_sizes_size_48_set_text(const char *text)
 {
-    if (s_f_text_sizes.size_48.lv_obj)
-        lv_label_set_text(s_f_text_sizes.size_48.lv_obj, text);
+    ui_copy_text(s_f_text_sizes.size_48.text, sizeof s_f_text_sizes.size_48.text, text);
+    if (!s_f_text_sizes.size_48.lv_obj) {
+        UI_LIFECYCLE_WARN("ui_f_text_sizes_size_48_set_text: screen not built; value stored");
+        return;
+    }
+    lv_label_set_text(s_f_text_sizes.size_48.lv_obj, s_f_text_sizes.size_48.text);
 }
 
 // ------------------------------
@@ -389,14 +473,20 @@ void ui_f_text_sizes_size_48_set_text(const char *text)
 // ------------------------------
 void ui_f_text_sizes_load(void)
 {
+    if (!s_f_text_sizes.lv_screen) {
+        UI_LIFECYCLE_WARN("ui_f_text_sizes_load: screen not built");
+        return;
+    }
     lv_scr_load(s_f_text_sizes.lv_screen);
 }
 
 // ------------------------------
-// SCREEN INIT
+// SCREEN INIT (builds from the struct's values; no-op if built)
 // ------------------------------
 void ui_f_text_sizes_init(void)
 {
+    if (s_f_text_sizes.lv_screen)
+        return;
     s_f_text_sizes.lv_screen = lv_obj_create(NULL);
 
     /* size_8 (label) */
@@ -566,4 +656,40 @@ void ui_f_text_sizes_init(void)
     lv_label_set_long_mode(s_f_text_sizes.size_48.lv_obj, LV_LABEL_LONG_CLIP);
     lv_label_set_text(s_f_text_sizes.size_48.lv_obj, s_f_text_sizes.size_48.text);
     ui_apply_style(s_f_text_sizes.size_48.lv_obj, UI_CHILD_LABEL, &s_f_text_sizes.size_48.style);
+}
+
+// ------------------------------
+// SCREEN DEINIT (refused for the active screen; values kept)
+// ------------------------------
+void ui_f_text_sizes_deinit(void)
+{
+    if (!s_f_text_sizes.lv_screen)
+        return;
+    if (lv_screen_active() == s_f_text_sizes.lv_screen) {
+        UI_LIFECYCLE_WARN("ui_f_text_sizes_deinit: refused, it is the active screen; load another first");
+        return;
+    }
+    lv_obj_delete(s_f_text_sizes.lv_screen);   /* frees every child, callback and animation */
+    s_f_text_sizes.lv_screen = NULL;
+    s_f_text_sizes.size_8.lv_obj = NULL;
+    s_f_text_sizes.size_10.lv_obj = NULL;
+    s_f_text_sizes.size_12.lv_obj = NULL;
+    s_f_text_sizes.size_14.lv_obj = NULL;
+    s_f_text_sizes.size_16.lv_obj = NULL;
+    s_f_text_sizes.size_18.lv_obj = NULL;
+    s_f_text_sizes.size_20.lv_obj = NULL;
+    s_f_text_sizes.size_22.lv_obj = NULL;
+    s_f_text_sizes.size_24.lv_obj = NULL;
+    s_f_text_sizes.size_26.lv_obj = NULL;
+    s_f_text_sizes.size_28.lv_obj = NULL;
+    s_f_text_sizes.size_30.lv_obj = NULL;
+    s_f_text_sizes.size_32.lv_obj = NULL;
+    s_f_text_sizes.size_34.lv_obj = NULL;
+    s_f_text_sizes.size_36.lv_obj = NULL;
+    s_f_text_sizes.size_38.lv_obj = NULL;
+    s_f_text_sizes.size_40.lv_obj = NULL;
+    s_f_text_sizes.size_42.lv_obj = NULL;
+    s_f_text_sizes.size_44.lv_obj = NULL;
+    s_f_text_sizes.size_46.lv_obj = NULL;
+    s_f_text_sizes.size_48.lv_obj = NULL;
 }
