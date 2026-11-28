@@ -56,6 +56,7 @@ static struct {
     },
     .icon_wifi = {
         .style = { .box = {0}, .text = {0}, .effects = {0} },
+        .src = &icon_wifi,
     },
     .bar = {
         .style = {
@@ -67,6 +68,7 @@ static struct {
     },
     .wifi_off = {
         .style = { .box = {0}, .text = {0}, .effects = {0} },
+        .src = &wifi_off,
     },
     .btn_test = {
         .style = {
@@ -125,6 +127,16 @@ void ui_home_icon_wifi_display(void)
     lv_image_set_src(s_home.icon_wifi.lv_obj, s_home.icon_wifi.src);
 }
 
+void ui_home_icon_wifi_hide(void)
+{
+    s_home.icon_wifi.src = NULL;   /* hidden, also after deinit and init */
+    if (!s_home.icon_wifi.lv_obj) {
+        UI_LIFECYCLE_WARN("ui_home_icon_wifi_hide: screen not built; value stored");
+        return;
+    }
+    lv_image_set_src(s_home.icon_wifi.lv_obj, NULL);
+}
+
 void ui_home_bar_set_value(int value, uint32_t duration_ms)
 {
     s_home.bar.value = value;   /* the target: what a rebuild shows */
@@ -153,6 +165,16 @@ void ui_home_wifi_off_display(void)
         return;
     }
     lv_image_set_src(s_home.wifi_off.lv_obj, s_home.wifi_off.src);
+}
+
+void ui_home_wifi_off_hide(void)
+{
+    s_home.wifi_off.src = NULL;   /* hidden, also after deinit and init */
+    if (!s_home.wifi_off.lv_obj) {
+        UI_LIFECYCLE_WARN("ui_home_wifi_off_hide: screen not built; value stored");
+        return;
+    }
+    lv_image_set_src(s_home.wifi_off.lv_obj, NULL);
 }
 
 void ui_home_btn_test_set_label(const char *text)

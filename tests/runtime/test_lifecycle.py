@@ -16,11 +16,10 @@ import pytest
 from tests.golden_cases import CASES
 from tests.runtime import lifecycle as L
 
-# case -> what the failing check must say on the code as it is. v0.7.0 PR 2
-# built the lifecycle; image hide() comes with PR 4 (Q16).
-EXPECTED_ON_0_6 = {
-    "image_matrix": r"no ui_\w+_hide\(\)",
-}
+# case -> what the failing check must say on the code as it is. Empty since
+# v0.7.0 PR 4 (image hide): every case passes; the machinery stays for the
+# next test written before its code.
+EXPECTED_ON_0_6 = {}
 
 _built: dict = {}
 

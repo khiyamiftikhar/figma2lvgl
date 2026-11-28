@@ -50,6 +50,19 @@ def _emit_image_setter(fn: str, path: str, asset: str) -> tuple[str, str]:
     return body, proto
 
 
+def _emit_image_hide(fn: str, path: str) -> tuple[str, str]:
+    body = (
+        f"void {fn}(void)\n"
+        f"{{\n"
+        f"    {path}.src = NULL;   /* hidden, also after deinit and init */\n"
+        f"{_unbuilt(fn, path)}"
+        f"    lv_image_set_src({path}.lv_obj, NULL);\n"
+        f"}}"
+    )
+    proto = f"void {fn}(void);"
+    return body, proto
+
+
 def _emit_bar_setter(fn: str, path: str) -> tuple[str, str]:
     body = (
         f"void {fn}(int value, uint32_t duration_ms)\n"
@@ -149,6 +162,9 @@ def collect_setters_and_callbacks(screen: ParsedScreen) -> dict:
 
         elif wt == WidgetType.IMAGE:
             body, proto = _emit_image_setter(sym["display"], path, node.asset_name or node.id)
+            setters.append(body)
+            prototypes.append(proto)
+            body, proto = _emit_image_hide(sym["hide"], path)
             setters.append(body)
             prototypes.append(proto)
 

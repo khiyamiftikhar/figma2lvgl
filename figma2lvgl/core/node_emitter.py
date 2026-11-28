@@ -142,6 +142,10 @@ def emit_node_initializer(node: ParsedNode, indent: str = "    ") -> str:
     elif wt == WidgetType.BUTTON and node.text_content:
         lines.append(f'{indent}.label_text = "{node.text_content}",')
 
+    elif wt == WidgetType.IMAGE:
+        # Shown from init, as in Figma (Q16); hide() sets it to NULL.
+        lines.append(f"{indent}.src = &{node.asset_name or node.id},")
+
     elif wt == WidgetType.SLIDER:
         lines.append(f"{indent}.value = 0,")
         lines.append(f"{indent}.min   = {node.slider_min},")

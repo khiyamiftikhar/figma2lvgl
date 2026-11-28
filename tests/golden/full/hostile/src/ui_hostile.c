@@ -346,12 +346,15 @@ static struct {
     },
     .ui_style = {
         .style = { .box = {0}, .text = {0}, .effects = {0} },
+        .src = &image_ui_style,
     },
     .icon_wifi = {
         .style = { .box = {0}, .text = {0}, .effects = {0} },
+        .src = &icon_wifi,
     },
     .icon_wifi_2 = {
         .style = { .box = {0}, .text = {0}, .effects = {0} },
+        .src = &icon_wifi,
     },
 };
 
@@ -490,6 +493,16 @@ void ui_hostile_ui_style_display(void)
     lv_image_set_src(s_hostile.ui_style.lv_obj, s_hostile.ui_style.src);
 }
 
+void ui_hostile_ui_style_hide(void)
+{
+    s_hostile.ui_style.src = NULL;   /* hidden, also after deinit and init */
+    if (!s_hostile.ui_style.lv_obj) {
+        UI_LIFECYCLE_WARN("ui_hostile_ui_style_hide: screen not built; value stored");
+        return;
+    }
+    lv_image_set_src(s_hostile.ui_style.lv_obj, NULL);
+}
+
 void ui_hostile_icon_wifi_display(void)
 {
     s_hostile.icon_wifi.src = &icon_wifi;
@@ -500,6 +513,16 @@ void ui_hostile_icon_wifi_display(void)
     lv_image_set_src(s_hostile.icon_wifi.lv_obj, s_hostile.icon_wifi.src);
 }
 
+void ui_hostile_icon_wifi_hide(void)
+{
+    s_hostile.icon_wifi.src = NULL;   /* hidden, also after deinit and init */
+    if (!s_hostile.icon_wifi.lv_obj) {
+        UI_LIFECYCLE_WARN("ui_hostile_icon_wifi_hide: screen not built; value stored");
+        return;
+    }
+    lv_image_set_src(s_hostile.icon_wifi.lv_obj, NULL);
+}
+
 void ui_hostile_icon_wifi_2_display(void)
 {
     s_hostile.icon_wifi_2.src = &icon_wifi;
@@ -508,6 +531,16 @@ void ui_hostile_icon_wifi_2_display(void)
         return;
     }
     lv_image_set_src(s_hostile.icon_wifi_2.lv_obj, s_hostile.icon_wifi_2.src);
+}
+
+void ui_hostile_icon_wifi_2_hide(void)
+{
+    s_hostile.icon_wifi_2.src = NULL;   /* hidden, also after deinit and init */
+    if (!s_hostile.icon_wifi_2.lv_obj) {
+        UI_LIFECYCLE_WARN("ui_hostile_icon_wifi_2_hide: screen not built; value stored");
+        return;
+    }
+    lv_image_set_src(s_hostile.icon_wifi_2.lv_obj, NULL);
 }
 
 void ui_hostile_panel_a_btn_ok_set_label(const char *text)

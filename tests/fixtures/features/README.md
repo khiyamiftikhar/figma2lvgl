@@ -20,13 +20,14 @@ How the files were made from the export:
   edit. (The `showcase` frame was also exported on its own, with a `<frame>` root:
   `../showcase/showcase_frame.xml`, which must generate exactly the same
   code; `tests/test_single_frame_export.py`, finding N33.)
-- The PNGs arrived at 2x with transparency flattened to black. Each frame's
-  1x PNG is cropped from the 2x page export and averaged over 2×2 pixels.
-  The separate 2x export of `showcase`, treated the same way, matches its
-  crop exactly (no pixel differs by more than 10 in any channel).
-- The icon PNGs are the 2x exports (48×48), opaque. Generated code only
-  shows images after `…_display()`, so they don't appear in the L10
-  references.
+- The frame PNGs are Figma's own 1x exports (Export panel), sent on
+  2026-11-27. They replace first versions made from a 2x page export
+  (cropped and averaged over 2×2 pixels), which matched them on 98.4–100 %
+  of pixels; the differences were in text edges.
+- The icon PNGs are Figma's own 1x exports (24×24, with transparency),
+  sent separately on 2026-11-27. Since v0.7.0 images show from `init`
+  (Q16) and keep their transparency (RGB565A8, Q16b), so they are in the
+  L10 references.
 
 What the tests check:
 
