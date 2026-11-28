@@ -491,7 +491,7 @@ void ui_showcase_init(void)
         ui_apply_text_style(lbl, &s_showcase.btn_cancel.style);
     }
     lv_obj_add_event_cb(s_showcase.btn_cancel.lv_obj, ui_showcase_on_btn_cancel_clicked,
-                        LV_EVENT_CLICKED, NULL);
+                        LV_EVENT_SHORT_CLICKED, NULL);
     lv_obj_add_event_cb(s_showcase.btn_cancel.lv_obj, ui_showcase_on_btn_cancel_long_pressed,
                         LV_EVENT_LONG_PRESSED, NULL);
     ui_apply_style(s_showcase.btn_cancel.lv_obj, UI_CHILD_BUTTON, &s_showcase.btn_cancel.style);

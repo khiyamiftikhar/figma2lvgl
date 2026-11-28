@@ -400,7 +400,7 @@ void ui_events_init(void)
         ui_apply_text_style(lbl, &s_events.btn_c.style);
     }
     lv_obj_add_event_cb(s_events.btn_c.lv_obj, ui_events_on_btn_c_clicked,
-                        LV_EVENT_CLICKED, NULL);
+                        LV_EVENT_SHORT_CLICKED, NULL);
     lv_obj_add_event_cb(s_events.btn_c.lv_obj, ui_events_on_btn_c_long_pressed,
                         LV_EVENT_LONG_PRESSED, NULL);
     ui_apply_style(s_events.btn_c.lv_obj, UI_CHILD_BUTTON, &s_events.btn_c.style);
@@ -417,7 +417,7 @@ void ui_events_init(void)
         ui_apply_text_style(lbl, &s_events.btn_d.style);
     }
     lv_obj_add_event_cb(s_events.btn_d.lv_obj, ui_events_on_btn_d_clicked,
-                        LV_EVENT_CLICKED, NULL);
+                        LV_EVENT_SHORT_CLICKED, NULL);
     lv_obj_add_event_cb(s_events.btn_d.lv_obj, ui_events_on_btn_d_long_pressed_repeat,
                         LV_EVENT_LONG_PRESSED_REPEAT, NULL);
     ui_apply_style(s_events.btn_d.lv_obj, UI_CHILD_BUTTON, &s_events.btn_d.style);

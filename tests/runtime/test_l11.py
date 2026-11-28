@@ -11,7 +11,10 @@ except in the events fixture, which asserts the detector itself.
 LVGL 9.3's event order within one press, confirmed with the events fixture:
 PRESSED at press, RELEASED at release, then CLICKED. LONG_PRESSED after
 400 ms, LONG_PRESSED_REPEAT every 100 ms after that, and CLICKED on release
-after a long press too (finding N25, asserted as today's behaviour).
+after a long press too (finding N25). Since v0.7.0 (Q15) a button with _lp
+or _lpr registers its clicked callback on SHORT_CLICKED, so a hold calls
+only the long-press callbacks; a tap still calls clicked. The pointer is
+driven by a simulated 5 ms clock, so the repeat count is exact.
 """
 
 import pytest
@@ -28,6 +31,14 @@ EXPECTED_COVERED = {
     "events": [("events", "btn_under_button", "btn_over_button")],
     "features": [("f_covering", "btn_under_button", "btn_on_top")],
 }
+
+
+# Repeats in the harness's 1000 ms hold (harness.py), with LVGL 9.3's
+# defaults (LONG_PRESSED after 400 ms, LONG_PRESSED_REPEAT every 100 ms) and
+# the simulated 5 ms clock: measured, and the same on every run, because
+# LVGL sees the press and the release only when its input timer reads the
+# pointer, not at the exact millisecond the harness changes it.
+LPR_REPEATS = 5
 
 
 def _widgets(screen):
@@ -49,17 +60,16 @@ def _check_button(result, screen, node, name, failures):
     if got != tap:
         failures.append(f"{screen.snake} {name} tap: callbacks {got}, expected {tap}")
     if "lp" in mods:
-        want = [cb("long_pressed"), cb("clicked")]
+        want = [cb("long_pressed")]                       # no clicked (Q15)
         got = result.step_callbacks.get((screen.snake, f"{name} long press"), [])
         if got != want:
             failures.append(f"{screen.snake} {name} long press: callbacks {got}, expected {want}")
     if "lpr" in mods:
         got = result.step_callbacks.get((screen.snake, f"{name} long press"), [])
-        repeat = cb("long_pressed_repeat")
-        n = len(got) - 1
-        if n < 1 or got[:-1] != [repeat] * n or got[-1] != cb("clicked"):
+        want = [cb("long_pressed_repeat")] * LPR_REPEATS   # no clicked (Q15)
+        if got != want:
             failures.append(f"{screen.snake} {name} long press: callbacks {got}, "
-                            f"expected [{repeat} x n>=1, {cb('clicked')}]")
+                            f"expected {LPR_REPEATS} x {cb('long_pressed_repeat')}")
 
 
 def _check_slider(result, screen, node, name, failures):
@@ -148,3 +158,22 @@ def test_events_fixture_exercises_every_kind(lvgl, tmp_path):
                  "btn_under_panel tap"]:
         assert step in steps, step
     assert result.values[("events", "slider_vrev")] >= 35       # range -50..50, reversed
+
+
+def _long_press_also_clicks(ui_src):
+    """0.6.0's registration for btn_c (_lp): clicked on LV_EVENT_CLICKED."""
+    c = ui_src / "src" / "ui_events.c"
+    text = c.read_text(encoding="utf-8")
+    old = ("lv_obj_add_event_cb(s_events.btn_c.lv_obj, ui_events_on_btn_c_clicked,\n"
+           "                        LV_EVENT_SHORT_CLICKED, NULL);")
+    assert old in text
+    c.write_text(text.replace(old, old.replace("SHORT_CLICKED", "CLICKED"), 1), encoding="utf-8")
+
+
+def test_checker_catches_a_long_press_that_also_clicks(lvgl, tmp_path):
+    """Q15: a hold on an _lp button must not call clicked (N25)."""
+    result = run_case("events", lvgl, tmp_path, mode="touch", patch=_long_press_also_clicks)
+    failures = touch_failures(result, "events")
+    assert failures == [
+        "events btn_c long press: callbacks ['ui_events_on_btn_c_long_pressed', "
+        "'ui_events_on_btn_c_clicked'], expected ['ui_events_on_btn_c_long_pressed']"]

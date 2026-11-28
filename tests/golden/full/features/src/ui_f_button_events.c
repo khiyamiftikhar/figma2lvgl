@@ -190,7 +190,7 @@ void ui_f_button_events_init(void)
         ui_apply_text_style(lbl, &s_f_button_events.btn_hold.style);
     }
     lv_obj_add_event_cb(s_f_button_events.btn_hold.lv_obj, ui_f_button_events_on_btn_hold_clicked,
-                        LV_EVENT_CLICKED, NULL);
+                        LV_EVENT_SHORT_CLICKED, NULL);
     lv_obj_add_event_cb(s_f_button_events.btn_hold.lv_obj, ui_f_button_events_on_btn_hold_long_pressed,
                         LV_EVENT_LONG_PRESSED, NULL);
     ui_apply_style(s_f_button_events.btn_hold.lv_obj, UI_CHILD_BUTTON, &s_f_button_events.btn_hold.style);
@@ -207,7 +207,7 @@ void ui_f_button_events_init(void)
         ui_apply_text_style(lbl, &s_f_button_events.btn_repeat.style);
     }
     lv_obj_add_event_cb(s_f_button_events.btn_repeat.lv_obj, ui_f_button_events_on_btn_repeat_clicked,
-                        LV_EVENT_CLICKED, NULL);
+                        LV_EVENT_SHORT_CLICKED, NULL);
     lv_obj_add_event_cb(s_f_button_events.btn_repeat.lv_obj, ui_f_button_events_on_btn_repeat_long_pressed_repeat,
                         LV_EVENT_LONG_PRESSED_REPEAT, NULL);
     ui_apply_style(s_f_button_events.btn_repeat.lv_obj, UI_CHILD_BUTTON, &s_f_button_events.btn_repeat.style);
