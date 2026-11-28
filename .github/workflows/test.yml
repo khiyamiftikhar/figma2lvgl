@@ -199,7 +199,7 @@ jobs:
         uses: actions/cache@v4
         with:
           path: ~/.cache/figma2lvgl/runtime
-          key: lvgl-san-${{ matrix.os }}-gcc${{ steps.gcc.outputs.version }}-${{ env.LVGL_COMMIT }}-${{ hashFiles('tests/lvgl/lv_conf.h', 'tests/runtime/lvgl_lib.py') }}
+          key: lvgl-san-${{ matrix.os }}-gcc${{ steps.gcc.outputs.version }}-${{ env.LVGL_COMMIT }}-${{ hashFiles('tests/lvgl/lv_conf.h', 'tests/lvgl/lv_test_assert.h', 'tests/runtime/lvgl_lib.py') }}
       - run: pip install -e . pytest pypng lz4
       - name: Run generated designs under the sanitizers
         run: pytest -q tests/runtime -rA
