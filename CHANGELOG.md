@@ -1,5 +1,71 @@
 # Changelog
 
+## [0.7.0] - 2026-11-28
+
+Screens can be freed and rebuilt, and each screen's values live in RAM
+whether or not it is built (design repo, `docs/design/11_screen_lifecycle_contract.md`).
+
+### Breaking
+- **A long press on an `_lp` or `_lpr` button no longer also calls
+  `clicked`.** Its `clicked` callback is registered on
+  `LV_EVENT_SHORT_CLICKED`: a short tap calls it, a hold calls only the
+  long-press callback. Plain buttons, and buttons with only `_press` or
+  `_release`, keep `LV_EVENT_CLICKED`. An application that relied on
+  `clicked` after a hold must handle it in the long-press callback (N25).
+- **Images show from `init`.** 0.6.0 showed an image only after
+  `…_display()`. Call the new `…_hide()` after `init`, or before it, to
+  start hidden (N32).
+- **A second `init` does nothing.** 0.6.0 built a second copy of the
+  screen and leaked the first.
+
+### Added
+- `ui_<screen>_deinit()`: frees a screen's LVGL objects (children,
+  callbacks, animations) and resets its pointers; refused for the active
+  screen. It reads back each slider's value first; a bar keeps the target of
+  its animation; `init` rebuilds the screen as it was.
+- `ui_<screen>_<image>_hide()`.
+- `-DUI_LIFECYCLE_DEBUG`: an LVGL warning when a call reaches a screen that
+  isn't built or a `deinit` is refused. Without it, no log calls.
+- `UI_MAX_STRING_LENGTH` can be overridden (`-DUI_MAX_STRING_LENGTH=64`).
+  It is now the minimum size of every text buffer.
+
+### Changed
+- **Every setter stores its value first,** then updates the screen if it is
+  built. Values set before `init`, or while a screen is freed, show when it
+  is built.
+- **`load` does nothing** for a screen that isn't built (0.6.0 passed `NULL`
+  to LVGL).
+- **Design text is never cut:** a text buffer is sized for its design text
+  if that is longer than `UI_MAX_STRING_LENGTH` (N34). Text set from code is
+  cut at its buffer's size, at a whole UTF-8 character (new `ui_copy_text`).
+- **PNGs with transparency keep it:** with the default colour format they
+  are converted to `RGB565A8`; transparent pixels were black (N35).
+- **RAM:** the screen structs grow by the button label buffers (an 8-byte
+  pointer became a 30-byte buffer) and by design texts longer than 29
+  bytes. On the test designs: golden +24, example +24, events +192,
+  classify +216, hostile +96, features +488 bytes.
+
+### Not done
+- `init` doesn't recover from an allocation failure: LVGL 9.3 crashes
+  inside its own code at most failure points when its asserts are off, and
+  stops in its assert handler when they're on (the default). Measured;
+  recorded as N36.
+
+### Tests
+- Lifecycle tests on every test design: second `init`, values before
+  `init`, `deinit` of the active and of an inactive screen (pixel-checked
+  replacement screen, memory back to the byte), 100 cycles without growth,
+  values after `deinit`, a slider dragged by the virtual pointer, a bar
+  freed mid-animation, the image show/hide matrix, exact text bytes, and the
+  two build options. Written first and run on 0.6.0's code, where each
+  failed at its named check.
+- Eight deliberately broken versions of the generated code, each caught by
+  its own check.
+- Exact-pixel transparency test against LVGL's blend formula.
+- L11: a tap and a hold on every `_lp`/`_lpr` button, with exact counts.
+- An LVGL assert now ends a test program with `ASSERT file:line` instead of
+  hanging.
+
 ## [0.6.0] - 2026-11-27
 
 Generated code is now run, drawn and touched on every PR (design repo,

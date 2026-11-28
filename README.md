@@ -39,6 +39,17 @@ pip install figma2lvgl
   Nothing is downloaded. For a different LVGL version, pass that version's
   `LVGLImage.py` with `--lvgl-tool`.
 
+### Upgrading from 0.6.x
+
+0.7.0 keeps every generated name. Three things behave differently
+([CHANGELOG.md](CHANGELOG.md), 0.7.0 → Breaking):
+
+- A long press on an `_lp`/`_lpr` button calls only the long-press
+  callback, not `clicked` too.
+- Images show from `init`; call `…_hide()` to start with one hidden.
+- A second `init` does nothing (0.6.0 built a second copy); use the new
+  `deinit` to free a screen you don't show.
+
 ### Upgrading from 0.4.x
 
 0.5.0 changes what some Figma layers become and what some generated names
@@ -146,15 +157,46 @@ void ui_home_on_btn_ok_clicked(lv_event_t *e)    { /* navigate, update state */ 
 void ui_home_on_btn_ok_long_pressed(lv_event_t *e) { /* hold action */ }
 
 // In your app init:
-ui_home_init();   // creates LVGL objects, applies styles, shows Figma text
+ui_home_init();   // creates LVGL objects, applies styles, shows Figma text and images
 ui_home_load();   // makes this screen active
 
 // At runtime — update widgets:
 ui_home_time_set_text("16:30");
 ui_home_battery_bar_set_value(85, 300);   // animated over 300 ms
-ui_home_icon_wifi_display();
+ui_home_icon_wifi_hide();                 // and ui_home_icon_wifi_display()
 ui_home_btn_ok_set_label("Confirm");
 ```
+
+### Screen lifecycle
+
+Each screen's values (texts, bar and slider values, which images show) live
+in RAM whether or not the screen is built. Setters store the value and, if
+the screen is built, show it; `init` builds the screen from the stored
+values.
+
+```c
+ui_home_time_set_text("16:30");   // fine before init: shown when it's built
+ui_home_init();                   // builds it; a second call does nothing
+ui_home_load();                   // shows it; does nothing if it isn't built
+
+ui_settings_init();
+ui_settings_load();               // switch first: the active screen can't be freed
+ui_home_deinit();                 // frees home's LVGL objects, keeps its values
+ui_home_init();                   // later: rebuilt as it was
+```
+
+- `deinit` does nothing for the active screen; load another screen first.
+- It reads back each slider's position, so a value the user dragged is kept.
+  A bar keeps the target of its animation.
+- Pointers from the accessors (`ui_home_<list>_get()`) and anything your
+  application added to the screen's objects (children, styles) are gone
+  after `deinit`; add them again after `init`.
+- Call these from the thread that runs LVGL, or with LVGL locked.
+- Build with `-DUI_LIFECYCLE_DEBUG` to get an LVGL warning when a call
+  reaches a screen that isn't built, or a `deinit` is refused.
+- `init` doesn't recover from running out of memory: LVGL 9.3 can't (it
+  stops in its assert handler by default). Give LVGL enough memory for the
+  screens you build at the same time.
 
 ---
 
@@ -207,8 +249,8 @@ Maps to:      lv_button_create()
 | Figma name | Events registered |
 |-----------|----------------------|
 | `btn_ok` | click |
-| `btn_ok_lp` | click + `LV_EVENT_LONG_PRESSED` |
-| `btn_ok_lpr` | click + `LV_EVENT_LONG_PRESSED_REPEAT` |
+| `btn_ok_lp` | click (a short tap only) + `LV_EVENT_LONG_PRESSED` |
+| `btn_ok_lpr` | click (a short tap only) + `LV_EVENT_LONG_PRESSED_REPEAT` |
 | `btn_ok_press` | click + `LV_EVENT_PRESSED` |
 | `btn_ok_release` | click + `LV_EVENT_RELEASED` |
 
@@ -232,6 +274,10 @@ The PNG is named after the layer, so several layers named `icon_wifi` all
 show `icon_wifi.png`. If they are instances of *different* components,
 figma2lvgl stops with an error naming both; if it can't tell (plain layers),
 it warns.
+
+The image shows from `init`, as in Figma; `…_hide()` clears it and
+`…_display()` shows it again. A PNG with transparency keeps it (converted to
+`RGB565A8`, 3 bytes a pixel); opaque PNGs are `RGB565` (2 bytes a pixel).
 
 #### Bar
 
@@ -362,8 +408,10 @@ Styles applied in Figma are extracted and baked into the generated C struct.
 
 > **Line breaks and wrapping:** line breaks in Figma text are kept. Text with
 > a fixed width in Figma ("Auto height" or "Fixed size") wraps at that width;
-> "Auto width" text doesn't. Label text is limited to 29 bytes
-> (`UI_MAX_STRING_LENGTH` 30); longer text is cut, with a whole character
+> "Auto width" text doesn't. The design's own text is never cut. Text set
+> from code is kept in a buffer of at least `UI_MAX_STRING_LENGTH` bytes
+> (30 by default; `-DUI_MAX_STRING_LENGTH=64` raises it), larger if the
+> design text needs it; longer text is cut, with a whole character
 > and escape at the end.
 
 > **Multiple fills** — only the first visible fill is used. If you layer
@@ -391,6 +439,7 @@ Every button and slider gets named event callback functions declared in its `.h`
 // Declared in ui_home.h — you must implement these
 void ui_home_on_btn_ok_clicked(lv_event_t *e);
 void ui_home_on_btn_ok_long_pressed(lv_event_t *e);   // only if btn_ok_lp in Figma
+                                                      // (then clicked is a short tap only)
 void ui_home_on_brightness_slider(lv_event_t *e);
 ```
 
