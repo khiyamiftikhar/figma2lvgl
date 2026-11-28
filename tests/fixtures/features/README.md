@@ -25,8 +25,9 @@ How the files were made from the export:
   (cropped and averaged over 2×2 pixels), which matched them on 98.4–100 %
   of pixels; the differences were in text edges.
 - The icon PNGs are Figma's own 1x exports (24×24, with transparency),
-  sent separately on 2026-11-27. Generated code only shows images after
-  `…_display()`, so they don't appear in the L10 references.
+  sent separately on 2026-11-27. Since v0.7.0 images show from `init`
+  (Q16) and keep their transparency (RGB565A8, Q16b), so they are in the
+  L10 references.
 
 What the tests check:
 

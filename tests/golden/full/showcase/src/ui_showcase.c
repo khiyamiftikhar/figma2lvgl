@@ -127,6 +127,7 @@ static struct {
         },
         .icon_star = {
             .style = { .box = {0}, .text = {0}, .effects = {0} },
+            .src = &icon_star,
         },
     },
     .btn_ok = {
@@ -185,6 +186,7 @@ static struct {
         },
         .icon_heart = {
             .style = { .box = {0}, .text = {0}, .effects = {0} },
+            .src = &icon_heart,
         },
     },
     .list_devices = {
@@ -381,6 +383,16 @@ void ui_showcase_panel_top_icon_star_display(void)
     lv_image_set_src(s_showcase.panel_top.icon_star.lv_obj, s_showcase.panel_top.icon_star.src);
 }
 
+void ui_showcase_panel_top_icon_star_hide(void)
+{
+    s_showcase.panel_top.icon_star.src = NULL;   /* hidden, also after deinit and init */
+    if (!s_showcase.panel_top.icon_star.lv_obj) {
+        UI_LIFECYCLE_WARN("ui_showcase_panel_top_icon_star_hide: screen not built; value stored");
+        return;
+    }
+    lv_image_set_src(s_showcase.panel_top.icon_star.lv_obj, NULL);
+}
+
 void ui_showcase_panel_card_card_title_set_text(const char *text)
 {
     ui_copy_text(s_showcase.panel_card.card_title.text, sizeof s_showcase.panel_card.card_title.text, text);
@@ -409,6 +421,16 @@ void ui_showcase_panel_card_icon_heart_display(void)
         return;
     }
     lv_image_set_src(s_showcase.panel_card.icon_heart.lv_obj, s_showcase.panel_card.icon_heart.src);
+}
+
+void ui_showcase_panel_card_icon_heart_hide(void)
+{
+    s_showcase.panel_card.icon_heart.src = NULL;   /* hidden, also after deinit and init */
+    if (!s_showcase.panel_card.icon_heart.lv_obj) {
+        UI_LIFECYCLE_WARN("ui_showcase_panel_card_icon_heart_hide: screen not built; value stored");
+        return;
+    }
+    lv_image_set_src(s_showcase.panel_card.icon_heart.lv_obj, NULL);
 }
 
 void ui_showcase_panel_row_btn_fill_a_set_label(const char *text)

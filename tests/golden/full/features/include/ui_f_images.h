@@ -30,9 +30,13 @@ void ui_f_images_deinit(void);
 // SETTERS
 // ------------------------------
 void ui_f_images_icon_star_display(void);
+void ui_f_images_icon_star_hide(void);
 void ui_f_images_icon_star_2_display(void);
+void ui_f_images_icon_star_2_hide(void);
 void ui_f_images_icon_heart_display(void);
+void ui_f_images_icon_heart_hide(void);
 void ui_f_images_panel_icons_icon_heart_display(void);
+void ui_f_images_panel_icons_icon_heart_hide(void);
 
 // ------------------------------
 // EVENT CALLBACKS

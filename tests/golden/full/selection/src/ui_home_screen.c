@@ -44,6 +44,7 @@ static struct {
     },
     .icon_wifi = {
         .style = { .box = {0}, .text = {0}, .effects = {0} },
+        .src = &icon_wifi,
     },
     .label_discovery = {
         .style = {
@@ -96,6 +97,16 @@ void ui_home_screen_icon_wifi_display(void)
         return;
     }
     lv_image_set_src(s_home_screen.icon_wifi.lv_obj, s_home_screen.icon_wifi.src);
+}
+
+void ui_home_screen_icon_wifi_hide(void)
+{
+    s_home_screen.icon_wifi.src = NULL;   /* hidden, also after deinit and init */
+    if (!s_home_screen.icon_wifi.lv_obj) {
+        UI_LIFECYCLE_WARN("ui_home_screen_icon_wifi_hide: screen not built; value stored");
+        return;
+    }
+    lv_image_set_src(s_home_screen.icon_wifi.lv_obj, NULL);
 }
 
 void ui_home_screen_label_discovery_set_text(const char *text)

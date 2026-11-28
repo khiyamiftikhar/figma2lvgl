@@ -32,8 +32,10 @@ void ui_home_deinit(void);
 void ui_home_time_set_text(const char *text);
 void ui_home_welcome_set_text(const char *text);
 void ui_home_icon_wifi_display(void);
+void ui_home_icon_wifi_hide(void);
 void ui_home_bar_set_value(int value, uint32_t duration_ms);
 void ui_home_wifi_off_display(void);
+void ui_home_wifi_off_hide(void);
 void ui_home_btn_test_set_label(const char *text);
 
 // ------------------------------

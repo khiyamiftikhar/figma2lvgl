@@ -500,7 +500,7 @@ def parse_screen(frame_node, snake: str | None = None) -> ParsedScreen:
 # Setter operations per widget type (setter_emitter adds the bodies).
 SETTER_OPS = {
     WidgetType.LABEL:  ("set_text",),
-    WidgetType.IMAGE:  ("display",),
+    WidgetType.IMAGE:  ("display", "hide"),
     WidgetType.BAR:    ("set_value",),
     WidgetType.BUTTON: ("set_label",),
     WidgetType.SLIDER: ("set_value",),

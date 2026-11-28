@@ -7,6 +7,27 @@ from pathlib import Path
 logger = logging.getLogger(__name__)
 
 DEFAULT_COLOR_FORMAT = "RGB565"
+# With the default format, a PNG with transparency keeps it: RGB565 colour
+# plus an 8-bit alpha plane (3 bytes a pixel instead of 2). Opaque PNGs stay
+# RGB565. Design doc 11 rev 5, Q16b (finding N35).
+ALPHA_FORMAT = "RGB565A8"
+
+
+def has_transparency(png_path: Path) -> bool:
+    """True if any pixel of the PNG is not fully opaque (alpha channel,
+    or a tRNS chunk on a palette or grey image)."""
+    import png as pypng
+    _w, _h, rows, info = pypng.Reader(filename=str(png_path)).asRGBA8()
+    if not info.get("alpha"):
+        return False
+    return any(row[i] != 255 for row in rows for i in range(3, len(row), 4))
+
+
+def color_format_for(png_path: Path, color_format: str) -> str:
+    """The format one PNG is converted to."""
+    if color_format == DEFAULT_COLOR_FORMAT and has_transparency(png_path):
+        return ALPHA_FORMAT
+    return color_format
 
 
 def convert_images(
@@ -42,12 +63,13 @@ def convert_images(
         logger.warning("No PNG files found in %s", assets_dir)
 
     for png in png_files:
-        logger.info("Converting %s ...", png.name)
+        cf = color_format_for(png, color_format)
+        logger.info("Converting %s (%s) ...", png.name, cf)
         cmd = [
             sys.executable,
             str(lvgl_tool),
             "--ofmt", "C",
-            "--cf", color_format,
+            "--cf", cf,
             "-o", str(staging_dir),
             str(png),
         ]

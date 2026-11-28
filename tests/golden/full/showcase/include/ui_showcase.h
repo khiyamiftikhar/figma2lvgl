@@ -40,9 +40,11 @@ void ui_showcase_custom_font_set_text(const char *text);
 void ui_showcase_btn_icon_set_label(const char *text);
 void ui_showcase_panel_top_title_set_text(const char *text);
 void ui_showcase_panel_top_icon_star_display(void);
+void ui_showcase_panel_top_icon_star_hide(void);
 void ui_showcase_panel_card_card_title_set_text(const char *text);
 void ui_showcase_panel_card_card_body_set_text(const char *text);
 void ui_showcase_panel_card_icon_heart_display(void);
+void ui_showcase_panel_card_icon_heart_hide(void);
 void ui_showcase_panel_row_btn_fill_a_set_label(const char *text);
 void ui_showcase_panel_row_btn_fill_b_set_label(const char *text);
 

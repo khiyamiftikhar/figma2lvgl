@@ -297,9 +297,11 @@ static struct {
     },
     .icon_wifi = {
         .style = { .box = {0}, .text = {0}, .effects = {0} },
+        .src = &icon_wifi,
     },
     .wifi_off = {
         .style = { .box = {0}, .text = {0}, .effects = {0} },
+        .src = &wifi_off,
     },
     .panel_slot = {
         .style = { .box = {0}, .text = {0}, .effects = {0} },
@@ -613,6 +615,16 @@ void ui_rules_icon_wifi_display(void)
     lv_image_set_src(s_rules.icon_wifi.lv_obj, s_rules.icon_wifi.src);
 }
 
+void ui_rules_icon_wifi_hide(void)
+{
+    s_rules.icon_wifi.src = NULL;   /* hidden, also after deinit and init */
+    if (!s_rules.icon_wifi.lv_obj) {
+        UI_LIFECYCLE_WARN("ui_rules_icon_wifi_hide: screen not built; value stored");
+        return;
+    }
+    lv_image_set_src(s_rules.icon_wifi.lv_obj, NULL);
+}
+
 void ui_rules_wifi_off_display(void)
 {
     s_rules.wifi_off.src = &wifi_off;
@@ -621,6 +633,16 @@ void ui_rules_wifi_off_display(void)
         return;
     }
     lv_image_set_src(s_rules.wifi_off.lv_obj, s_rules.wifi_off.src);
+}
+
+void ui_rules_wifi_off_hide(void)
+{
+    s_rules.wifi_off.src = NULL;   /* hidden, also after deinit and init */
+    if (!s_rules.wifi_off.lv_obj) {
+        UI_LIFECYCLE_WARN("ui_rules_wifi_off_hide: screen not built; value stored");
+        return;
+    }
+    lv_image_set_src(s_rules.wifi_off.lv_obj, NULL);
 }
 
 void ui_rules_btn_inner_set_label(const char *text)

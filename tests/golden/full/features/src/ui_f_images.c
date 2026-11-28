@@ -36,12 +36,15 @@ static struct {
 } s_f_images = {
     .icon_star = {
         .style = { .box = {0}, .text = {0}, .effects = {0} },
+        .src = &icon_star,
     },
     .icon_star_2 = {
         .style = { .box = {0}, .text = {0}, .effects = {0} },
+        .src = &icon_star,
     },
     .icon_heart = {
         .style = { .box = {0}, .text = {0}, .effects = {0} },
+        .src = &icon_heart,
     },
     .panel_icons = {
         .style = {
@@ -49,6 +52,7 @@ static struct {
         },
         .icon_heart = {
             .style = { .box = {0}, .text = {0}, .effects = {0} },
+            .src = &icon_heart,
         },
     },
 };
@@ -78,6 +82,16 @@ void ui_f_images_icon_star_display(void)
     lv_image_set_src(s_f_images.icon_star.lv_obj, s_f_images.icon_star.src);
 }
 
+void ui_f_images_icon_star_hide(void)
+{
+    s_f_images.icon_star.src = NULL;   /* hidden, also after deinit and init */
+    if (!s_f_images.icon_star.lv_obj) {
+        UI_LIFECYCLE_WARN("ui_f_images_icon_star_hide: screen not built; value stored");
+        return;
+    }
+    lv_image_set_src(s_f_images.icon_star.lv_obj, NULL);
+}
+
 void ui_f_images_icon_star_2_display(void)
 {
     s_f_images.icon_star_2.src = &icon_star;
@@ -86,6 +100,16 @@ void ui_f_images_icon_star_2_display(void)
         return;
     }
     lv_image_set_src(s_f_images.icon_star_2.lv_obj, s_f_images.icon_star_2.src);
+}
+
+void ui_f_images_icon_star_2_hide(void)
+{
+    s_f_images.icon_star_2.src = NULL;   /* hidden, also after deinit and init */
+    if (!s_f_images.icon_star_2.lv_obj) {
+        UI_LIFECYCLE_WARN("ui_f_images_icon_star_2_hide: screen not built; value stored");
+        return;
+    }
+    lv_image_set_src(s_f_images.icon_star_2.lv_obj, NULL);
 }
 
 void ui_f_images_icon_heart_display(void)
@@ -98,6 +122,16 @@ void ui_f_images_icon_heart_display(void)
     lv_image_set_src(s_f_images.icon_heart.lv_obj, s_f_images.icon_heart.src);
 }
 
+void ui_f_images_icon_heart_hide(void)
+{
+    s_f_images.icon_heart.src = NULL;   /* hidden, also after deinit and init */
+    if (!s_f_images.icon_heart.lv_obj) {
+        UI_LIFECYCLE_WARN("ui_f_images_icon_heart_hide: screen not built; value stored");
+        return;
+    }
+    lv_image_set_src(s_f_images.icon_heart.lv_obj, NULL);
+}
+
 void ui_f_images_panel_icons_icon_heart_display(void)
 {
     s_f_images.panel_icons.icon_heart.src = &icon_heart;
@@ -106,6 +140,16 @@ void ui_f_images_panel_icons_icon_heart_display(void)
         return;
     }
     lv_image_set_src(s_f_images.panel_icons.icon_heart.lv_obj, s_f_images.panel_icons.icon_heart.src);
+}
+
+void ui_f_images_panel_icons_icon_heart_hide(void)
+{
+    s_f_images.panel_icons.icon_heart.src = NULL;   /* hidden, also after deinit and init */
+    if (!s_f_images.panel_icons.icon_heart.lv_obj) {
+        UI_LIFECYCLE_WARN("ui_f_images_panel_icons_icon_heart_hide: screen not built; value stored");
+        return;
+    }
+    lv_image_set_src(s_f_images.panel_icons.icon_heart.lv_obj, NULL);
 }
 
 // ------------------------------

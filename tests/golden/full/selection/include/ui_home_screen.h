@@ -32,6 +32,7 @@ void ui_home_screen_deinit(void);
 void ui_home_screen_label_ap_ssid_set_text(const char *text);
 void ui_home_screen_label_main_set_text(const char *text);
 void ui_home_screen_icon_wifi_display(void);
+void ui_home_screen_icon_wifi_hide(void);
 void ui_home_screen_label_discovery_set_text(const char *text);
 
 // ------------------------------
