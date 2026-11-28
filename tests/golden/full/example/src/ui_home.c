@@ -12,12 +12,12 @@ static struct {
     struct {
         lv_obj_t   *lv_obj;
         ui_style_t  style;
-        char        text[UI_MAX_STRING_LENGTH];
+        char        text[UI_TEXT_SIZE(14)];
     } time;
     struct {
         lv_obj_t   *lv_obj;
         ui_style_t  style;
-        char        text[UI_MAX_STRING_LENGTH];
+        char        text[UI_TEXT_SIZE(20)];
     } welcome;
     struct {
         lv_obj_t   *lv_obj;
@@ -39,7 +39,7 @@ static struct {
     struct {
         lv_obj_t   *lv_obj;
         ui_style_t  style;
-        const char *label_text;
+        char        label_text[UI_TEXT_SIZE(5)];
     } btn_test;
 } s_home = {
     .time = {
@@ -97,26 +97,41 @@ static void bar_anim_exec_cb(void *obj, int32_t v)
 // ------------------------------
 void ui_home_time_set_text(const char *text)
 {
-    if (s_home.time.lv_obj)
-        lv_label_set_text(s_home.time.lv_obj, text);
+    ui_copy_text(s_home.time.text, sizeof s_home.time.text, text);
+    if (!s_home.time.lv_obj) {
+        UI_LIFECYCLE_WARN("ui_home_time_set_text: screen not built; value stored");
+        return;
+    }
+    lv_label_set_text(s_home.time.lv_obj, s_home.time.text);
 }
 
 void ui_home_welcome_set_text(const char *text)
 {
-    if (s_home.welcome.lv_obj)
-        lv_label_set_text(s_home.welcome.lv_obj, text);
+    ui_copy_text(s_home.welcome.text, sizeof s_home.welcome.text, text);
+    if (!s_home.welcome.lv_obj) {
+        UI_LIFECYCLE_WARN("ui_home_welcome_set_text: screen not built; value stored");
+        return;
+    }
+    lv_label_set_text(s_home.welcome.lv_obj, s_home.welcome.text);
 }
 
 void ui_home_icon_wifi_display(void)
 {
-    if (!s_home.icon_wifi.lv_obj) return;
     s_home.icon_wifi.src = &icon_wifi;
+    if (!s_home.icon_wifi.lv_obj) {
+        UI_LIFECYCLE_WARN("ui_home_icon_wifi_display: screen not built; value stored");
+        return;
+    }
     lv_image_set_src(s_home.icon_wifi.lv_obj, s_home.icon_wifi.src);
 }
 
 void ui_home_bar_set_value(int value, uint32_t duration_ms)
 {
-    if (!s_home.bar.lv_obj) return;
+    s_home.bar.value = value;   /* the target: what a rebuild shows */
+    if (!s_home.bar.lv_obj) {
+        UI_LIFECYCLE_WARN("ui_home_bar_set_value: screen not built; value stored");
+        return;
+    }
     if (duration_ms == 0) {
         lv_bar_set_value(s_home.bar.lv_obj, value, LV_ANIM_OFF);
         return;
@@ -132,16 +147,23 @@ void ui_home_bar_set_value(int value, uint32_t duration_ms)
 
 void ui_home_wifi_off_display(void)
 {
-    if (!s_home.wifi_off.lv_obj) return;
     s_home.wifi_off.src = &wifi_off;
+    if (!s_home.wifi_off.lv_obj) {
+        UI_LIFECYCLE_WARN("ui_home_wifi_off_display: screen not built; value stored");
+        return;
+    }
     lv_image_set_src(s_home.wifi_off.lv_obj, s_home.wifi_off.src);
 }
 
 void ui_home_btn_test_set_label(const char *text)
 {
-    if (!s_home.btn_test.lv_obj) return;
+    ui_copy_text(s_home.btn_test.label_text, sizeof s_home.btn_test.label_text, text);
+    if (!s_home.btn_test.lv_obj) {
+        UI_LIFECYCLE_WARN("ui_home_btn_test_set_label: screen not built; value stored");
+        return;
+    }
     lv_obj_t *lbl = lv_obj_get_child(s_home.btn_test.lv_obj, 0);
-    if (lbl) lv_label_set_text(lbl, text);
+    if (lbl) lv_label_set_text(lbl, s_home.btn_test.label_text);
 }
 
 // ------------------------------
@@ -149,14 +171,20 @@ void ui_home_btn_test_set_label(const char *text)
 // ------------------------------
 void ui_home_load(void)
 {
+    if (!s_home.lv_screen) {
+        UI_LIFECYCLE_WARN("ui_home_load: screen not built");
+        return;
+    }
     lv_scr_load(s_home.lv_screen);
 }
 
 // ------------------------------
-// SCREEN INIT
+// SCREEN INIT (builds from the struct's values; no-op if built)
 // ------------------------------
 void ui_home_init(void)
 {
+    if (s_home.lv_screen)
+        return;
     s_home.lv_screen = lv_obj_create(NULL);
 
     /* time (label) */
@@ -215,4 +243,25 @@ void ui_home_init(void)
     lv_obj_add_event_cb(s_home.btn_test.lv_obj, ui_home_on_btn_test_long_pressed,
                         LV_EVENT_LONG_PRESSED, NULL);
     ui_apply_style(s_home.btn_test.lv_obj, UI_CHILD_BUTTON, &s_home.btn_test.style);
+}
+
+// ------------------------------
+// SCREEN DEINIT (refused for the active screen; values kept)
+// ------------------------------
+void ui_home_deinit(void)
+{
+    if (!s_home.lv_screen)
+        return;
+    if (lv_screen_active() == s_home.lv_screen) {
+        UI_LIFECYCLE_WARN("ui_home_deinit: refused, it is the active screen; load another first");
+        return;
+    }
+    lv_obj_delete(s_home.lv_screen);   /* frees every child, callback and animation */
+    s_home.lv_screen = NULL;
+    s_home.time.lv_obj = NULL;
+    s_home.welcome.lv_obj = NULL;
+    s_home.icon_wifi.lv_obj = NULL;
+    s_home.bar.lv_obj = NULL;
+    s_home.wifi_off.lv_obj = NULL;
+    s_home.btn_test.lv_obj = NULL;
 }

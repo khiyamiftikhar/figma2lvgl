@@ -15,13 +15,13 @@ static struct {
         struct {
             lv_obj_t   *lv_obj;
             ui_style_t  style;
-            char        text[UI_MAX_STRING_LENGTH];
+            char        text[UI_TEXT_SIZE(6)];
         } time;
     } panel_top;
     struct {
         lv_obj_t   *lv_obj;
         ui_style_t  style;
-        const char *label_text;
+        char        label_text[UI_TEXT_SIZE(3)];
     } btn_ok;
     struct {
         lv_obj_t   *lv_obj;
@@ -79,14 +79,22 @@ static void bar_anim_exec_cb(void *obj, int32_t v)
 // ------------------------------
 void ui_testscreen_btn_ok_set_label(const char *text)
 {
-    if (!s_testscreen.btn_ok.lv_obj) return;
+    ui_copy_text(s_testscreen.btn_ok.label_text, sizeof s_testscreen.btn_ok.label_text, text);
+    if (!s_testscreen.btn_ok.lv_obj) {
+        UI_LIFECYCLE_WARN("ui_testscreen_btn_ok_set_label: screen not built; value stored");
+        return;
+    }
     lv_obj_t *lbl = lv_obj_get_child(s_testscreen.btn_ok.lv_obj, 0);
-    if (lbl) lv_label_set_text(lbl, text);
+    if (lbl) lv_label_set_text(lbl, s_testscreen.btn_ok.label_text);
 }
 
 void ui_testscreen_battery_bar_set_value(int value, uint32_t duration_ms)
 {
-    if (!s_testscreen.battery_bar.lv_obj) return;
+    s_testscreen.battery_bar.value = value;   /* the target: what a rebuild shows */
+    if (!s_testscreen.battery_bar.lv_obj) {
+        UI_LIFECYCLE_WARN("ui_testscreen_battery_bar_set_value: screen not built; value stored");
+        return;
+    }
     if (duration_ms == 0) {
         lv_bar_set_value(s_testscreen.battery_bar.lv_obj, value, LV_ANIM_OFF);
         return;
@@ -102,8 +110,12 @@ void ui_testscreen_battery_bar_set_value(int value, uint32_t duration_ms)
 
 void ui_testscreen_panel_top_time_set_text(const char *text)
 {
-    if (s_testscreen.panel_top.time.lv_obj)
-        lv_label_set_text(s_testscreen.panel_top.time.lv_obj, text);
+    ui_copy_text(s_testscreen.panel_top.time.text, sizeof s_testscreen.panel_top.time.text, text);
+    if (!s_testscreen.panel_top.time.lv_obj) {
+        UI_LIFECYCLE_WARN("ui_testscreen_panel_top_time_set_text: screen not built; value stored");
+        return;
+    }
+    lv_label_set_text(s_testscreen.panel_top.time.lv_obj, s_testscreen.panel_top.time.text);
 }
 
 // ------------------------------
@@ -111,14 +123,20 @@ void ui_testscreen_panel_top_time_set_text(const char *text)
 // ------------------------------
 void ui_testscreen_load(void)
 {
+    if (!s_testscreen.lv_screen) {
+        UI_LIFECYCLE_WARN("ui_testscreen_load: screen not built");
+        return;
+    }
     lv_scr_load(s_testscreen.lv_screen);
 }
 
 // ------------------------------
-// SCREEN INIT
+// SCREEN INIT (builds from the struct's values; no-op if built)
 // ------------------------------
 void ui_testscreen_init(void)
 {
+    if (s_testscreen.lv_screen)
+        return;
     s_testscreen.lv_screen = lv_obj_create(NULL);
 
     /* panel_top (panel) */
@@ -162,4 +180,23 @@ void ui_testscreen_init(void)
     lv_label_set_long_mode(s_testscreen.panel_top.time.lv_obj, LV_LABEL_LONG_CLIP);
     lv_label_set_text(s_testscreen.panel_top.time.lv_obj, s_testscreen.panel_top.time.text);
     ui_apply_style(s_testscreen.panel_top.time.lv_obj, UI_CHILD_LABEL, &s_testscreen.panel_top.time.style);
+}
+
+// ------------------------------
+// SCREEN DEINIT (refused for the active screen; values kept)
+// ------------------------------
+void ui_testscreen_deinit(void)
+{
+    if (!s_testscreen.lv_screen)
+        return;
+    if (lv_screen_active() == s_testscreen.lv_screen) {
+        UI_LIFECYCLE_WARN("ui_testscreen_deinit: refused, it is the active screen; load another first");
+        return;
+    }
+    lv_obj_delete(s_testscreen.lv_screen);   /* frees every child, callback and animation */
+    s_testscreen.lv_screen = NULL;
+    s_testscreen.panel_top.lv_obj = NULL;
+    s_testscreen.btn_ok.lv_obj = NULL;
+    s_testscreen.battery_bar.lv_obj = NULL;
+    s_testscreen.panel_top.time.lv_obj = NULL;
 }

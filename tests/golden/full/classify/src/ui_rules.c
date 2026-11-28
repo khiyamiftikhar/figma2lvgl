@@ -12,32 +12,32 @@ static struct {
     struct {
         lv_obj_t   *lv_obj;
         ui_style_t  style;
-        char        text[UI_MAX_STRING_LENGTH];
+        char        text[UI_TEXT_SIZE(6)];
     } caption;
     struct {
         lv_obj_t   *lv_obj;
         ui_style_t  style;
-        const char *label_text;
+        char        label_text[UI_TEXT_SIZE(3)];
     } btn_ok;
     struct {
         lv_obj_t   *lv_obj;
         ui_style_t  style;
-        const char *label_text;
+        char        label_text[UI_TEXT_SIZE(9)];
     } btn_next;
     struct {
         lv_obj_t   *lv_obj;
         ui_style_t  style;
-        const char *label_text;
+        char        label_text[UI_TEXT_SIZE(8)];
     } btnback;
     struct {
         lv_obj_t   *lv_obj;
         ui_style_t  style;
-        const char *label_text;
+        char        label_text[UI_TEXT_SIZE(6)];
     } btn_press;
     struct {
         lv_obj_t   *lv_obj;
         ui_style_t  style;
-        const char *label_text;
+        char        label_text[UI_TEXT_SIZE(8)];
     } btn_save;
     struct {
         lv_obj_t   *lv_obj;
@@ -112,13 +112,13 @@ static struct {
         struct {
             lv_obj_t   *lv_obj;
             ui_style_t  style;
-            char        text[UI_MAX_STRING_LENGTH];
+            char        text[UI_TEXT_SIZE(5)];
         } title;
     } header;
     struct {
         lv_obj_t   *lv_obj;
         ui_style_t  style;
-        const char *label_text;
+        char        label_text[UI_TEXT_SIZE(6)];
     } btn_inner;
     struct {
         lv_obj_t   *lv_obj;
@@ -127,12 +127,12 @@ static struct {
     struct {
         lv_obj_t   *lv_obj;
         ui_style_t  style;
-        const char *label_text;
+        char        label_text[UI_TEXT_SIZE(7)];
     } btn_slider;
     struct {
         lv_obj_t   *lv_obj;
         ui_style_t  style;
-        const char *label_text;
+        char        label_text[UI_TEXT_SIZE(5)];
     } button_icon;
     struct {
         lv_obj_t   *lv_obj;
@@ -188,7 +188,7 @@ static struct {
     struct {
         lv_obj_t   *lv_obj;
         ui_style_t  style;
-        char        text[UI_MAX_STRING_LENGTH];
+        char        text[UI_TEXT_SIZE(6)];
     } time_click;
     struct {
         lv_obj_t   *lv_obj;
@@ -196,7 +196,7 @@ static struct {
         struct {
             lv_obj_t   *lv_obj;
             ui_style_t  style;
-            const char *label_text;
+            char        label_text[UI_TEXT_SIZE(6)];
         } btn_shown;
     } box_with_hidden_child;
 } s_rules = {
@@ -445,73 +445,117 @@ static void bar_anim_exec_cb(void *obj, int32_t v)
 // ------------------------------
 void ui_rules_caption_set_text(const char *text)
 {
-    if (s_rules.caption.lv_obj)
-        lv_label_set_text(s_rules.caption.lv_obj, text);
+    ui_copy_text(s_rules.caption.text, sizeof s_rules.caption.text, text);
+    if (!s_rules.caption.lv_obj) {
+        UI_LIFECYCLE_WARN("ui_rules_caption_set_text: screen not built; value stored");
+        return;
+    }
+    lv_label_set_text(s_rules.caption.lv_obj, s_rules.caption.text);
 }
 
 void ui_rules_btn_ok_set_label(const char *text)
 {
-    if (!s_rules.btn_ok.lv_obj) return;
+    ui_copy_text(s_rules.btn_ok.label_text, sizeof s_rules.btn_ok.label_text, text);
+    if (!s_rules.btn_ok.lv_obj) {
+        UI_LIFECYCLE_WARN("ui_rules_btn_ok_set_label: screen not built; value stored");
+        return;
+    }
     lv_obj_t *lbl = lv_obj_get_child(s_rules.btn_ok.lv_obj, 0);
-    if (lbl) lv_label_set_text(lbl, text);
+    if (lbl) lv_label_set_text(lbl, s_rules.btn_ok.label_text);
 }
 
 void ui_rules_btn_next_set_label(const char *text)
 {
-    if (!s_rules.btn_next.lv_obj) return;
+    ui_copy_text(s_rules.btn_next.label_text, sizeof s_rules.btn_next.label_text, text);
+    if (!s_rules.btn_next.lv_obj) {
+        UI_LIFECYCLE_WARN("ui_rules_btn_next_set_label: screen not built; value stored");
+        return;
+    }
     lv_obj_t *lbl = lv_obj_get_child(s_rules.btn_next.lv_obj, 0);
-    if (lbl) lv_label_set_text(lbl, text);
+    if (lbl) lv_label_set_text(lbl, s_rules.btn_next.label_text);
 }
 
 void ui_rules_btnback_set_label(const char *text)
 {
-    if (!s_rules.btnback.lv_obj) return;
+    ui_copy_text(s_rules.btnback.label_text, sizeof s_rules.btnback.label_text, text);
+    if (!s_rules.btnback.lv_obj) {
+        UI_LIFECYCLE_WARN("ui_rules_btnback_set_label: screen not built; value stored");
+        return;
+    }
     lv_obj_t *lbl = lv_obj_get_child(s_rules.btnback.lv_obj, 0);
-    if (lbl) lv_label_set_text(lbl, text);
+    if (lbl) lv_label_set_text(lbl, s_rules.btnback.label_text);
 }
 
 void ui_rules_btn_press_set_label(const char *text)
 {
-    if (!s_rules.btn_press.lv_obj) return;
+    ui_copy_text(s_rules.btn_press.label_text, sizeof s_rules.btn_press.label_text, text);
+    if (!s_rules.btn_press.lv_obj) {
+        UI_LIFECYCLE_WARN("ui_rules_btn_press_set_label: screen not built; value stored");
+        return;
+    }
     lv_obj_t *lbl = lv_obj_get_child(s_rules.btn_press.lv_obj, 0);
-    if (lbl) lv_label_set_text(lbl, text);
+    if (lbl) lv_label_set_text(lbl, s_rules.btn_press.label_text);
 }
 
 void ui_rules_btn_save_set_label(const char *text)
 {
-    if (!s_rules.btn_save.lv_obj) return;
+    ui_copy_text(s_rules.btn_save.label_text, sizeof s_rules.btn_save.label_text, text);
+    if (!s_rules.btn_save.lv_obj) {
+        UI_LIFECYCLE_WARN("ui_rules_btn_save_set_label: screen not built; value stored");
+        return;
+    }
     lv_obj_t *lbl = lv_obj_get_child(s_rules.btn_save.lv_obj, 0);
-    if (lbl) lv_label_set_text(lbl, text);
+    if (lbl) lv_label_set_text(lbl, s_rules.btn_save.label_text);
 }
 
 void ui_rules_slider_vol_set_value(int32_t value)
 {
-    if (s_rules.slider_vol.lv_obj)
-        lv_slider_set_value(s_rules.slider_vol.lv_obj, value, LV_ANIM_OFF);
+    s_rules.slider_vol.value = value;
+    if (!s_rules.slider_vol.lv_obj) {
+        UI_LIFECYCLE_WARN("ui_rules_slider_vol_set_value: screen not built; value stored");
+        return;
+    }
+    lv_slider_set_value(s_rules.slider_vol.lv_obj, value, LV_ANIM_OFF);
 }
 
 void ui_rules_volume_slider_set_value(int32_t value)
 {
-    if (s_rules.volume_slider.lv_obj)
-        lv_slider_set_value(s_rules.volume_slider.lv_obj, value, LV_ANIM_OFF);
+    s_rules.volume_slider.value = value;
+    if (!s_rules.volume_slider.lv_obj) {
+        UI_LIFECYCLE_WARN("ui_rules_volume_slider_set_value: screen not built; value stored");
+        return;
+    }
+    lv_slider_set_value(s_rules.volume_slider.lv_obj, value, LV_ANIM_OFF);
 }
 
 void ui_rules_brightness_slider_set_value(int32_t value)
 {
-    if (s_rules.brightness_slider.lv_obj)
-        lv_slider_set_value(s_rules.brightness_slider.lv_obj, value, LV_ANIM_OFF);
+    s_rules.brightness_slider.value = value;
+    if (!s_rules.brightness_slider.lv_obj) {
+        UI_LIFECYCLE_WARN("ui_rules_brightness_slider_set_value: screen not built; value stored");
+        return;
+    }
+    lv_slider_set_value(s_rules.brightness_slider.lv_obj, value, LV_ANIM_OFF);
 }
 
 void ui_rules_slider_rev_set_value(int32_t value)
 {
-    if (s_rules.slider_rev.lv_obj)
-        lv_slider_set_value(s_rules.slider_rev.lv_obj, value, LV_ANIM_OFF);
+    s_rules.slider_rev.value = value;
+    if (!s_rules.slider_rev.lv_obj) {
+        UI_LIFECYCLE_WARN("ui_rules_slider_rev_set_value: screen not built; value stored");
+        return;
+    }
+    lv_slider_set_value(s_rules.slider_rev.lv_obj, value, LV_ANIM_OFF);
 }
 
 void ui_rules_slider_flat_set_value(int32_t value)
 {
-    if (s_rules.slider_flat.lv_obj)
-        lv_slider_set_value(s_rules.slider_flat.lv_obj, value, LV_ANIM_OFF);
+    s_rules.slider_flat.value = value;
+    if (!s_rules.slider_flat.lv_obj) {
+        UI_LIFECYCLE_WARN("ui_rules_slider_flat_set_value: screen not built; value stored");
+        return;
+    }
+    lv_slider_set_value(s_rules.slider_flat.lv_obj, value, LV_ANIM_OFF);
 }
 
 lv_obj_t *ui_rules_get_list_items(void)
@@ -521,7 +565,11 @@ lv_obj_t *ui_rules_get_list_items(void)
 
 void ui_rules_battery_bar_set_value(int value, uint32_t duration_ms)
 {
-    if (!s_rules.battery_bar.lv_obj) return;
+    s_rules.battery_bar.value = value;   /* the target: what a rebuild shows */
+    if (!s_rules.battery_bar.lv_obj) {
+        UI_LIFECYCLE_WARN("ui_rules_battery_bar_set_value: screen not built; value stored");
+        return;
+    }
     if (duration_ms == 0) {
         lv_bar_set_value(s_rules.battery_bar.lv_obj, value, LV_ANIM_OFF);
         return;
@@ -537,7 +585,11 @@ void ui_rules_battery_bar_set_value(int value, uint32_t duration_ms)
 
 void ui_rules_batterybar_set_value(int value, uint32_t duration_ms)
 {
-    if (!s_rules.batterybar.lv_obj) return;
+    s_rules.batterybar.value = value;   /* the target: what a rebuild shows */
+    if (!s_rules.batterybar.lv_obj) {
+        UI_LIFECYCLE_WARN("ui_rules_batterybar_set_value: screen not built; value stored");
+        return;
+    }
     if (duration_ms == 0) {
         lv_bar_set_value(s_rules.batterybar.lv_obj, value, LV_ANIM_OFF);
         return;
@@ -553,48 +605,74 @@ void ui_rules_batterybar_set_value(int value, uint32_t duration_ms)
 
 void ui_rules_icon_wifi_display(void)
 {
-    if (!s_rules.icon_wifi.lv_obj) return;
     s_rules.icon_wifi.src = &icon_wifi;
+    if (!s_rules.icon_wifi.lv_obj) {
+        UI_LIFECYCLE_WARN("ui_rules_icon_wifi_display: screen not built; value stored");
+        return;
+    }
     lv_image_set_src(s_rules.icon_wifi.lv_obj, s_rules.icon_wifi.src);
 }
 
 void ui_rules_wifi_off_display(void)
 {
-    if (!s_rules.wifi_off.lv_obj) return;
     s_rules.wifi_off.src = &wifi_off;
+    if (!s_rules.wifi_off.lv_obj) {
+        UI_LIFECYCLE_WARN("ui_rules_wifi_off_display: screen not built; value stored");
+        return;
+    }
     lv_image_set_src(s_rules.wifi_off.lv_obj, s_rules.wifi_off.src);
 }
 
 void ui_rules_btn_inner_set_label(const char *text)
 {
-    if (!s_rules.btn_inner.lv_obj) return;
+    ui_copy_text(s_rules.btn_inner.label_text, sizeof s_rules.btn_inner.label_text, text);
+    if (!s_rules.btn_inner.lv_obj) {
+        UI_LIFECYCLE_WARN("ui_rules_btn_inner_set_label: screen not built; value stored");
+        return;
+    }
     lv_obj_t *lbl = lv_obj_get_child(s_rules.btn_inner.lv_obj, 0);
-    if (lbl) lv_label_set_text(lbl, text);
+    if (lbl) lv_label_set_text(lbl, s_rules.btn_inner.label_text);
 }
 
 void ui_rules_btn_slider_set_label(const char *text)
 {
-    if (!s_rules.btn_slider.lv_obj) return;
+    ui_copy_text(s_rules.btn_slider.label_text, sizeof s_rules.btn_slider.label_text, text);
+    if (!s_rules.btn_slider.lv_obj) {
+        UI_LIFECYCLE_WARN("ui_rules_btn_slider_set_label: screen not built; value stored");
+        return;
+    }
     lv_obj_t *lbl = lv_obj_get_child(s_rules.btn_slider.lv_obj, 0);
-    if (lbl) lv_label_set_text(lbl, text);
+    if (lbl) lv_label_set_text(lbl, s_rules.btn_slider.label_text);
 }
 
 void ui_rules_button_icon_set_label(const char *text)
 {
-    if (!s_rules.button_icon.lv_obj) return;
+    ui_copy_text(s_rules.button_icon.label_text, sizeof s_rules.button_icon.label_text, text);
+    if (!s_rules.button_icon.lv_obj) {
+        UI_LIFECYCLE_WARN("ui_rules_button_icon_set_label: screen not built; value stored");
+        return;
+    }
     lv_obj_t *lbl = lv_obj_get_child(s_rules.button_icon.lv_obj, 0);
-    if (lbl) lv_label_set_text(lbl, text);
+    if (lbl) lv_label_set_text(lbl, s_rules.button_icon.label_text);
 }
 
 void ui_rules_bar_volume_slider_set_value(int32_t value)
 {
-    if (s_rules.bar_volume_slider.lv_obj)
-        lv_slider_set_value(s_rules.bar_volume_slider.lv_obj, value, LV_ANIM_OFF);
+    s_rules.bar_volume_slider.value = value;
+    if (!s_rules.bar_volume_slider.lv_obj) {
+        UI_LIFECYCLE_WARN("ui_rules_bar_volume_slider_set_value: screen not built; value stored");
+        return;
+    }
+    lv_slider_set_value(s_rules.bar_volume_slider.lv_obj, value, LV_ANIM_OFF);
 }
 
 void ui_rules_volume_slider_bar_set_value(int value, uint32_t duration_ms)
 {
-    if (!s_rules.volume_slider_bar.lv_obj) return;
+    s_rules.volume_slider_bar.value = value;   /* the target: what a rebuild shows */
+    if (!s_rules.volume_slider_bar.lv_obj) {
+        UI_LIFECYCLE_WARN("ui_rules_volume_slider_bar_set_value: screen not built; value stored");
+        return;
+    }
     if (duration_ms == 0) {
         lv_bar_set_value(s_rules.volume_slider_bar.lv_obj, value, LV_ANIM_OFF);
         return;
@@ -620,7 +698,11 @@ lv_obj_t *ui_rules_get_grid_bar(void)
 
 void ui_rules_bar_icon_set_value(int value, uint32_t duration_ms)
 {
-    if (!s_rules.bar_icon.lv_obj) return;
+    s_rules.bar_icon.value = value;   /* the target: what a rebuild shows */
+    if (!s_rules.bar_icon.lv_obj) {
+        UI_LIFECYCLE_WARN("ui_rules_bar_icon_set_value: screen not built; value stored");
+        return;
+    }
     if (duration_ms == 0) {
         lv_bar_set_value(s_rules.bar_icon.lv_obj, value, LV_ANIM_OFF);
         return;
@@ -636,7 +718,11 @@ void ui_rules_bar_icon_set_value(int value, uint32_t duration_ms)
 
 void ui_rules_icon_bar_set_value(int value, uint32_t duration_ms)
 {
-    if (!s_rules.icon_bar.lv_obj) return;
+    s_rules.icon_bar.value = value;   /* the target: what a rebuild shows */
+    if (!s_rules.icon_bar.lv_obj) {
+        UI_LIFECYCLE_WARN("ui_rules_icon_bar_set_value: screen not built; value stored");
+        return;
+    }
     if (duration_ms == 0) {
         lv_bar_set_value(s_rules.icon_bar.lv_obj, value, LV_ANIM_OFF);
         return;
@@ -652,27 +738,43 @@ void ui_rules_icon_bar_set_value(int value, uint32_t duration_ms)
 
 void ui_rules_slider_panel_set_value(int32_t value)
 {
-    if (s_rules.slider_panel.lv_obj)
-        lv_slider_set_value(s_rules.slider_panel.lv_obj, value, LV_ANIM_OFF);
+    s_rules.slider_panel.value = value;
+    if (!s_rules.slider_panel.lv_obj) {
+        UI_LIFECYCLE_WARN("ui_rules_slider_panel_set_value: screen not built; value stored");
+        return;
+    }
+    lv_slider_set_value(s_rules.slider_panel.lv_obj, value, LV_ANIM_OFF);
 }
 
 void ui_rules_time_click_set_text(const char *text)
 {
-    if (s_rules.time_click.lv_obj)
-        lv_label_set_text(s_rules.time_click.lv_obj, text);
+    ui_copy_text(s_rules.time_click.text, sizeof s_rules.time_click.text, text);
+    if (!s_rules.time_click.lv_obj) {
+        UI_LIFECYCLE_WARN("ui_rules_time_click_set_text: screen not built; value stored");
+        return;
+    }
+    lv_label_set_text(s_rules.time_click.lv_obj, s_rules.time_click.text);
 }
 
 void ui_rules_header_title_set_text(const char *text)
 {
-    if (s_rules.header.title.lv_obj)
-        lv_label_set_text(s_rules.header.title.lv_obj, text);
+    ui_copy_text(s_rules.header.title.text, sizeof s_rules.header.title.text, text);
+    if (!s_rules.header.title.lv_obj) {
+        UI_LIFECYCLE_WARN("ui_rules_header_title_set_text: screen not built; value stored");
+        return;
+    }
+    lv_label_set_text(s_rules.header.title.lv_obj, s_rules.header.title.text);
 }
 
 void ui_rules_box_with_hidden_child_btn_shown_set_label(const char *text)
 {
-    if (!s_rules.box_with_hidden_child.btn_shown.lv_obj) return;
+    ui_copy_text(s_rules.box_with_hidden_child.btn_shown.label_text, sizeof s_rules.box_with_hidden_child.btn_shown.label_text, text);
+    if (!s_rules.box_with_hidden_child.btn_shown.lv_obj) {
+        UI_LIFECYCLE_WARN("ui_rules_box_with_hidden_child_btn_shown_set_label: screen not built; value stored");
+        return;
+    }
     lv_obj_t *lbl = lv_obj_get_child(s_rules.box_with_hidden_child.btn_shown.lv_obj, 0);
-    if (lbl) lv_label_set_text(lbl, text);
+    if (lbl) lv_label_set_text(lbl, s_rules.box_with_hidden_child.btn_shown.label_text);
 }
 
 // ------------------------------
@@ -680,14 +782,20 @@ void ui_rules_box_with_hidden_child_btn_shown_set_label(const char *text)
 // ------------------------------
 void ui_rules_load(void)
 {
+    if (!s_rules.lv_screen) {
+        UI_LIFECYCLE_WARN("ui_rules_load: screen not built");
+        return;
+    }
     lv_scr_load(s_rules.lv_screen);
 }
 
 // ------------------------------
-// SCREEN INIT
+// SCREEN INIT (builds from the struct's values; no-op if built)
 // ------------------------------
 void ui_rules_init(void)
 {
+    if (s_rules.lv_screen)
+        return;
     s_rules.lv_screen = lv_obj_create(NULL);
 
     /* caption (label) */
@@ -1060,4 +1168,61 @@ void ui_rules_init(void)
     lv_obj_add_event_cb(s_rules.box_with_hidden_child.btn_shown.lv_obj, ui_rules_on_btn_shown_clicked,
                         LV_EVENT_CLICKED, NULL);
     ui_apply_style(s_rules.box_with_hidden_child.btn_shown.lv_obj, UI_CHILD_BUTTON, &s_rules.box_with_hidden_child.btn_shown.style);
+}
+
+// ------------------------------
+// SCREEN DEINIT (refused for the active screen; values kept)
+// ------------------------------
+void ui_rules_deinit(void)
+{
+    if (!s_rules.lv_screen)
+        return;
+    if (lv_screen_active() == s_rules.lv_screen) {
+        UI_LIFECYCLE_WARN("ui_rules_deinit: refused, it is the active screen; load another first");
+        return;
+    }
+    s_rules.slider_vol.value = lv_slider_get_value(s_rules.slider_vol.lv_obj);
+    s_rules.volume_slider.value = lv_slider_get_value(s_rules.volume_slider.lv_obj);
+    s_rules.brightness_slider.value = lv_slider_get_value(s_rules.brightness_slider.lv_obj);
+    s_rules.slider_rev.value = lv_slider_get_value(s_rules.slider_rev.lv_obj);
+    s_rules.slider_flat.value = lv_slider_get_value(s_rules.slider_flat.lv_obj);
+    s_rules.bar_volume_slider.value = lv_slider_get_value(s_rules.bar_volume_slider.lv_obj);
+    s_rules.slider_panel.value = lv_slider_get_value(s_rules.slider_panel.lv_obj);
+    lv_obj_delete(s_rules.lv_screen);   /* frees every child, callback and animation */
+    s_rules.lv_screen = NULL;
+    s_rules.caption.lv_obj = NULL;
+    s_rules.btn_ok.lv_obj = NULL;
+    s_rules.btn_next.lv_obj = NULL;
+    s_rules.btnback.lv_obj = NULL;
+    s_rules.btn_press.lv_obj = NULL;
+    s_rules.btn_save.lv_obj = NULL;
+    s_rules.slider_vol.lv_obj = NULL;
+    s_rules.volume_slider.lv_obj = NULL;
+    s_rules.brightness_slider.lv_obj = NULL;
+    s_rules.slider_rev.lv_obj = NULL;
+    s_rules.slider_flat.lv_obj = NULL;
+    s_rules.list_items.lv_obj = NULL;
+    s_rules.battery_bar.lv_obj = NULL;
+    s_rules.batterybar.lv_obj = NULL;
+    s_rules.icon_wifi.lv_obj = NULL;
+    s_rules.wifi_off.lv_obj = NULL;
+    s_rules.panel_slot.lv_obj = NULL;
+    s_rules.header.lv_obj = NULL;
+    s_rules.btn_inner.lv_obj = NULL;
+    s_rules.toolbar_bg.lv_obj = NULL;
+    s_rules.btn_slider.lv_obj = NULL;
+    s_rules.button_icon.lv_obj = NULL;
+    s_rules.bar_volume_slider.lv_obj = NULL;
+    s_rules.volume_slider_bar.lv_obj = NULL;
+    s_rules.list_icon.lv_obj = NULL;
+    s_rules.grid_bar.lv_obj = NULL;
+    s_rules.bar_icon.lv_obj = NULL;
+    s_rules.icon_bar.lv_obj = NULL;
+    s_rules.panel_btn.lv_obj = NULL;
+    s_rules.slider_panel.lv_obj = NULL;
+    s_rules.panel_2_3.lv_obj = NULL;
+    s_rules.time_click.lv_obj = NULL;
+    s_rules.box_with_hidden_child.lv_obj = NULL;
+    s_rules.header.title.lv_obj = NULL;
+    s_rules.box_with_hidden_child.btn_shown.lv_obj = NULL;
 }

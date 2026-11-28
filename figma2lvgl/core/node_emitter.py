@@ -67,10 +67,7 @@ def emit_struct_fields(node: ParsedNode, indent: str = "    ") -> str:
     wt = node.widget_type
 
     if wt == WidgetType.LABEL:
-        if node.is_dynamic_text:
-            lines.append(f"{indent}char        text[UI_MAX_STRING_LENGTH];")
-        else:
-            lines.append(f"{indent}const char *text;")
+        lines.append(f"{indent}char        text[UI_TEXT_SIZE({node.text_size})];")
 
     elif wt == WidgetType.IMAGE:
         lines.append(f"{indent}const lv_image_dsc_t *src;")
@@ -81,7 +78,7 @@ def emit_struct_fields(node: ParsedNode, indent: str = "    ") -> str:
         lines.append(f"{indent}int32_t max;")
 
     elif wt == WidgetType.BUTTON:
-        lines.append(f"{indent}const char *label_text;")
+        lines.append(f"{indent}char        label_text[UI_TEXT_SIZE({node.text_size})];")
 
     elif wt == WidgetType.SLIDER:
         lines.append(f"{indent}int32_t value;")

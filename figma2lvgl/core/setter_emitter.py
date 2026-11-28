@@ -13,13 +13,24 @@ from figma2lvgl.core.figma_parser import ParsedNode, ParsedScreen
 # section 4.6). This module only writes the bodies.
 
 
+# Every setter stores its value in the struct first, then updates the
+# object if the screen is built (design doc 11, rules 3 and 5).
+
+def _unbuilt(fn: str, path: str) -> str:
+    return (f"    if (!{path}.lv_obj) {{\n"
+            f"        UI_LIFECYCLE_WARN(\"{fn}: screen not built; value stored\");\n"
+            f"        return;\n"
+            f"    }}\n")
+
+
 def _emit_label_setter(fn: str, path: str) -> tuple[str, str]:
     """Returns (setter_body, prototype)."""
     body = (
         f"void {fn}(const char *text)\n"
         f"{{\n"
-        f"    if ({path}.lv_obj)\n"
-        f"        lv_label_set_text({path}.lv_obj, text);\n"
+        f"    ui_copy_text({path}.text, sizeof {path}.text, text);\n"
+        f"{_unbuilt(fn, path)}"
+        f"    lv_label_set_text({path}.lv_obj, {path}.text);\n"
         f"}}"
     )
     proto = f"void {fn}(const char *text);"
@@ -30,8 +41,8 @@ def _emit_image_setter(fn: str, path: str, asset: str) -> tuple[str, str]:
     body = (
         f"void {fn}(void)\n"
         f"{{\n"
-        f"    if (!{path}.lv_obj) return;\n"
         f"    {path}.src = &{asset};\n"
+        f"{_unbuilt(fn, path)}"
         f"    lv_image_set_src({path}.lv_obj, {path}.src);\n"
         f"}}"
     )
@@ -43,7 +54,8 @@ def _emit_bar_setter(fn: str, path: str) -> tuple[str, str]:
     body = (
         f"void {fn}(int value, uint32_t duration_ms)\n"
         f"{{\n"
-        f"    if (!{path}.lv_obj) return;\n"
+        f"    {path}.value = value;   /* the target: what a rebuild shows */\n"
+        f"{_unbuilt(fn, path)}"
         f"    if (duration_ms == 0) {{\n"
         f"        lv_bar_set_value({path}.lv_obj, value, LV_ANIM_OFF);\n"
         f"        return;\n"
@@ -65,9 +77,10 @@ def _emit_button_setter(fn: str, path: str) -> tuple[str, str]:
     body = (
         f"void {fn}(const char *text)\n"
         f"{{\n"
-        f"    if (!{path}.lv_obj) return;\n"
+        f"    ui_copy_text({path}.label_text, sizeof {path}.label_text, text);\n"
+        f"{_unbuilt(fn, path)}"
         f"    lv_obj_t *lbl = lv_obj_get_child({path}.lv_obj, 0);\n"
-        f"    if (lbl) lv_label_set_text(lbl, text);\n"
+        f"    if (lbl) lv_label_set_text(lbl, {path}.label_text);\n"
         f"}}"
     )
     proto = f"void {fn}(const char *text);"
@@ -78,8 +91,9 @@ def _emit_slider_setter(fn: str, path: str) -> tuple[str, str]:
     body = (
         f"void {fn}(int32_t value)\n"
         f"{{\n"
-        f"    if ({path}.lv_obj)\n"
-        f"        lv_slider_set_value({path}.lv_obj, value, LV_ANIM_OFF);\n"
+        f"    {path}.value = value;\n"
+        f"{_unbuilt(fn, path)}"
+        f"    lv_slider_set_value({path}.lv_obj, value, LV_ANIM_OFF);\n"
         f"}}"
     )
     proto = f"void {fn}(int32_t value);"

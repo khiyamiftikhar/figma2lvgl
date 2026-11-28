@@ -12,7 +12,7 @@ static struct {
     struct {
         lv_obj_t   *lv_obj;
         ui_style_t  style;
-        const char *label_text;
+        char        label_text[UI_TEXT_SIZE(3)];
     } btn_ok;
 } s_settings = {
     .btn_ok = {
@@ -41,9 +41,13 @@ static struct {
 // ------------------------------
 void ui_settings_btn_ok_set_label(const char *text)
 {
-    if (!s_settings.btn_ok.lv_obj) return;
+    ui_copy_text(s_settings.btn_ok.label_text, sizeof s_settings.btn_ok.label_text, text);
+    if (!s_settings.btn_ok.lv_obj) {
+        UI_LIFECYCLE_WARN("ui_settings_btn_ok_set_label: screen not built; value stored");
+        return;
+    }
     lv_obj_t *lbl = lv_obj_get_child(s_settings.btn_ok.lv_obj, 0);
-    if (lbl) lv_label_set_text(lbl, text);
+    if (lbl) lv_label_set_text(lbl, s_settings.btn_ok.label_text);
 }
 
 // ------------------------------
@@ -51,14 +55,20 @@ void ui_settings_btn_ok_set_label(const char *text)
 // ------------------------------
 void ui_settings_load(void)
 {
+    if (!s_settings.lv_screen) {
+        UI_LIFECYCLE_WARN("ui_settings_load: screen not built");
+        return;
+    }
     lv_scr_load(s_settings.lv_screen);
 }
 
 // ------------------------------
-// SCREEN INIT
+// SCREEN INIT (builds from the struct's values; no-op if built)
 // ------------------------------
 void ui_settings_init(void)
 {
+    if (s_settings.lv_screen)
+        return;
     s_settings.lv_screen = lv_obj_create(NULL);
 
     /* btn_ok (button) */
@@ -75,4 +85,20 @@ void ui_settings_init(void)
     lv_obj_add_event_cb(s_settings.btn_ok.lv_obj, ui_settings_on_btn_ok_clicked,
                         LV_EVENT_CLICKED, NULL);
     ui_apply_style(s_settings.btn_ok.lv_obj, UI_CHILD_BUTTON, &s_settings.btn_ok.style);
+}
+
+// ------------------------------
+// SCREEN DEINIT (refused for the active screen; values kept)
+// ------------------------------
+void ui_settings_deinit(void)
+{
+    if (!s_settings.lv_screen)
+        return;
+    if (lv_screen_active() == s_settings.lv_screen) {
+        UI_LIFECYCLE_WARN("ui_settings_deinit: refused, it is the active screen; load another first");
+        return;
+    }
+    lv_obj_delete(s_settings.lv_screen);   /* frees every child, callback and animation */
+    s_settings.lv_screen = NULL;
+    s_settings.btn_ok.lv_obj = NULL;
 }

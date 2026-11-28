@@ -78,20 +78,32 @@ static struct {
 // ------------------------------
 void ui_f_sliders_slider_h_set_value(int32_t value)
 {
-    if (s_f_sliders.slider_h.lv_obj)
-        lv_slider_set_value(s_f_sliders.slider_h.lv_obj, value, LV_ANIM_OFF);
+    s_f_sliders.slider_h.value = value;
+    if (!s_f_sliders.slider_h.lv_obj) {
+        UI_LIFECYCLE_WARN("ui_f_sliders_slider_h_set_value: screen not built; value stored");
+        return;
+    }
+    lv_slider_set_value(s_f_sliders.slider_h.lv_obj, value, LV_ANIM_OFF);
 }
 
 void ui_f_sliders_slider_h_2_set_value(int32_t value)
 {
-    if (s_f_sliders.slider_h_2.lv_obj)
-        lv_slider_set_value(s_f_sliders.slider_h_2.lv_obj, value, LV_ANIM_OFF);
+    s_f_sliders.slider_h_2.value = value;
+    if (!s_f_sliders.slider_h_2.lv_obj) {
+        UI_LIFECYCLE_WARN("ui_f_sliders_slider_h_2_set_value: screen not built; value stored");
+        return;
+    }
+    lv_slider_set_value(s_f_sliders.slider_h_2.lv_obj, value, LV_ANIM_OFF);
 }
 
 void ui_f_sliders_slider_v_set_value(int32_t value)
 {
-    if (s_f_sliders.slider_v.lv_obj)
-        lv_slider_set_value(s_f_sliders.slider_v.lv_obj, value, LV_ANIM_OFF);
+    s_f_sliders.slider_v.value = value;
+    if (!s_f_sliders.slider_v.lv_obj) {
+        UI_LIFECYCLE_WARN("ui_f_sliders_slider_v_set_value: screen not built; value stored");
+        return;
+    }
+    lv_slider_set_value(s_f_sliders.slider_v.lv_obj, value, LV_ANIM_OFF);
 }
 
 // ------------------------------
@@ -99,14 +111,20 @@ void ui_f_sliders_slider_v_set_value(int32_t value)
 // ------------------------------
 void ui_f_sliders_load(void)
 {
+    if (!s_f_sliders.lv_screen) {
+        UI_LIFECYCLE_WARN("ui_f_sliders_load: screen not built");
+        return;
+    }
     lv_scr_load(s_f_sliders.lv_screen);
 }
 
 // ------------------------------
-// SCREEN INIT
+// SCREEN INIT (builds from the struct's values; no-op if built)
 // ------------------------------
 void ui_f_sliders_init(void)
 {
+    if (s_f_sliders.lv_screen)
+        return;
     s_f_sliders.lv_screen = lv_obj_create(NULL);
 
     /* slider_h (slider) */
@@ -138,4 +156,25 @@ void ui_f_sliders_init(void)
     lv_obj_add_event_cb(s_f_sliders.slider_v.lv_obj, ui_f_sliders_on_slider_v,
                         LV_EVENT_VALUE_CHANGED, NULL);
     ui_apply_style(s_f_sliders.slider_v.lv_obj, UI_CHILD_SLIDER, &s_f_sliders.slider_v.style);
+}
+
+// ------------------------------
+// SCREEN DEINIT (refused for the active screen; values kept)
+// ------------------------------
+void ui_f_sliders_deinit(void)
+{
+    if (!s_f_sliders.lv_screen)
+        return;
+    if (lv_screen_active() == s_f_sliders.lv_screen) {
+        UI_LIFECYCLE_WARN("ui_f_sliders_deinit: refused, it is the active screen; load another first");
+        return;
+    }
+    s_f_sliders.slider_h.value = lv_slider_get_value(s_f_sliders.slider_h.lv_obj);
+    s_f_sliders.slider_h_2.value = lv_slider_get_value(s_f_sliders.slider_h_2.lv_obj);
+    s_f_sliders.slider_v.value = lv_slider_get_value(s_f_sliders.slider_v.lv_obj);
+    lv_obj_delete(s_f_sliders.lv_screen);   /* frees every child, callback and animation */
+    s_f_sliders.lv_screen = NULL;
+    s_f_sliders.slider_h.lv_obj = NULL;
+    s_f_sliders.slider_h_2.lv_obj = NULL;
+    s_f_sliders.slider_v.lv_obj = NULL;
 }

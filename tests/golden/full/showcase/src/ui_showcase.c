@@ -15,7 +15,7 @@ static struct {
         struct {
             lv_obj_t   *lv_obj;
             ui_style_t  style;
-            char        text[UI_MAX_STRING_LENGTH];
+            char        text[UI_TEXT_SIZE(9)];
         } title;
         struct {
             lv_obj_t   *lv_obj;
@@ -26,12 +26,12 @@ static struct {
     struct {
         lv_obj_t   *lv_obj;
         ui_style_t  style;
-        const char *label_text;
+        char        label_text[UI_TEXT_SIZE(3)];
     } btn_ok;
     struct {
         lv_obj_t   *lv_obj;
         ui_style_t  style;
-        const char *label_text;
+        char        label_text[UI_TEXT_SIZE(7)];
     } btn_cancel;
     struct {
         lv_obj_t   *lv_obj;
@@ -60,12 +60,12 @@ static struct {
         struct {
             lv_obj_t   *lv_obj;
             ui_style_t  style;
-            char        text[UI_MAX_STRING_LENGTH];
+            char        text[UI_TEXT_SIZE(5)];
         } card_title;
         struct {
             lv_obj_t   *lv_obj;
             ui_style_t  style;
-            char        text[UI_MAX_STRING_LENGTH];
+            char        text[UI_TEXT_SIZE(23)];
         } card_body;
         struct {
             lv_obj_t   *lv_obj;
@@ -88,7 +88,7 @@ static struct {
     struct {
         lv_obj_t   *lv_obj;
         ui_style_t  style;
-        const char *label_text;
+        char        label_text[UI_TEXT_SIZE(7)];
     } btn_shadow;
     struct {
         lv_obj_t   *lv_obj;
@@ -96,23 +96,23 @@ static struct {
         struct {
             lv_obj_t   *lv_obj;
             ui_style_t  style;
-            const char *label_text;
+            char        label_text[UI_TEXT_SIZE(2)];
         } btn_fill_a;
         struct {
             lv_obj_t   *lv_obj;
             ui_style_t  style;
-            const char *label_text;
+            char        label_text[UI_TEXT_SIZE(2)];
         } btn_fill_b;
     } panel_row;
     struct {
         lv_obj_t   *lv_obj;
         ui_style_t  style;
-        char        text[UI_MAX_STRING_LENGTH];
+        char        text[UI_TEXT_SIZE(11)];
     } custom_font;
     struct {
         lv_obj_t   *lv_obj;
         ui_style_t  style;
-        const char *label_text;
+        char        label_text[UI_TEXT_SIZE(10)];
     } btn_icon;
 } s_showcase = {
     .panel_top = {
@@ -264,21 +264,33 @@ static void bar_anim_exec_cb(void *obj, int32_t v)
 // ------------------------------
 void ui_showcase_btn_ok_set_label(const char *text)
 {
-    if (!s_showcase.btn_ok.lv_obj) return;
+    ui_copy_text(s_showcase.btn_ok.label_text, sizeof s_showcase.btn_ok.label_text, text);
+    if (!s_showcase.btn_ok.lv_obj) {
+        UI_LIFECYCLE_WARN("ui_showcase_btn_ok_set_label: screen not built; value stored");
+        return;
+    }
     lv_obj_t *lbl = lv_obj_get_child(s_showcase.btn_ok.lv_obj, 0);
-    if (lbl) lv_label_set_text(lbl, text);
+    if (lbl) lv_label_set_text(lbl, s_showcase.btn_ok.label_text);
 }
 
 void ui_showcase_btn_cancel_set_label(const char *text)
 {
-    if (!s_showcase.btn_cancel.lv_obj) return;
+    ui_copy_text(s_showcase.btn_cancel.label_text, sizeof s_showcase.btn_cancel.label_text, text);
+    if (!s_showcase.btn_cancel.lv_obj) {
+        UI_LIFECYCLE_WARN("ui_showcase_btn_cancel_set_label: screen not built; value stored");
+        return;
+    }
     lv_obj_t *lbl = lv_obj_get_child(s_showcase.btn_cancel.lv_obj, 0);
-    if (lbl) lv_label_set_text(lbl, text);
+    if (lbl) lv_label_set_text(lbl, s_showcase.btn_cancel.label_text);
 }
 
 void ui_showcase_battery_bar_set_value(int value, uint32_t duration_ms)
 {
-    if (!s_showcase.battery_bar.lv_obj) return;
+    s_showcase.battery_bar.value = value;   /* the target: what a rebuild shows */
+    if (!s_showcase.battery_bar.lv_obj) {
+        UI_LIFECYCLE_WARN("ui_showcase_battery_bar_set_value: screen not built; value stored");
+        return;
+    }
     if (duration_ms == 0) {
         lv_bar_set_value(s_showcase.battery_bar.lv_obj, value, LV_ANIM_OFF);
         return;
@@ -294,14 +306,22 @@ void ui_showcase_battery_bar_set_value(int value, uint32_t duration_ms)
 
 void ui_showcase_slider_volume_set_value(int32_t value)
 {
-    if (s_showcase.slider_volume.lv_obj)
-        lv_slider_set_value(s_showcase.slider_volume.lv_obj, value, LV_ANIM_OFF);
+    s_showcase.slider_volume.value = value;
+    if (!s_showcase.slider_volume.lv_obj) {
+        UI_LIFECYCLE_WARN("ui_showcase_slider_volume_set_value: screen not built; value stored");
+        return;
+    }
+    lv_slider_set_value(s_showcase.slider_volume.lv_obj, value, LV_ANIM_OFF);
 }
 
 void ui_showcase_slider_level_set_value(int32_t value)
 {
-    if (s_showcase.slider_level.lv_obj)
-        lv_slider_set_value(s_showcase.slider_level.lv_obj, value, LV_ANIM_OFF);
+    s_showcase.slider_level.value = value;
+    if (!s_showcase.slider_level.lv_obj) {
+        UI_LIFECYCLE_WARN("ui_showcase_slider_level_set_value: screen not built; value stored");
+        return;
+    }
+    lv_slider_set_value(s_showcase.slider_level.lv_obj, value, LV_ANIM_OFF);
 }
 
 lv_obj_t *ui_showcase_get_list_devices(void)
@@ -311,68 +331,106 @@ lv_obj_t *ui_showcase_get_list_devices(void)
 
 void ui_showcase_btn_shadow_set_label(const char *text)
 {
-    if (!s_showcase.btn_shadow.lv_obj) return;
+    ui_copy_text(s_showcase.btn_shadow.label_text, sizeof s_showcase.btn_shadow.label_text, text);
+    if (!s_showcase.btn_shadow.lv_obj) {
+        UI_LIFECYCLE_WARN("ui_showcase_btn_shadow_set_label: screen not built; value stored");
+        return;
+    }
     lv_obj_t *lbl = lv_obj_get_child(s_showcase.btn_shadow.lv_obj, 0);
-    if (lbl) lv_label_set_text(lbl, text);
+    if (lbl) lv_label_set_text(lbl, s_showcase.btn_shadow.label_text);
 }
 
 void ui_showcase_custom_font_set_text(const char *text)
 {
-    if (s_showcase.custom_font.lv_obj)
-        lv_label_set_text(s_showcase.custom_font.lv_obj, text);
+    ui_copy_text(s_showcase.custom_font.text, sizeof s_showcase.custom_font.text, text);
+    if (!s_showcase.custom_font.lv_obj) {
+        UI_LIFECYCLE_WARN("ui_showcase_custom_font_set_text: screen not built; value stored");
+        return;
+    }
+    lv_label_set_text(s_showcase.custom_font.lv_obj, s_showcase.custom_font.text);
 }
 
 void ui_showcase_btn_icon_set_label(const char *text)
 {
-    if (!s_showcase.btn_icon.lv_obj) return;
+    ui_copy_text(s_showcase.btn_icon.label_text, sizeof s_showcase.btn_icon.label_text, text);
+    if (!s_showcase.btn_icon.lv_obj) {
+        UI_LIFECYCLE_WARN("ui_showcase_btn_icon_set_label: screen not built; value stored");
+        return;
+    }
     lv_obj_t *lbl = lv_obj_get_child(s_showcase.btn_icon.lv_obj, 0);
-    if (lbl) lv_label_set_text(lbl, text);
+    if (lbl) lv_label_set_text(lbl, s_showcase.btn_icon.label_text);
 }
 
 void ui_showcase_panel_top_title_set_text(const char *text)
 {
-    if (s_showcase.panel_top.title.lv_obj)
-        lv_label_set_text(s_showcase.panel_top.title.lv_obj, text);
+    ui_copy_text(s_showcase.panel_top.title.text, sizeof s_showcase.panel_top.title.text, text);
+    if (!s_showcase.panel_top.title.lv_obj) {
+        UI_LIFECYCLE_WARN("ui_showcase_panel_top_title_set_text: screen not built; value stored");
+        return;
+    }
+    lv_label_set_text(s_showcase.panel_top.title.lv_obj, s_showcase.panel_top.title.text);
 }
 
 void ui_showcase_panel_top_icon_star_display(void)
 {
-    if (!s_showcase.panel_top.icon_star.lv_obj) return;
     s_showcase.panel_top.icon_star.src = &icon_star;
+    if (!s_showcase.panel_top.icon_star.lv_obj) {
+        UI_LIFECYCLE_WARN("ui_showcase_panel_top_icon_star_display: screen not built; value stored");
+        return;
+    }
     lv_image_set_src(s_showcase.panel_top.icon_star.lv_obj, s_showcase.panel_top.icon_star.src);
 }
 
 void ui_showcase_panel_card_card_title_set_text(const char *text)
 {
-    if (s_showcase.panel_card.card_title.lv_obj)
-        lv_label_set_text(s_showcase.panel_card.card_title.lv_obj, text);
+    ui_copy_text(s_showcase.panel_card.card_title.text, sizeof s_showcase.panel_card.card_title.text, text);
+    if (!s_showcase.panel_card.card_title.lv_obj) {
+        UI_LIFECYCLE_WARN("ui_showcase_panel_card_card_title_set_text: screen not built; value stored");
+        return;
+    }
+    lv_label_set_text(s_showcase.panel_card.card_title.lv_obj, s_showcase.panel_card.card_title.text);
 }
 
 void ui_showcase_panel_card_card_body_set_text(const char *text)
 {
-    if (s_showcase.panel_card.card_body.lv_obj)
-        lv_label_set_text(s_showcase.panel_card.card_body.lv_obj, text);
+    ui_copy_text(s_showcase.panel_card.card_body.text, sizeof s_showcase.panel_card.card_body.text, text);
+    if (!s_showcase.panel_card.card_body.lv_obj) {
+        UI_LIFECYCLE_WARN("ui_showcase_panel_card_card_body_set_text: screen not built; value stored");
+        return;
+    }
+    lv_label_set_text(s_showcase.panel_card.card_body.lv_obj, s_showcase.panel_card.card_body.text);
 }
 
 void ui_showcase_panel_card_icon_heart_display(void)
 {
-    if (!s_showcase.panel_card.icon_heart.lv_obj) return;
     s_showcase.panel_card.icon_heart.src = &icon_heart;
+    if (!s_showcase.panel_card.icon_heart.lv_obj) {
+        UI_LIFECYCLE_WARN("ui_showcase_panel_card_icon_heart_display: screen not built; value stored");
+        return;
+    }
     lv_image_set_src(s_showcase.panel_card.icon_heart.lv_obj, s_showcase.panel_card.icon_heart.src);
 }
 
 void ui_showcase_panel_row_btn_fill_a_set_label(const char *text)
 {
-    if (!s_showcase.panel_row.btn_fill_a.lv_obj) return;
+    ui_copy_text(s_showcase.panel_row.btn_fill_a.label_text, sizeof s_showcase.panel_row.btn_fill_a.label_text, text);
+    if (!s_showcase.panel_row.btn_fill_a.lv_obj) {
+        UI_LIFECYCLE_WARN("ui_showcase_panel_row_btn_fill_a_set_label: screen not built; value stored");
+        return;
+    }
     lv_obj_t *lbl = lv_obj_get_child(s_showcase.panel_row.btn_fill_a.lv_obj, 0);
-    if (lbl) lv_label_set_text(lbl, text);
+    if (lbl) lv_label_set_text(lbl, s_showcase.panel_row.btn_fill_a.label_text);
 }
 
 void ui_showcase_panel_row_btn_fill_b_set_label(const char *text)
 {
-    if (!s_showcase.panel_row.btn_fill_b.lv_obj) return;
+    ui_copy_text(s_showcase.panel_row.btn_fill_b.label_text, sizeof s_showcase.panel_row.btn_fill_b.label_text, text);
+    if (!s_showcase.panel_row.btn_fill_b.lv_obj) {
+        UI_LIFECYCLE_WARN("ui_showcase_panel_row_btn_fill_b_set_label: screen not built; value stored");
+        return;
+    }
     lv_obj_t *lbl = lv_obj_get_child(s_showcase.panel_row.btn_fill_b.lv_obj, 0);
-    if (lbl) lv_label_set_text(lbl, text);
+    if (lbl) lv_label_set_text(lbl, s_showcase.panel_row.btn_fill_b.label_text);
 }
 
 // ------------------------------
@@ -380,14 +438,20 @@ void ui_showcase_panel_row_btn_fill_b_set_label(const char *text)
 // ------------------------------
 void ui_showcase_load(void)
 {
+    if (!s_showcase.lv_screen) {
+        UI_LIFECYCLE_WARN("ui_showcase_load: screen not built");
+        return;
+    }
     lv_scr_load(s_showcase.lv_screen);
 }
 
 // ------------------------------
-// SCREEN INIT
+// SCREEN INIT (builds from the struct's values; no-op if built)
 // ------------------------------
 void ui_showcase_init(void)
 {
+    if (s_showcase.lv_screen)
+        return;
     s_showcase.lv_screen = lv_obj_create(NULL);
 
     /* panel_top (panel) */
@@ -613,4 +677,42 @@ void ui_showcase_init(void)
     lv_obj_add_event_cb(s_showcase.panel_row.btn_fill_b.lv_obj, ui_showcase_on_btn_fill_b_clicked,
                         LV_EVENT_CLICKED, NULL);
     ui_apply_style(s_showcase.panel_row.btn_fill_b.lv_obj, UI_CHILD_BUTTON, &s_showcase.panel_row.btn_fill_b.style);
+}
+
+// ------------------------------
+// SCREEN DEINIT (refused for the active screen; values kept)
+// ------------------------------
+void ui_showcase_deinit(void)
+{
+    if (!s_showcase.lv_screen)
+        return;
+    if (lv_screen_active() == s_showcase.lv_screen) {
+        UI_LIFECYCLE_WARN("ui_showcase_deinit: refused, it is the active screen; load another first");
+        return;
+    }
+    s_showcase.slider_volume.value = lv_slider_get_value(s_showcase.slider_volume.lv_obj);
+    s_showcase.slider_level.value = lv_slider_get_value(s_showcase.slider_level.lv_obj);
+    lv_obj_delete(s_showcase.lv_screen);   /* frees every child, callback and animation */
+    s_showcase.lv_screen = NULL;
+    s_showcase.panel_top.lv_obj = NULL;
+    s_showcase.btn_ok.lv_obj = NULL;
+    s_showcase.btn_cancel.lv_obj = NULL;
+    s_showcase.battery_bar.lv_obj = NULL;
+    s_showcase.slider_volume.lv_obj = NULL;
+    s_showcase.slider_level.lv_obj = NULL;
+    s_showcase.panel_card.lv_obj = NULL;
+    s_showcase.list_devices.lv_obj = NULL;
+    s_showcase.panel_dim.lv_obj = NULL;
+    s_showcase.panel_gradient.lv_obj = NULL;
+    s_showcase.btn_shadow.lv_obj = NULL;
+    s_showcase.panel_row.lv_obj = NULL;
+    s_showcase.custom_font.lv_obj = NULL;
+    s_showcase.btn_icon.lv_obj = NULL;
+    s_showcase.panel_top.title.lv_obj = NULL;
+    s_showcase.panel_top.icon_star.lv_obj = NULL;
+    s_showcase.panel_card.card_title.lv_obj = NULL;
+    s_showcase.panel_card.card_body.lv_obj = NULL;
+    s_showcase.panel_card.icon_heart.lv_obj = NULL;
+    s_showcase.panel_row.btn_fill_a.lv_obj = NULL;
+    s_showcase.panel_row.btn_fill_b.lv_obj = NULL;
 }

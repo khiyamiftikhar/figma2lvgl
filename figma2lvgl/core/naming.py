@@ -657,15 +657,16 @@ def assign_symbols(screens: Sequence[ScreenSymbols], symbols: Allocator
                    ) -> tuple[dict[tuple, str], list[Diagnostic]]:
     """Every external symbol of the design (4.6), claimed in one allocator.
 
-    Keys: (screen, "init"), (screen, "load"), (widget key, op) for setters,
+    Keys: (screen, "init"), (screen, "load"), (screen, "deinit"), (widget key, op) for setters,
     (widget key, "cb", event or None) for callbacks, (widget key, "get").
     All candidates are collected first, so natural names win over suffixes
     across the whole design (4.5).
     """
     keys, cands = [], []
     for s in screens:
-        keys += [(s.screen, "init"), (s.screen, "load")]
-        cands += [(f"ui_{s.screen}_init", s.screen), (f"ui_{s.screen}_load", s.screen)]
+        keys += [(s.screen, "init"), (s.screen, "load"), (s.screen, "deinit")]
+        cands += [(f"ui_{s.screen}_init", s.screen), (f"ui_{s.screen}_load", s.screen),
+                  (f"ui_{s.screen}_deinit", s.screen)]
         q = _qualify(s.screen, s.widgets)
         for w in s.widgets:
             for op in w.setter_ops:

@@ -12,12 +12,12 @@ static struct {
     struct {
         lv_obj_t   *lv_obj;
         ui_style_t  style;
-        const char *label_text;
+        char        label_text[UI_TEXT_SIZE(4)];
     } btn_4x4;
     struct {
         lv_obj_t   *lv_obj;
         ui_style_t  style;
-        const char *label_text;
+        char        label_text[UI_TEXT_SIZE(4)];
     } btn_1x1;
     struct {
         lv_obj_t   *lv_obj;
@@ -66,22 +66,34 @@ static struct {
 // ------------------------------
 void ui_f_tiny_btn_4x4_set_label(const char *text)
 {
-    if (!s_f_tiny.btn_4x4.lv_obj) return;
+    ui_copy_text(s_f_tiny.btn_4x4.label_text, sizeof s_f_tiny.btn_4x4.label_text, text);
+    if (!s_f_tiny.btn_4x4.lv_obj) {
+        UI_LIFECYCLE_WARN("ui_f_tiny_btn_4x4_set_label: screen not built; value stored");
+        return;
+    }
     lv_obj_t *lbl = lv_obj_get_child(s_f_tiny.btn_4x4.lv_obj, 0);
-    if (lbl) lv_label_set_text(lbl, text);
+    if (lbl) lv_label_set_text(lbl, s_f_tiny.btn_4x4.label_text);
 }
 
 void ui_f_tiny_btn_1x1_set_label(const char *text)
 {
-    if (!s_f_tiny.btn_1x1.lv_obj) return;
+    ui_copy_text(s_f_tiny.btn_1x1.label_text, sizeof s_f_tiny.btn_1x1.label_text, text);
+    if (!s_f_tiny.btn_1x1.lv_obj) {
+        UI_LIFECYCLE_WARN("ui_f_tiny_btn_1x1_set_label: screen not built; value stored");
+        return;
+    }
     lv_obj_t *lbl = lv_obj_get_child(s_f_tiny.btn_1x1.lv_obj, 0);
-    if (lbl) lv_label_set_text(lbl, text);
+    if (lbl) lv_label_set_text(lbl, s_f_tiny.btn_1x1.label_text);
 }
 
 void ui_f_tiny_slider_tiny_set_value(int32_t value)
 {
-    if (s_f_tiny.slider_tiny.lv_obj)
-        lv_slider_set_value(s_f_tiny.slider_tiny.lv_obj, value, LV_ANIM_OFF);
+    s_f_tiny.slider_tiny.value = value;
+    if (!s_f_tiny.slider_tiny.lv_obj) {
+        UI_LIFECYCLE_WARN("ui_f_tiny_slider_tiny_set_value: screen not built; value stored");
+        return;
+    }
+    lv_slider_set_value(s_f_tiny.slider_tiny.lv_obj, value, LV_ANIM_OFF);
 }
 
 // ------------------------------
@@ -89,14 +101,20 @@ void ui_f_tiny_slider_tiny_set_value(int32_t value)
 // ------------------------------
 void ui_f_tiny_load(void)
 {
+    if (!s_f_tiny.lv_screen) {
+        UI_LIFECYCLE_WARN("ui_f_tiny_load: screen not built");
+        return;
+    }
     lv_scr_load(s_f_tiny.lv_screen);
 }
 
 // ------------------------------
-// SCREEN INIT
+// SCREEN INIT (builds from the struct's values; no-op if built)
 // ------------------------------
 void ui_f_tiny_init(void)
 {
+    if (s_f_tiny.lv_screen)
+        return;
     s_f_tiny.lv_screen = lv_obj_create(NULL);
 
     /* btn_4x4 (button) */
@@ -138,4 +156,23 @@ void ui_f_tiny_init(void)
     lv_obj_add_event_cb(s_f_tiny.slider_tiny.lv_obj, ui_f_tiny_on_slider_tiny,
                         LV_EVENT_VALUE_CHANGED, NULL);
     ui_apply_style(s_f_tiny.slider_tiny.lv_obj, UI_CHILD_SLIDER, &s_f_tiny.slider_tiny.style);
+}
+
+// ------------------------------
+// SCREEN DEINIT (refused for the active screen; values kept)
+// ------------------------------
+void ui_f_tiny_deinit(void)
+{
+    if (!s_f_tiny.lv_screen)
+        return;
+    if (lv_screen_active() == s_f_tiny.lv_screen) {
+        UI_LIFECYCLE_WARN("ui_f_tiny_deinit: refused, it is the active screen; load another first");
+        return;
+    }
+    s_f_tiny.slider_tiny.value = lv_slider_get_value(s_f_tiny.slider_tiny.lv_obj);
+    lv_obj_delete(s_f_tiny.lv_screen);   /* frees every child, callback and animation */
+    s_f_tiny.lv_screen = NULL;
+    s_f_tiny.btn_4x4.lv_obj = NULL;
+    s_f_tiny.btn_1x1.lv_obj = NULL;
+    s_f_tiny.slider_tiny.lv_obj = NULL;
 }

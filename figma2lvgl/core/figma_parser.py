@@ -8,8 +8,7 @@ import logging
 
 from figma2lvgl.core.widget_type import WidgetType
 from figma2lvgl.core.utils.utils import (
-    normalize_id, to_snake_case, sanitize_c_string,
-    UI_MAX_STRING_LENGTH, int_attr,
+    normalize_id, to_snake_case, sanitize_c_string, int_attr,
 )
 from figma2lvgl.core import naming
 
@@ -198,6 +197,7 @@ class ParsedNode:
         self.event_modifiers = event_modifiers if event_modifiers is not None else []
         self.clips           = clips
         self.design_text     = None   # labels and buttons: Figma's text, uncut
+        self.text_size       = 0      # bytes the design text needs, with its NUL (Q17)
         self.layer:        str = id          # Figma layer name, for messages
         self.natural_id:   str = id          # member name before fixes/suffixes
         self.asset_name:   str | None = None # IMAGE: symbol and PNG stem (4.4)
@@ -210,6 +210,16 @@ class ParsedNode:
         return self.widget_type not in (WidgetType.BUTTON,)
 
 
+# Design text is never cut (doc 11 rev 5, Q17): its buffer is sized for it.
+_UNCUT = 1 << 30
+
+
+def text_bytes(text: str) -> int:
+    """Bytes of a design text in the generated C string (line and paragraph
+    separators become one-byte line breaks, as sanitize_c_string writes)."""
+    return len(text.replace("\u2028", "\n").replace("\u2029", "\n").encode("utf-8"))
+
+
 # ── Button label helper ───────────────────────────────────────────────────────
 
 def _find_button_label(button_xml) -> str:
@@ -220,7 +230,7 @@ def _find_button_label(button_xml) -> str:
             if child.tag == "Text":
                 raw = child.attrib.get("characters", "")
                 if raw:
-                    return sanitize_c_string(raw, UI_MAX_STRING_LENGTH)
+                    return sanitize_c_string(raw, _UNCUT)
     # Fall back: derive from node name
     name = button_xml.attrib.get("name", "btn").lower()
     for prefix in ("btn_", "button_"):
@@ -369,7 +379,7 @@ def _parse_children(parent_xml, screen_name: str, depth: int, counters,
 
         if wtype == WidgetType.LABEL:
             raw_text     = child_xml.attrib.get("characters", "")
-            text_content = sanitize_c_string(raw_text, UI_MAX_STRING_LENGTH)
+            text_content = sanitize_c_string(raw_text, _UNCUT)
             design_text  = raw_text
 
         elif wtype == WidgetType.BUTTON:
@@ -416,6 +426,8 @@ def _parse_children(parent_xml, screen_name: str, depth: int, counters,
                                and child_xml.attrib.get("clipsContent", "").lower() == "true"),
         ))
         result[-1].design_text = design_text
+        if design_text is not None:
+            result[-1].text_size = text_bytes(design_text or text_content) + 1
         result[-1].layer        = name
         result[-1].natural_id   = normalize_id(info.base.lower())  # before any fix
         result[-1].asset_name   = asset
@@ -434,7 +446,7 @@ class ParsedScreen:
         # 0.4.6's to_snake_case.
         self.snake    = snake if snake is not None else to_snake_case(name)
         self.children: list[ParsedNode] = []
-        self.symbols:  dict = {}         # "init", "load" (assign_design_symbols)
+        self.symbols:  dict = {}         # "init", "load", "deinit" (assign_design_symbols)
 
     def get_required_assets(self) -> list[str]:
         """Return IDs of all IMAGE nodes (need matching PNG files)."""
@@ -509,7 +521,7 @@ def button_events(node) -> list[tuple[str, str]]:
 def assign_design_symbols(screens) -> None:
     """Every external symbol of the design, in one allocator (doc 10, 4.6).
 
-    Stores the names in screen.symbols ("init", "load") and node.symbols
+    Stores the names in screen.symbols ("init", "load", "deinit") and node.symbols
     (setter op, ("cb", event or None), "get"). The emitters only read them.
     """
     specs = []
@@ -530,7 +542,8 @@ def assign_design_symbols(screens) -> None:
         logger.warning("%s", d.message)
     for screen in screens:
         screen.symbols = {"init": names[(screen.snake, "init")],
-                          "load": names[(screen.snake, "load")]}
+                          "load": names[(screen.snake, "load")],
+                          "deinit": names[(screen.snake, "deinit")]}
         for node, _path in _nodes_dfs(screen):
             node.symbols = {}
     for key, name in names.items():

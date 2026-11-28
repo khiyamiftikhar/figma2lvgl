@@ -12,17 +12,17 @@ static struct {
     struct {
         lv_obj_t   *lv_obj;
         ui_style_t  style;
-        const char *label_text;
+        char        label_text[UI_TEXT_SIZE(3)];
     } btn_g2;
     struct {
         lv_obj_t   *lv_obj;
         ui_style_t  style;
-        const char *label_text;
+        char        label_text[UI_TEXT_SIZE(3)];
     } btn_f2;
     struct {
         lv_obj_t   *lv_obj;
         ui_style_t  style;
-        const char *label_text;
+        char        label_text[UI_TEXT_SIZE(4)];
     } btn_mix;
     struct {
         lv_obj_t   *lv_obj;
@@ -30,17 +30,17 @@ static struct {
         struct {
             lv_obj_t   *lv_obj;
             ui_style_t  style;
-            const char *label_text;
+            char        label_text[UI_TEXT_SIZE(4)];
         } btn_al1;
         struct {
             lv_obj_t   *lv_obj;
             ui_style_t  style;
-            const char *label_text;
+            char        label_text[UI_TEXT_SIZE(4)];
         } btn_al2;
         struct {
             lv_obj_t   *lv_obj;
             ui_style_t  style;
-            const char *label_text;
+            char        label_text[UI_TEXT_SIZE(4)];
         } btn_al3;
     } auto_box;
     struct {
@@ -49,7 +49,7 @@ static struct {
         struct {
             lv_obj_t   *lv_obj;
             ui_style_t  style;
-            const char *label_text;
+            char        label_text[UI_TEXT_SIZE(5)];
         } btn_card;
     } card;
     struct {
@@ -58,23 +58,23 @@ static struct {
         struct {
             lv_obj_t   *lv_obj;
             ui_style_t  style;
-            const char *label_text;
+            char        label_text[UI_TEXT_SIZE(4)];
         } btn_pg1;
         struct {
             lv_obj_t   *lv_obj;
             ui_style_t  style;
-            const char *label_text;
+            char        label_text[UI_TEXT_SIZE(4)];
         } btn_pg2;
     } panel_grp;
     struct {
         lv_obj_t   *lv_obj;
         ui_style_t  style;
-        const char *label_text;
+        char        label_text[UI_TEXT_SIZE(9)];
     } btn_overflow;
     struct {
         lv_obj_t   *lv_obj;
         ui_style_t  style;
-        const char *label_text;
+        char        label_text[UI_TEXT_SIZE(4)];
     } btn_rot;
 } s_coords_test_2 = {
     .btn_g2 = {
@@ -175,79 +175,123 @@ static struct {
 // ------------------------------
 void ui_coords_test_2_btn_g2_set_label(const char *text)
 {
-    if (!s_coords_test_2.btn_g2.lv_obj) return;
+    ui_copy_text(s_coords_test_2.btn_g2.label_text, sizeof s_coords_test_2.btn_g2.label_text, text);
+    if (!s_coords_test_2.btn_g2.lv_obj) {
+        UI_LIFECYCLE_WARN("ui_coords_test_2_btn_g2_set_label: screen not built; value stored");
+        return;
+    }
     lv_obj_t *lbl = lv_obj_get_child(s_coords_test_2.btn_g2.lv_obj, 0);
-    if (lbl) lv_label_set_text(lbl, text);
+    if (lbl) lv_label_set_text(lbl, s_coords_test_2.btn_g2.label_text);
 }
 
 void ui_coords_test_2_btn_f2_set_label(const char *text)
 {
-    if (!s_coords_test_2.btn_f2.lv_obj) return;
+    ui_copy_text(s_coords_test_2.btn_f2.label_text, sizeof s_coords_test_2.btn_f2.label_text, text);
+    if (!s_coords_test_2.btn_f2.lv_obj) {
+        UI_LIFECYCLE_WARN("ui_coords_test_2_btn_f2_set_label: screen not built; value stored");
+        return;
+    }
     lv_obj_t *lbl = lv_obj_get_child(s_coords_test_2.btn_f2.lv_obj, 0);
-    if (lbl) lv_label_set_text(lbl, text);
+    if (lbl) lv_label_set_text(lbl, s_coords_test_2.btn_f2.label_text);
 }
 
 void ui_coords_test_2_btn_mix_set_label(const char *text)
 {
-    if (!s_coords_test_2.btn_mix.lv_obj) return;
+    ui_copy_text(s_coords_test_2.btn_mix.label_text, sizeof s_coords_test_2.btn_mix.label_text, text);
+    if (!s_coords_test_2.btn_mix.lv_obj) {
+        UI_LIFECYCLE_WARN("ui_coords_test_2_btn_mix_set_label: screen not built; value stored");
+        return;
+    }
     lv_obj_t *lbl = lv_obj_get_child(s_coords_test_2.btn_mix.lv_obj, 0);
-    if (lbl) lv_label_set_text(lbl, text);
+    if (lbl) lv_label_set_text(lbl, s_coords_test_2.btn_mix.label_text);
 }
 
 void ui_coords_test_2_btn_overflow_set_label(const char *text)
 {
-    if (!s_coords_test_2.btn_overflow.lv_obj) return;
+    ui_copy_text(s_coords_test_2.btn_overflow.label_text, sizeof s_coords_test_2.btn_overflow.label_text, text);
+    if (!s_coords_test_2.btn_overflow.lv_obj) {
+        UI_LIFECYCLE_WARN("ui_coords_test_2_btn_overflow_set_label: screen not built; value stored");
+        return;
+    }
     lv_obj_t *lbl = lv_obj_get_child(s_coords_test_2.btn_overflow.lv_obj, 0);
-    if (lbl) lv_label_set_text(lbl, text);
+    if (lbl) lv_label_set_text(lbl, s_coords_test_2.btn_overflow.label_text);
 }
 
 void ui_coords_test_2_btn_rot_set_label(const char *text)
 {
-    if (!s_coords_test_2.btn_rot.lv_obj) return;
+    ui_copy_text(s_coords_test_2.btn_rot.label_text, sizeof s_coords_test_2.btn_rot.label_text, text);
+    if (!s_coords_test_2.btn_rot.lv_obj) {
+        UI_LIFECYCLE_WARN("ui_coords_test_2_btn_rot_set_label: screen not built; value stored");
+        return;
+    }
     lv_obj_t *lbl = lv_obj_get_child(s_coords_test_2.btn_rot.lv_obj, 0);
-    if (lbl) lv_label_set_text(lbl, text);
+    if (lbl) lv_label_set_text(lbl, s_coords_test_2.btn_rot.label_text);
 }
 
 void ui_coords_test_2_auto_box_btn_al1_set_label(const char *text)
 {
-    if (!s_coords_test_2.auto_box.btn_al1.lv_obj) return;
+    ui_copy_text(s_coords_test_2.auto_box.btn_al1.label_text, sizeof s_coords_test_2.auto_box.btn_al1.label_text, text);
+    if (!s_coords_test_2.auto_box.btn_al1.lv_obj) {
+        UI_LIFECYCLE_WARN("ui_coords_test_2_auto_box_btn_al1_set_label: screen not built; value stored");
+        return;
+    }
     lv_obj_t *lbl = lv_obj_get_child(s_coords_test_2.auto_box.btn_al1.lv_obj, 0);
-    if (lbl) lv_label_set_text(lbl, text);
+    if (lbl) lv_label_set_text(lbl, s_coords_test_2.auto_box.btn_al1.label_text);
 }
 
 void ui_coords_test_2_auto_box_btn_al2_set_label(const char *text)
 {
-    if (!s_coords_test_2.auto_box.btn_al2.lv_obj) return;
+    ui_copy_text(s_coords_test_2.auto_box.btn_al2.label_text, sizeof s_coords_test_2.auto_box.btn_al2.label_text, text);
+    if (!s_coords_test_2.auto_box.btn_al2.lv_obj) {
+        UI_LIFECYCLE_WARN("ui_coords_test_2_auto_box_btn_al2_set_label: screen not built; value stored");
+        return;
+    }
     lv_obj_t *lbl = lv_obj_get_child(s_coords_test_2.auto_box.btn_al2.lv_obj, 0);
-    if (lbl) lv_label_set_text(lbl, text);
+    if (lbl) lv_label_set_text(lbl, s_coords_test_2.auto_box.btn_al2.label_text);
 }
 
 void ui_coords_test_2_auto_box_btn_al3_set_label(const char *text)
 {
-    if (!s_coords_test_2.auto_box.btn_al3.lv_obj) return;
+    ui_copy_text(s_coords_test_2.auto_box.btn_al3.label_text, sizeof s_coords_test_2.auto_box.btn_al3.label_text, text);
+    if (!s_coords_test_2.auto_box.btn_al3.lv_obj) {
+        UI_LIFECYCLE_WARN("ui_coords_test_2_auto_box_btn_al3_set_label: screen not built; value stored");
+        return;
+    }
     lv_obj_t *lbl = lv_obj_get_child(s_coords_test_2.auto_box.btn_al3.lv_obj, 0);
-    if (lbl) lv_label_set_text(lbl, text);
+    if (lbl) lv_label_set_text(lbl, s_coords_test_2.auto_box.btn_al3.label_text);
 }
 
 void ui_coords_test_2_card_btn_card_set_label(const char *text)
 {
-    if (!s_coords_test_2.card.btn_card.lv_obj) return;
+    ui_copy_text(s_coords_test_2.card.btn_card.label_text, sizeof s_coords_test_2.card.btn_card.label_text, text);
+    if (!s_coords_test_2.card.btn_card.lv_obj) {
+        UI_LIFECYCLE_WARN("ui_coords_test_2_card_btn_card_set_label: screen not built; value stored");
+        return;
+    }
     lv_obj_t *lbl = lv_obj_get_child(s_coords_test_2.card.btn_card.lv_obj, 0);
-    if (lbl) lv_label_set_text(lbl, text);
+    if (lbl) lv_label_set_text(lbl, s_coords_test_2.card.btn_card.label_text);
 }
 
 void ui_coords_test_2_panel_grp_btn_pg1_set_label(const char *text)
 {
-    if (!s_coords_test_2.panel_grp.btn_pg1.lv_obj) return;
+    ui_copy_text(s_coords_test_2.panel_grp.btn_pg1.label_text, sizeof s_coords_test_2.panel_grp.btn_pg1.label_text, text);
+    if (!s_coords_test_2.panel_grp.btn_pg1.lv_obj) {
+        UI_LIFECYCLE_WARN("ui_coords_test_2_panel_grp_btn_pg1_set_label: screen not built; value stored");
+        return;
+    }
     lv_obj_t *lbl = lv_obj_get_child(s_coords_test_2.panel_grp.btn_pg1.lv_obj, 0);
-    if (lbl) lv_label_set_text(lbl, text);
+    if (lbl) lv_label_set_text(lbl, s_coords_test_2.panel_grp.btn_pg1.label_text);
 }
 
 void ui_coords_test_2_panel_grp_btn_pg2_set_label(const char *text)
 {
-    if (!s_coords_test_2.panel_grp.btn_pg2.lv_obj) return;
+    ui_copy_text(s_coords_test_2.panel_grp.btn_pg2.label_text, sizeof s_coords_test_2.panel_grp.btn_pg2.label_text, text);
+    if (!s_coords_test_2.panel_grp.btn_pg2.lv_obj) {
+        UI_LIFECYCLE_WARN("ui_coords_test_2_panel_grp_btn_pg2_set_label: screen not built; value stored");
+        return;
+    }
     lv_obj_t *lbl = lv_obj_get_child(s_coords_test_2.panel_grp.btn_pg2.lv_obj, 0);
-    if (lbl) lv_label_set_text(lbl, text);
+    if (lbl) lv_label_set_text(lbl, s_coords_test_2.panel_grp.btn_pg2.label_text);
 }
 
 // ------------------------------
@@ -255,14 +299,20 @@ void ui_coords_test_2_panel_grp_btn_pg2_set_label(const char *text)
 // ------------------------------
 void ui_coords_test_2_load(void)
 {
+    if (!s_coords_test_2.lv_screen) {
+        UI_LIFECYCLE_WARN("ui_coords_test_2_load: screen not built");
+        return;
+    }
     lv_scr_load(s_coords_test_2.lv_screen);
 }
 
 // ------------------------------
-// SCREEN INIT
+// SCREEN INIT (builds from the struct's values; no-op if built)
 // ------------------------------
 void ui_coords_test_2_init(void)
 {
+    if (s_coords_test_2.lv_screen)
+        return;
     s_coords_test_2.lv_screen = lv_obj_create(NULL);
 
     /* btn_g2 (button) */
@@ -459,4 +509,33 @@ void ui_coords_test_2_init(void)
     lv_obj_add_event_cb(s_coords_test_2.panel_grp.btn_pg2.lv_obj, ui_coords_test_2_on_btn_pg2_clicked,
                         LV_EVENT_CLICKED, NULL);
     ui_apply_style(s_coords_test_2.panel_grp.btn_pg2.lv_obj, UI_CHILD_BUTTON, &s_coords_test_2.panel_grp.btn_pg2.style);
+}
+
+// ------------------------------
+// SCREEN DEINIT (refused for the active screen; values kept)
+// ------------------------------
+void ui_coords_test_2_deinit(void)
+{
+    if (!s_coords_test_2.lv_screen)
+        return;
+    if (lv_screen_active() == s_coords_test_2.lv_screen) {
+        UI_LIFECYCLE_WARN("ui_coords_test_2_deinit: refused, it is the active screen; load another first");
+        return;
+    }
+    lv_obj_delete(s_coords_test_2.lv_screen);   /* frees every child, callback and animation */
+    s_coords_test_2.lv_screen = NULL;
+    s_coords_test_2.btn_g2.lv_obj = NULL;
+    s_coords_test_2.btn_f2.lv_obj = NULL;
+    s_coords_test_2.btn_mix.lv_obj = NULL;
+    s_coords_test_2.auto_box.lv_obj = NULL;
+    s_coords_test_2.card.lv_obj = NULL;
+    s_coords_test_2.panel_grp.lv_obj = NULL;
+    s_coords_test_2.btn_overflow.lv_obj = NULL;
+    s_coords_test_2.btn_rot.lv_obj = NULL;
+    s_coords_test_2.auto_box.btn_al1.lv_obj = NULL;
+    s_coords_test_2.auto_box.btn_al2.lv_obj = NULL;
+    s_coords_test_2.auto_box.btn_al3.lv_obj = NULL;
+    s_coords_test_2.card.btn_card.lv_obj = NULL;
+    s_coords_test_2.panel_grp.btn_pg1.lv_obj = NULL;
+    s_coords_test_2.panel_grp.btn_pg2.lv_obj = NULL;
 }

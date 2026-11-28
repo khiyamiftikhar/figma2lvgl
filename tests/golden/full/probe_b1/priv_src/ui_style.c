@@ -1,4 +1,5 @@
 #include "ui_style.h"
+#include <string.h>
 
 // ── Font mapping ──────────────────────────────────────────────────────────────
 
@@ -133,4 +134,30 @@ void ui_apply_style(lv_obj_t *obj, ui_child_type_t type, const ui_style_t *s)
     // ── Global opacity ────────────────────────────────────────────────────
     if (s->effects.has_opacity)
         lv_obj_set_style_opa(obj, s->effects.opacity, LV_PART_MAIN);
+}
+
+
+// ── Text buffers (design doc 11, rule 3) ─────────────────────────────────────
+
+void ui_copy_text(char *dst, size_t size, const char *text)
+{
+    if (!dst || size == 0)
+        return;
+    size_t n = 0;
+    if (text)
+    {
+        while (text[n] && n < size - 1)
+            n++;
+        if (text[n])
+        {
+            // Cut: step back over continuation bytes to a character start,
+            // then drop that character if it doesn't fit whole.
+            size_t start = n;
+            while (start > 0 && ((unsigned char)text[start] & 0xC0) == 0x80)
+                start--;
+            n = start;
+        }
+        memcpy(dst, text, n);
+    }
+    dst[n] = 0;
 }

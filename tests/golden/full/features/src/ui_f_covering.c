@@ -12,7 +12,7 @@ static struct {
     struct {
         lv_obj_t   *lv_obj;
         ui_style_t  style;
-        const char *label_text;
+        char        label_text[UI_TEXT_SIZE(6)];
     } btn_under_panel;
     struct {
         lv_obj_t   *lv_obj;
@@ -21,12 +21,12 @@ static struct {
     struct {
         lv_obj_t   *lv_obj;
         ui_style_t  style;
-        const char *label_text;
+        char        label_text[UI_TEXT_SIZE(6)];
     } btn_under_button;
     struct {
         lv_obj_t   *lv_obj;
         ui_style_t  style;
-        const char *label_text;
+        char        label_text[UI_TEXT_SIZE(4)];
     } btn_on_top;
 } s_f_covering = {
     .btn_under_panel = {
@@ -74,23 +74,35 @@ static struct {
 // ------------------------------
 void ui_f_covering_btn_under_panel_set_label(const char *text)
 {
-    if (!s_f_covering.btn_under_panel.lv_obj) return;
+    ui_copy_text(s_f_covering.btn_under_panel.label_text, sizeof s_f_covering.btn_under_panel.label_text, text);
+    if (!s_f_covering.btn_under_panel.lv_obj) {
+        UI_LIFECYCLE_WARN("ui_f_covering_btn_under_panel_set_label: screen not built; value stored");
+        return;
+    }
     lv_obj_t *lbl = lv_obj_get_child(s_f_covering.btn_under_panel.lv_obj, 0);
-    if (lbl) lv_label_set_text(lbl, text);
+    if (lbl) lv_label_set_text(lbl, s_f_covering.btn_under_panel.label_text);
 }
 
 void ui_f_covering_btn_under_button_set_label(const char *text)
 {
-    if (!s_f_covering.btn_under_button.lv_obj) return;
+    ui_copy_text(s_f_covering.btn_under_button.label_text, sizeof s_f_covering.btn_under_button.label_text, text);
+    if (!s_f_covering.btn_under_button.lv_obj) {
+        UI_LIFECYCLE_WARN("ui_f_covering_btn_under_button_set_label: screen not built; value stored");
+        return;
+    }
     lv_obj_t *lbl = lv_obj_get_child(s_f_covering.btn_under_button.lv_obj, 0);
-    if (lbl) lv_label_set_text(lbl, text);
+    if (lbl) lv_label_set_text(lbl, s_f_covering.btn_under_button.label_text);
 }
 
 void ui_f_covering_btn_on_top_set_label(const char *text)
 {
-    if (!s_f_covering.btn_on_top.lv_obj) return;
+    ui_copy_text(s_f_covering.btn_on_top.label_text, sizeof s_f_covering.btn_on_top.label_text, text);
+    if (!s_f_covering.btn_on_top.lv_obj) {
+        UI_LIFECYCLE_WARN("ui_f_covering_btn_on_top_set_label: screen not built; value stored");
+        return;
+    }
     lv_obj_t *lbl = lv_obj_get_child(s_f_covering.btn_on_top.lv_obj, 0);
-    if (lbl) lv_label_set_text(lbl, text);
+    if (lbl) lv_label_set_text(lbl, s_f_covering.btn_on_top.label_text);
 }
 
 // ------------------------------
@@ -98,14 +110,20 @@ void ui_f_covering_btn_on_top_set_label(const char *text)
 // ------------------------------
 void ui_f_covering_load(void)
 {
+    if (!s_f_covering.lv_screen) {
+        UI_LIFECYCLE_WARN("ui_f_covering_load: screen not built");
+        return;
+    }
     lv_scr_load(s_f_covering.lv_screen);
 }
 
 // ------------------------------
-// SCREEN INIT
+// SCREEN INIT (builds from the struct's values; no-op if built)
 // ------------------------------
 void ui_f_covering_init(void)
 {
+    if (s_f_covering.lv_screen)
+        return;
     s_f_covering.lv_screen = lv_obj_create(NULL);
 
     /* btn_under_panel (button) */
@@ -162,4 +180,23 @@ void ui_f_covering_init(void)
     lv_obj_add_event_cb(s_f_covering.btn_on_top.lv_obj, ui_f_covering_on_btn_on_top_clicked,
                         LV_EVENT_CLICKED, NULL);
     ui_apply_style(s_f_covering.btn_on_top.lv_obj, UI_CHILD_BUTTON, &s_f_covering.btn_on_top.style);
+}
+
+// ------------------------------
+// SCREEN DEINIT (refused for the active screen; values kept)
+// ------------------------------
+void ui_f_covering_deinit(void)
+{
+    if (!s_f_covering.lv_screen)
+        return;
+    if (lv_screen_active() == s_f_covering.lv_screen) {
+        UI_LIFECYCLE_WARN("ui_f_covering_deinit: refused, it is the active screen; load another first");
+        return;
+    }
+    lv_obj_delete(s_f_covering.lv_screen);   /* frees every child, callback and animation */
+    s_f_covering.lv_screen = NULL;
+    s_f_covering.btn_under_panel.lv_obj = NULL;
+    s_f_covering.panel_cover.lv_obj = NULL;
+    s_f_covering.btn_under_button.lv_obj = NULL;
+    s_f_covering.btn_on_top.lv_obj = NULL;
 }

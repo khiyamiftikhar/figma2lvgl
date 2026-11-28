@@ -24,12 +24,12 @@ static struct {
     struct {
         lv_obj_t   *lv_obj;
         ui_style_t  style;
-        const char *label_text;
+        char        label_text[UI_TEXT_SIZE(5)];
     } btn_opa_50;
     struct {
         lv_obj_t   *lv_obj;
         ui_style_t  style;
-        char        text[UI_MAX_STRING_LENGTH];
+        char        text[UI_TEXT_SIZE(10)];
     } text_opa_50;
     struct {
         lv_obj_t   *lv_obj;
@@ -92,15 +92,23 @@ static struct {
 // ------------------------------
 void ui_f_opacity_btn_opa_50_set_label(const char *text)
 {
-    if (!s_f_opacity.btn_opa_50.lv_obj) return;
+    ui_copy_text(s_f_opacity.btn_opa_50.label_text, sizeof s_f_opacity.btn_opa_50.label_text, text);
+    if (!s_f_opacity.btn_opa_50.lv_obj) {
+        UI_LIFECYCLE_WARN("ui_f_opacity_btn_opa_50_set_label: screen not built; value stored");
+        return;
+    }
     lv_obj_t *lbl = lv_obj_get_child(s_f_opacity.btn_opa_50.lv_obj, 0);
-    if (lbl) lv_label_set_text(lbl, text);
+    if (lbl) lv_label_set_text(lbl, s_f_opacity.btn_opa_50.label_text);
 }
 
 void ui_f_opacity_text_opa_50_set_text(const char *text)
 {
-    if (s_f_opacity.text_opa_50.lv_obj)
-        lv_label_set_text(s_f_opacity.text_opa_50.lv_obj, text);
+    ui_copy_text(s_f_opacity.text_opa_50.text, sizeof s_f_opacity.text_opa_50.text, text);
+    if (!s_f_opacity.text_opa_50.lv_obj) {
+        UI_LIFECYCLE_WARN("ui_f_opacity_text_opa_50_set_text: screen not built; value stored");
+        return;
+    }
+    lv_label_set_text(s_f_opacity.text_opa_50.lv_obj, s_f_opacity.text_opa_50.text);
 }
 
 // ------------------------------
@@ -108,14 +116,20 @@ void ui_f_opacity_text_opa_50_set_text(const char *text)
 // ------------------------------
 void ui_f_opacity_load(void)
 {
+    if (!s_f_opacity.lv_screen) {
+        UI_LIFECYCLE_WARN("ui_f_opacity_load: screen not built");
+        return;
+    }
     lv_scr_load(s_f_opacity.lv_screen);
 }
 
 // ------------------------------
-// SCREEN INIT
+// SCREEN INIT (builds from the struct's values; no-op if built)
 // ------------------------------
 void ui_f_opacity_init(void)
 {
+    if (s_f_opacity.lv_screen)
+        return;
     s_f_opacity.lv_screen = lv_obj_create(NULL);
 
     /* panel_opa_0 (panel) */
@@ -179,4 +193,25 @@ void ui_f_opacity_init(void)
     lv_obj_clear_flag(s_f_opacity.panel_fill_50.lv_obj, LV_OBJ_FLAG_CLICKABLE);
     lv_obj_set_scrollbar_mode(s_f_opacity.panel_fill_50.lv_obj, LV_SCROLLBAR_MODE_OFF);
     ui_apply_style(s_f_opacity.panel_fill_50.lv_obj, UI_CHILD_PANEL, &s_f_opacity.panel_fill_50.style);
+}
+
+// ------------------------------
+// SCREEN DEINIT (refused for the active screen; values kept)
+// ------------------------------
+void ui_f_opacity_deinit(void)
+{
+    if (!s_f_opacity.lv_screen)
+        return;
+    if (lv_screen_active() == s_f_opacity.lv_screen) {
+        UI_LIFECYCLE_WARN("ui_f_opacity_deinit: refused, it is the active screen; load another first");
+        return;
+    }
+    lv_obj_delete(s_f_opacity.lv_screen);   /* frees every child, callback and animation */
+    s_f_opacity.lv_screen = NULL;
+    s_f_opacity.panel_opa_0.lv_obj = NULL;
+    s_f_opacity.panel_opa_50.lv_obj = NULL;
+    s_f_opacity.panel_opa_100.lv_obj = NULL;
+    s_f_opacity.btn_opa_50.lv_obj = NULL;
+    s_f_opacity.text_opa_50.lv_obj = NULL;
+    s_f_opacity.panel_fill_50.lv_obj = NULL;
 }

@@ -12,27 +12,27 @@ static struct {
     struct {
         lv_obj_t   *lv_obj;
         ui_style_t  style;
-        const char *label_text;
+        char        label_text[UI_TEXT_SIZE(2)];
     } btn_a;
     struct {
         lv_obj_t   *lv_obj;
         ui_style_t  style;
-        const char *label_text;
+        char        label_text[UI_TEXT_SIZE(2)];
     } btn_b;
     struct {
         lv_obj_t   *lv_obj;
         ui_style_t  style;
-        const char *label_text;
+        char        label_text[UI_TEXT_SIZE(2)];
     } btn_c;
     struct {
         lv_obj_t   *lv_obj;
         ui_style_t  style;
-        const char *label_text;
+        char        label_text[UI_TEXT_SIZE(2)];
     } btn_d;
     struct {
         lv_obj_t   *lv_obj;
         ui_style_t  style;
-        const char *label_text;
+        char        label_text[UI_TEXT_SIZE(6)];
     } btn_ghost;
 } s_coords_test = {
     .btn_a = {
@@ -85,37 +85,57 @@ static struct {
 // ------------------------------
 void ui_coords_test_btn_a_set_label(const char *text)
 {
-    if (!s_coords_test.btn_a.lv_obj) return;
+    ui_copy_text(s_coords_test.btn_a.label_text, sizeof s_coords_test.btn_a.label_text, text);
+    if (!s_coords_test.btn_a.lv_obj) {
+        UI_LIFECYCLE_WARN("ui_coords_test_btn_a_set_label: screen not built; value stored");
+        return;
+    }
     lv_obj_t *lbl = lv_obj_get_child(s_coords_test.btn_a.lv_obj, 0);
-    if (lbl) lv_label_set_text(lbl, text);
+    if (lbl) lv_label_set_text(lbl, s_coords_test.btn_a.label_text);
 }
 
 void ui_coords_test_btn_b_set_label(const char *text)
 {
-    if (!s_coords_test.btn_b.lv_obj) return;
+    ui_copy_text(s_coords_test.btn_b.label_text, sizeof s_coords_test.btn_b.label_text, text);
+    if (!s_coords_test.btn_b.lv_obj) {
+        UI_LIFECYCLE_WARN("ui_coords_test_btn_b_set_label: screen not built; value stored");
+        return;
+    }
     lv_obj_t *lbl = lv_obj_get_child(s_coords_test.btn_b.lv_obj, 0);
-    if (lbl) lv_label_set_text(lbl, text);
+    if (lbl) lv_label_set_text(lbl, s_coords_test.btn_b.label_text);
 }
 
 void ui_coords_test_btn_c_set_label(const char *text)
 {
-    if (!s_coords_test.btn_c.lv_obj) return;
+    ui_copy_text(s_coords_test.btn_c.label_text, sizeof s_coords_test.btn_c.label_text, text);
+    if (!s_coords_test.btn_c.lv_obj) {
+        UI_LIFECYCLE_WARN("ui_coords_test_btn_c_set_label: screen not built; value stored");
+        return;
+    }
     lv_obj_t *lbl = lv_obj_get_child(s_coords_test.btn_c.lv_obj, 0);
-    if (lbl) lv_label_set_text(lbl, text);
+    if (lbl) lv_label_set_text(lbl, s_coords_test.btn_c.label_text);
 }
 
 void ui_coords_test_btn_d_set_label(const char *text)
 {
-    if (!s_coords_test.btn_d.lv_obj) return;
+    ui_copy_text(s_coords_test.btn_d.label_text, sizeof s_coords_test.btn_d.label_text, text);
+    if (!s_coords_test.btn_d.lv_obj) {
+        UI_LIFECYCLE_WARN("ui_coords_test_btn_d_set_label: screen not built; value stored");
+        return;
+    }
     lv_obj_t *lbl = lv_obj_get_child(s_coords_test.btn_d.lv_obj, 0);
-    if (lbl) lv_label_set_text(lbl, text);
+    if (lbl) lv_label_set_text(lbl, s_coords_test.btn_d.label_text);
 }
 
 void ui_coords_test_btn_ghost_set_label(const char *text)
 {
-    if (!s_coords_test.btn_ghost.lv_obj) return;
+    ui_copy_text(s_coords_test.btn_ghost.label_text, sizeof s_coords_test.btn_ghost.label_text, text);
+    if (!s_coords_test.btn_ghost.lv_obj) {
+        UI_LIFECYCLE_WARN("ui_coords_test_btn_ghost_set_label: screen not built; value stored");
+        return;
+    }
     lv_obj_t *lbl = lv_obj_get_child(s_coords_test.btn_ghost.lv_obj, 0);
-    if (lbl) lv_label_set_text(lbl, text);
+    if (lbl) lv_label_set_text(lbl, s_coords_test.btn_ghost.label_text);
 }
 
 // ------------------------------
@@ -123,14 +143,20 @@ void ui_coords_test_btn_ghost_set_label(const char *text)
 // ------------------------------
 void ui_coords_test_load(void)
 {
+    if (!s_coords_test.lv_screen) {
+        UI_LIFECYCLE_WARN("ui_coords_test_load: screen not built");
+        return;
+    }
     lv_scr_load(s_coords_test.lv_screen);
 }
 
 // ------------------------------
-// SCREEN INIT
+// SCREEN INIT (builds from the struct's values; no-op if built)
 // ------------------------------
 void ui_coords_test_init(void)
 {
+    if (s_coords_test.lv_screen)
+        return;
     s_coords_test.lv_screen = lv_obj_create(NULL);
 
     /* btn_a (button) */
@@ -207,4 +233,24 @@ void ui_coords_test_init(void)
     lv_obj_add_event_cb(s_coords_test.btn_ghost.lv_obj, ui_coords_test_on_btn_ghost_clicked,
                         LV_EVENT_CLICKED, NULL);
     ui_apply_style(s_coords_test.btn_ghost.lv_obj, UI_CHILD_BUTTON, &s_coords_test.btn_ghost.style);
+}
+
+// ------------------------------
+// SCREEN DEINIT (refused for the active screen; values kept)
+// ------------------------------
+void ui_coords_test_deinit(void)
+{
+    if (!s_coords_test.lv_screen)
+        return;
+    if (lv_screen_active() == s_coords_test.lv_screen) {
+        UI_LIFECYCLE_WARN("ui_coords_test_deinit: refused, it is the active screen; load another first");
+        return;
+    }
+    lv_obj_delete(s_coords_test.lv_screen);   /* frees every child, callback and animation */
+    s_coords_test.lv_screen = NULL;
+    s_coords_test.btn_a.lv_obj = NULL;
+    s_coords_test.btn_b.lv_obj = NULL;
+    s_coords_test.btn_c.lv_obj = NULL;
+    s_coords_test.btn_d.lv_obj = NULL;
+    s_coords_test.btn_ghost.lv_obj = NULL;
 }

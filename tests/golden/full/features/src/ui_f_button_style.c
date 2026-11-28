@@ -12,32 +12,32 @@ static struct {
     struct {
         lv_obj_t   *lv_obj;
         ui_style_t  style;
-        const char *label_text;
+        char        label_text[UI_TEXT_SIZE(7)];
     } btn_square;
     struct {
         lv_obj_t   *lv_obj;
         ui_style_t  style;
-        const char *label_text;
+        char        label_text[UI_TEXT_SIZE(6)];
     } btn_round;
     struct {
         lv_obj_t   *lv_obj;
         ui_style_t  style;
-        const char *label_text;
+        char        label_text[UI_TEXT_SIZE(5)];
     } btn_pill;
     struct {
         lv_obj_t   *lv_obj;
         ui_style_t  style;
-        const char *label_text;
+        char        label_text[UI_TEXT_SIZE(7)];
     } btn_stroke;
     struct {
         lv_obj_t   *lv_obj;
         ui_style_t  style;
-        const char *label_text;
+        char        label_text[UI_TEXT_SIZE(5)];
     } btn_both;
     struct {
         lv_obj_t   *lv_obj;
         ui_style_t  style;
-        const char *label_text;
+        char        label_text[UI_TEXT_SIZE(6)];
     } btn_thick;
 } s_f_button_style = {
     .btn_square = {
@@ -101,44 +101,68 @@ static struct {
 // ------------------------------
 void ui_f_button_style_btn_square_set_label(const char *text)
 {
-    if (!s_f_button_style.btn_square.lv_obj) return;
+    ui_copy_text(s_f_button_style.btn_square.label_text, sizeof s_f_button_style.btn_square.label_text, text);
+    if (!s_f_button_style.btn_square.lv_obj) {
+        UI_LIFECYCLE_WARN("ui_f_button_style_btn_square_set_label: screen not built; value stored");
+        return;
+    }
     lv_obj_t *lbl = lv_obj_get_child(s_f_button_style.btn_square.lv_obj, 0);
-    if (lbl) lv_label_set_text(lbl, text);
+    if (lbl) lv_label_set_text(lbl, s_f_button_style.btn_square.label_text);
 }
 
 void ui_f_button_style_btn_round_set_label(const char *text)
 {
-    if (!s_f_button_style.btn_round.lv_obj) return;
+    ui_copy_text(s_f_button_style.btn_round.label_text, sizeof s_f_button_style.btn_round.label_text, text);
+    if (!s_f_button_style.btn_round.lv_obj) {
+        UI_LIFECYCLE_WARN("ui_f_button_style_btn_round_set_label: screen not built; value stored");
+        return;
+    }
     lv_obj_t *lbl = lv_obj_get_child(s_f_button_style.btn_round.lv_obj, 0);
-    if (lbl) lv_label_set_text(lbl, text);
+    if (lbl) lv_label_set_text(lbl, s_f_button_style.btn_round.label_text);
 }
 
 void ui_f_button_style_btn_pill_set_label(const char *text)
 {
-    if (!s_f_button_style.btn_pill.lv_obj) return;
+    ui_copy_text(s_f_button_style.btn_pill.label_text, sizeof s_f_button_style.btn_pill.label_text, text);
+    if (!s_f_button_style.btn_pill.lv_obj) {
+        UI_LIFECYCLE_WARN("ui_f_button_style_btn_pill_set_label: screen not built; value stored");
+        return;
+    }
     lv_obj_t *lbl = lv_obj_get_child(s_f_button_style.btn_pill.lv_obj, 0);
-    if (lbl) lv_label_set_text(lbl, text);
+    if (lbl) lv_label_set_text(lbl, s_f_button_style.btn_pill.label_text);
 }
 
 void ui_f_button_style_btn_stroke_set_label(const char *text)
 {
-    if (!s_f_button_style.btn_stroke.lv_obj) return;
+    ui_copy_text(s_f_button_style.btn_stroke.label_text, sizeof s_f_button_style.btn_stroke.label_text, text);
+    if (!s_f_button_style.btn_stroke.lv_obj) {
+        UI_LIFECYCLE_WARN("ui_f_button_style_btn_stroke_set_label: screen not built; value stored");
+        return;
+    }
     lv_obj_t *lbl = lv_obj_get_child(s_f_button_style.btn_stroke.lv_obj, 0);
-    if (lbl) lv_label_set_text(lbl, text);
+    if (lbl) lv_label_set_text(lbl, s_f_button_style.btn_stroke.label_text);
 }
 
 void ui_f_button_style_btn_both_set_label(const char *text)
 {
-    if (!s_f_button_style.btn_both.lv_obj) return;
+    ui_copy_text(s_f_button_style.btn_both.label_text, sizeof s_f_button_style.btn_both.label_text, text);
+    if (!s_f_button_style.btn_both.lv_obj) {
+        UI_LIFECYCLE_WARN("ui_f_button_style_btn_both_set_label: screen not built; value stored");
+        return;
+    }
     lv_obj_t *lbl = lv_obj_get_child(s_f_button_style.btn_both.lv_obj, 0);
-    if (lbl) lv_label_set_text(lbl, text);
+    if (lbl) lv_label_set_text(lbl, s_f_button_style.btn_both.label_text);
 }
 
 void ui_f_button_style_btn_thick_set_label(const char *text)
 {
-    if (!s_f_button_style.btn_thick.lv_obj) return;
+    ui_copy_text(s_f_button_style.btn_thick.label_text, sizeof s_f_button_style.btn_thick.label_text, text);
+    if (!s_f_button_style.btn_thick.lv_obj) {
+        UI_LIFECYCLE_WARN("ui_f_button_style_btn_thick_set_label: screen not built; value stored");
+        return;
+    }
     lv_obj_t *lbl = lv_obj_get_child(s_f_button_style.btn_thick.lv_obj, 0);
-    if (lbl) lv_label_set_text(lbl, text);
+    if (lbl) lv_label_set_text(lbl, s_f_button_style.btn_thick.label_text);
 }
 
 // ------------------------------
@@ -146,14 +170,20 @@ void ui_f_button_style_btn_thick_set_label(const char *text)
 // ------------------------------
 void ui_f_button_style_load(void)
 {
+    if (!s_f_button_style.lv_screen) {
+        UI_LIFECYCLE_WARN("ui_f_button_style_load: screen not built");
+        return;
+    }
     lv_scr_load(s_f_button_style.lv_screen);
 }
 
 // ------------------------------
-// SCREEN INIT
+// SCREEN INIT (builds from the struct's values; no-op if built)
 // ------------------------------
 void ui_f_button_style_init(void)
 {
+    if (s_f_button_style.lv_screen)
+        return;
     s_f_button_style.lv_screen = lv_obj_create(NULL);
 
     /* btn_square (button) */
@@ -245,4 +275,25 @@ void ui_f_button_style_init(void)
     lv_obj_add_event_cb(s_f_button_style.btn_thick.lv_obj, ui_f_button_style_on_btn_thick_clicked,
                         LV_EVENT_CLICKED, NULL);
     ui_apply_style(s_f_button_style.btn_thick.lv_obj, UI_CHILD_BUTTON, &s_f_button_style.btn_thick.style);
+}
+
+// ------------------------------
+// SCREEN DEINIT (refused for the active screen; values kept)
+// ------------------------------
+void ui_f_button_style_deinit(void)
+{
+    if (!s_f_button_style.lv_screen)
+        return;
+    if (lv_screen_active() == s_f_button_style.lv_screen) {
+        UI_LIFECYCLE_WARN("ui_f_button_style_deinit: refused, it is the active screen; load another first");
+        return;
+    }
+    lv_obj_delete(s_f_button_style.lv_screen);   /* frees every child, callback and animation */
+    s_f_button_style.lv_screen = NULL;
+    s_f_button_style.btn_square.lv_obj = NULL;
+    s_f_button_style.btn_round.lv_obj = NULL;
+    s_f_button_style.btn_pill.lv_obj = NULL;
+    s_f_button_style.btn_stroke.lv_obj = NULL;
+    s_f_button_style.btn_both.lv_obj = NULL;
+    s_f_button_style.btn_thick.lv_obj = NULL;
 }

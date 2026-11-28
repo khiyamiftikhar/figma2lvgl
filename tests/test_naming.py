@@ -325,7 +325,7 @@ def test_reserved_fields_match_emitted_struct_fields():
         if wtype is T.STRUCTURAL:
             continue
         n = ParsedNode(wtype, "w", "w", 0, 0, 1, 1, ParsedStyle())
-        emitted |= set(re.findall(r"\b(\w+)(?:\[\w+\])?;", emit_struct_fields(n)))
+        emitted |= set(re.findall(r"\b(\w+)(?:\[[^\]]*\])?;", emit_struct_fields(n)))
     screen = ParsedScreen("s")
     emitted |= set(re.findall(r"\b(\w+);", emit_screen_struct_type(screen)))
     emitted.discard("s_s")   # the struct variable, not a field

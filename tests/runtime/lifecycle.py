@@ -194,6 +194,7 @@ def _case_functions(screen, p, size) -> str:
            f"static void deinit_{s}(void) {{ {deinit} }}"]
 
     out.append(fn("init_twice", f"""void *saved[{ptr_n}];
+    measure("struct bytes", (long)sizeof {p['sv']});
     {p['init']}();
     if (any_null_{s}()) fail("a pointer is NULL after init");
     save_ptrs_{s}(saved);
@@ -217,7 +218,7 @@ def _case_functions(screen, p, size) -> str:
     if (lv_screen_active() != {p['sv']}.lv_screen) fail("deinit of the active screen changed the active screen");
     if (!same_ptrs_{s}(saved)) fail("deinit of the active screen changed pointers");
     if (live() != before) fail("deinit of the active screen freed %zu bytes", before - live());
-    if (warnings - warns != 1) fail("deinit of the active screen logged %d warnings, expected 1", warnings - warns);"""))
+    if (warnings != warns) fail("deinit of the active screen logged %d warnings without UI_LIFECYCLE_DEBUG", warnings - warns);"""))
 
     out.append(fn("deinit_inactive", f"""{need_deinit}
     void *screen;
@@ -342,7 +343,12 @@ def _case_functions(screen, p, size) -> str:
     out.append(fn("debug", (f"""{need_deinit}
     int warns = warnings;
     {p['set_calls'][0]}
-    if (warnings - warns < 1) fail("a setter on a screen that isn't built logged no warning with UI_LIFECYCLE_DEBUG");""")
+    if (warnings - warns != 1) fail("a setter on a screen that isn't built logged %d warnings with UI_LIFECYCLE_DEBUG, expected 1", warnings - warns);
+    {p['init']}(); {p['load']}(); cycles(5);
+    warns = warnings;
+    deinit_{s}();
+    if (warnings - warns != 1) fail("a refused deinit logged %d warnings with UI_LIFECYCLE_DEBUG, expected 1", warnings - warns);
+    if (!{p['sv']}.lv_screen) fail("deinit of the active screen wasn't refused");""")
                   if p["set_calls"] else 'skip("no setters");'))
     return "\n".join(out)
 
@@ -443,6 +449,7 @@ static void ptr_read(lv_indev_t *i, lv_indev_data_t *d)
 { (void)i; d->point = ptr_pt; d->state = ptr_down ? LV_INDEV_STATE_PRESSED : LV_INDEV_STATE_RELEASED; }
 static void slider_drag(lv_obj_t *s, int reversed)
 {
+    lv_obj_update_layout(s);   /* coordinates even if no refresh ran since load */
     lv_area_t a; lv_obj_get_coords(s, &a);
     int32_t w = lv_area_get_width(&a), h = lv_area_get_height(&a);
     lv_point_t p0, p1;

@@ -70,29 +70,41 @@ static struct {
 // ------------------------------
 void ui_f_images_icon_star_display(void)
 {
-    if (!s_f_images.icon_star.lv_obj) return;
     s_f_images.icon_star.src = &icon_star;
+    if (!s_f_images.icon_star.lv_obj) {
+        UI_LIFECYCLE_WARN("ui_f_images_icon_star_display: screen not built; value stored");
+        return;
+    }
     lv_image_set_src(s_f_images.icon_star.lv_obj, s_f_images.icon_star.src);
 }
 
 void ui_f_images_icon_star_2_display(void)
 {
-    if (!s_f_images.icon_star_2.lv_obj) return;
     s_f_images.icon_star_2.src = &icon_star;
+    if (!s_f_images.icon_star_2.lv_obj) {
+        UI_LIFECYCLE_WARN("ui_f_images_icon_star_2_display: screen not built; value stored");
+        return;
+    }
     lv_image_set_src(s_f_images.icon_star_2.lv_obj, s_f_images.icon_star_2.src);
 }
 
 void ui_f_images_icon_heart_display(void)
 {
-    if (!s_f_images.icon_heart.lv_obj) return;
     s_f_images.icon_heart.src = &icon_heart;
+    if (!s_f_images.icon_heart.lv_obj) {
+        UI_LIFECYCLE_WARN("ui_f_images_icon_heart_display: screen not built; value stored");
+        return;
+    }
     lv_image_set_src(s_f_images.icon_heart.lv_obj, s_f_images.icon_heart.src);
 }
 
 void ui_f_images_panel_icons_icon_heart_display(void)
 {
-    if (!s_f_images.panel_icons.icon_heart.lv_obj) return;
     s_f_images.panel_icons.icon_heart.src = &icon_heart;
+    if (!s_f_images.panel_icons.icon_heart.lv_obj) {
+        UI_LIFECYCLE_WARN("ui_f_images_panel_icons_icon_heart_display: screen not built; value stored");
+        return;
+    }
     lv_image_set_src(s_f_images.panel_icons.icon_heart.lv_obj, s_f_images.panel_icons.icon_heart.src);
 }
 
@@ -101,14 +113,20 @@ void ui_f_images_panel_icons_icon_heart_display(void)
 // ------------------------------
 void ui_f_images_load(void)
 {
+    if (!s_f_images.lv_screen) {
+        UI_LIFECYCLE_WARN("ui_f_images_load: screen not built");
+        return;
+    }
     lv_scr_load(s_f_images.lv_screen);
 }
 
 // ------------------------------
-// SCREEN INIT
+// SCREEN INIT (builds from the struct's values; no-op if built)
 // ------------------------------
 void ui_f_images_init(void)
 {
+    if (s_f_images.lv_screen)
+        return;
     s_f_images.lv_screen = lv_obj_create(NULL);
 
     /* icon_star (image) */
@@ -152,4 +170,24 @@ void ui_f_images_init(void)
     if (s_f_images.panel_icons.icon_heart.src)
         lv_image_set_src(s_f_images.panel_icons.icon_heart.lv_obj, s_f_images.panel_icons.icon_heart.src);
     ui_apply_style(s_f_images.panel_icons.icon_heart.lv_obj, UI_CHILD_IMAGE, &s_f_images.panel_icons.icon_heart.style);
+}
+
+// ------------------------------
+// SCREEN DEINIT (refused for the active screen; values kept)
+// ------------------------------
+void ui_f_images_deinit(void)
+{
+    if (!s_f_images.lv_screen)
+        return;
+    if (lv_screen_active() == s_f_images.lv_screen) {
+        UI_LIFECYCLE_WARN("ui_f_images_deinit: refused, it is the active screen; load another first");
+        return;
+    }
+    lv_obj_delete(s_f_images.lv_screen);   /* frees every child, callback and animation */
+    s_f_images.lv_screen = NULL;
+    s_f_images.icon_star.lv_obj = NULL;
+    s_f_images.icon_star_2.lv_obj = NULL;
+    s_f_images.icon_heart.lv_obj = NULL;
+    s_f_images.panel_icons.lv_obj = NULL;
+    s_f_images.panel_icons.icon_heart.lv_obj = NULL;
 }

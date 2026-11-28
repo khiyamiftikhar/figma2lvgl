@@ -72,10 +72,10 @@ class TestStructure:
         assert "} panel_top;" in self.c
 
     def test_nested_label_in_struct(self):
-        assert "char        text[UI_MAX_STRING_LENGTH];" in self.c
+        assert "char        text[UI_TEXT_SIZE(6)];" in self.c   # "16:30" and its NUL (Q17)
 
-    def test_button_const_label(self):
-        assert "const char *label_text;" in self.c
+    def test_button_label_buffer(self):
+        assert "char        label_text[UI_TEXT_SIZE(3)];" in self.c   # a buffer (doc 11 rule 3)
 
     def test_bar_value_field(self):
         assert "int32_t value;" in self.c
