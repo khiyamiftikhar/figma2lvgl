@@ -12,6 +12,7 @@ from dataclasses import dataclass, field
 from pathlib import Path
 
 from figma2lvgl.core import naming
+from figma2lvgl.core.widget_type import WidgetType
 from figma2lvgl.core.config_writer import write_ui_config
 from figma2lvgl.core.figma_parser import parse_design
 from figma2lvgl.core.generator import generate_screen
@@ -92,7 +93,14 @@ def check_invariants(run: Run, page) -> None:
             assert len(ids) == len(set(ids)), ids                      # C2
             for n in nodes:
                 assert naming.is_valid_identifier(n.id), n.id          # C1
-                assert n.id not in naming.RESERVED_FIELDS, n.id        # C2
+                # C2 (doc 10 rev 6): no reserved name, except label_text,
+                # which the type prefix gives a Text named "text"; it is a
+                # field only of buttons, and buttons hold no members.
+                assert n.id not in naming.RESERVED_FIELDS - {"label_text"}, n.id
+                if n.id == "label_text":
+                    assert n.widget_type == WidgetType.LABEL, n.id
+                if n.widget_type == WidgetType.BUTTON:                  # why that's safe
+                    assert not n.children, n.id
                 if n.id.startswith("lv_"):
                     raise AssertionError(n.id)                         # C5
                 if n.id != n.natural_id:                                # C8

@@ -33,3 +33,18 @@ def test_random_designs_are_deterministic(page):  # C6
         assert first.files == second.files
     else:
         assert first.error.diagnostic == second.error.diagnostic
+
+
+def test_text_layer_named_text_found_by_the_nightly_run():
+    """Nightly 2026-11-28: a Text named "text" becomes the member label_text
+    (the type prefix), which is also the button's field name. Allowed by C2
+    (doc 10 rev 6): buttons hold no members, so it never meets that field."""
+    import xml.etree.ElementTree as ET
+    page = ET.fromstring(
+        '<page name="Page_1" type="PAGE"><children><Frame name="home" type="FRAME" '
+        'x="0" y="0" width="320" height="480"><children><Text name="text" type="TEXT" '
+        'x="0" y="0" width="1" height="1" characters="t" fontSize="12" rotation="30" />'
+        '</children><fills><fill color="#ffffff" /></fills></Frame></children></page>')
+    run = run_design(page)
+    check_invariants(run, page)
+    assert [n.id for n in run.screens[0].children] == ["label_text"]
